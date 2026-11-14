@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Colours are CSS variables so that dark / light mode is a single attribute switch. */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface2: var(--c-surface2);
+  --color-line: var(--c-line);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-primary: var(--c-primary);
+  --color-primary-deep: var(--c-primary-deep);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-deep: var(--c-accent-deep);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-deep: var(--c-danger-deep);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-deep: var(--c-warn-deep);
+  --font-sans: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+:root {
+  --c-bg: #0e1422;
+  --c-surface: #172033;
+  --c-surface2: #1f2a42;
+  --c-line: #2f3c5a;
+  --c-fg: #eef2fb;
+  --c-muted: #95a3c2;
+  --c-primary: #58cc02;
+  --c-primary-deep: #3f9600;
+  --c-primary-soft: rgba(88, 204, 2, 0.14);
+  --c-accent: #3fa9ff;
+  --c-accent-deep: #1f7fd0;
+  --c-accent-soft: rgba(63, 169, 255, 0.16);
+  --c-danger: #ff5a64;
+  --c-danger-deep: #c93a44;
+  --c-danger-soft: rgba(255, 90, 100, 0.14);
+  --c-warn: #ffc234;
+  --c-warn-deep: #d39a12;
+  --c-code-kw: #ff8ad1;
+  --c-code-num: #ffc234;
+  --c-code-op: #7fd4ff;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --c-bg: #f4f6fb;
+  --c-surface: #ffffff;
+  --c-surface2: #eef1f8;
+  --c-line: #d9dfec;
+  --c-fg: #162036;
+  --c-muted: #5d6a86;
+  --c-primary: #4bb000;
+  --c-primary-deep: #378200;
+  --c-primary-soft: rgba(75, 176, 0, 0.13);
+  --c-accent: #1c8be6;
+  --c-accent-deep: #1269b3;
+  --c-accent-soft: rgba(28, 139, 230, 0.12);
+  --c-danger: #e5394a;
+  --c-danger-deep: #b3243a;
+  --c-danger-soft: rgba(229, 57, 74, 0.1);
+  --c-warn: #e6a100;
+  --c-warn-deep: #b37d00;
+  --c-code-kw: #c2278f;
+  --c-code-num: #b06d00;
+  --c-code-op: #1269b3;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* KaTeX: slightly larger inline maths and no overflow on phones. */
+.katex {
+  font-size: 1.08em;
+}
+.katex-display {
+  margin: 0.4em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+.code-kw { color: var(--c-code-kw); font-weight: 700; }
+.code-num { color: var(--c-code-num); }
+.code-op { color: var(--c-code-op); }
+
+:focus-visible {
+  outline: 3px solid var(--c-accent);
+  outline-offset: 2px;
+}
