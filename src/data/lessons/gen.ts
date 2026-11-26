@@ -91,3 +91,31 @@ export const det3 = (A: Mat) =>
   A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
   A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
   A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+export const cross = ([a, b, c]: number[], [d, e, f]: number[]) => [b * f - c * e, c * d - a * f, a * e - b * d];
+export const outer = (u: number[], v: number[]): Mat => u.map((x) => v.map((y) => x * y));
+export const sumOf = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
+
+/** Primitive Pythagorean triples (a, b, c) with a² + b² = c². */
+export const PYTHAGOREAN = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25]];
+
+/** A vector with entries p_i / d, each in lowest terms: fvec([3, 4], 5) -> "(\tfrac{3}{5}, \tfrac{4}{5})". */
+export const fvec = (v: number[], d: number) => `(${v.map((x) => frac(x, d)).join(', ')})`;
+
+/** √n simplified: 9 -> "3", 45 -> "3\sqrt{5}", 7 -> "\sqrt{7}". */
+export function sqrtTex(n: number): string {
+  let f = 1;
+  for (let k = 2; k * k <= n; k++) if (n % (k * k) === 0) f = k;
+  const rest = n / (f * f);
+  if (rest === 1) return `${f}`;
+  return `${f === 1 ? '' : f}\\sqrt{${rest}}`;
+}
+
+/** "y = 5 - 3t" style: c + d·t with tidy signs and unit coefficients. */
+export function lineTex(c: number, d: number, t = 't'): string {
+  const dt = d === 0 ? '' : `${Math.abs(d) === 1 ? '' : Math.abs(d)}${t}`;
+  if (c === 0) return d === 0 ? '0' : `${d < 0 ? '-' : ''}${dt}`;
+  return d === 0 ? `${c}` : `${c} ${d < 0 ? '-' : '+'} ${dt}`;
+}
+
+/** A coefficient in front of a vector or symbol: 1 -> "", -1 -> "-", 3 -> "3". */
+export const coef = (k: number) => (k === 1 ? '' : k === -1 ? '-' : `${k}`);

@@ -9,7 +9,7 @@ Runs entirely in the browser. No account, no server, no API keys.
 ## What is inside
 
 - **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
-  Optimization, Programming Foundations. Mathematical Language (6 lessons) and Linear Algebra (7 lessons) are
+  Optimization, Programming Foundations. Mathematical Language (6 lessons) and Linear Algebra (11 lessons) are
   available; the other modules show their planned lessons as "coming soon".
 - **Lessons** — lecture → Practice 1 → (Extra practice if needed) → next lesson. The lecture is shown one
   section at a time, with definition / key-fact / trap boxes, step-by-step worked examples and 2–3 quick checks:

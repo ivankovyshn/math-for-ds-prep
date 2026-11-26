@@ -948,6 +948,219 @@ Object.assign(checks, {
   },
 });
 
+// la-08 · norms and orthogonality
+const l1norm = (v) => v.reduce((s, x) => s + Math.abs(x), 0);
+const isOrthogonal = (Q) => {
+  const QtQ = mul(T(Q), Q);
+  return QtQ.every((row, i) => row.every((x, j) => Math.abs(x - (i === j ? 1 : 0)) < EPS));
+};
+const rot = (t) => [[Math.cos(t), -Math.sin(t)], [Math.sin(t), Math.cos(t)]];
+const sub2 = (u, v) => u.map((x, i) => x - v[i]);
+Object.assign(checks, {
+  'la-08-q1': () => l1norm([2, -3, 1]),
+  'la-08-q2': () => {
+    const q1 = [3 / 5, 4 / 5];
+    const q2 = [-4 / 5, 3 / 5];
+    return [dot([0, 5], q1), dot([0, 5], q2)];
+  },
+  'la-08-q3': () =>
+    pickId({
+      a: () => isOrthogonal(scale(1 / 5, [[3, -4], [4, 3]])),
+      b: () => isOrthogonal([[3, -4], [4, 3]]),
+      c: () => isOrthogonal([[1, 1], [0, 1]]),
+      d: () => isOrthogonal(scale(1 / 2, [[1, 1], [1, 1]])),
+    }),
+  'la-08-1': ({ v }) => l1norm(v),
+  'la-08-2': ({ v }) => v.map((x) => x / norm(v)),
+  'la-08-3': ({ q1, c, v }) => {
+    const Q = T([q1.map((x) => x / c), [-q1[1] / c, q1[0] / c]]);
+    if (!isOrthogonal(Q)) throw new Error('basis is not orthonormal');
+    return solve(Q, v);
+  },
+  'la-08-4': ({ M, c }) => flat(inv(scale(1 / c, M))),
+  'la-08-5': ({ v1, v2 }) => sub2(v2, v1.map((x) => (x * dot(v2, v1)) / dot(v1, v1))),
+  'la-08-6': ({ p, q, s }) => {
+    // Concrete vectors with these lengths and dot product, moved by an arbitrary rotation.
+    const th = Math.acos(s / (p * q));
+    const Q = rot(0.83);
+    return norm(sub2(mulVec(Q, [p, 0]), mulVec(Q, [q * Math.cos(th), q * Math.sin(th)])));
+  },
+  'la-08-x1': ({ v }) => Math.max(...v.map(Math.abs)),
+  'la-08-x2': ({ v }) => l1norm(v),
+  'la-08-x3': ({ v, c }) => {
+    const unit = (u) => () => Math.abs(norm(u) - 1) < EPS;
+    return pickId({ a: unit(v.map((x) => x / c)), b: unit(v.map((x) => x / l1norm(v))), c: unit([0.5, 0.5]), d: unit(v.map((x) => x / (c * c))) });
+  },
+  'la-08-x4': ({ x, reflect }) => norm(mulVec(reflect ? [[Math.cos(1.1), Math.sin(1.1)], [Math.sin(1.1), -Math.cos(1.1)]] : rot(2.3), x)),
+  'la-08-x5': ({ u, v }) => solve([[dot(u, u)]], [dot(v, u)])[0],
+  'la-08-x6': ({ q1, c, v }) => solve(T([q1.map((x) => x / c), [-q1[1] / c, q1[0] / c]]), v)[0],
+});
+
+// la-09 · projections and least squares
+/** Least squares by the normal equations. */
+const lstsq = (A, b) => solve(mul(T(A), A), mulVec(T(A), b));
+const projMatrix = (A) => mul(mul(A, inv(mul(T(A), A))), T(A));
+const col = (v) => v.map((x) => [x]);
+const trace = (A) => A.reduce((s, row, i) => s + row[i], 0);
+Object.assign(checks, {
+  'la-09-q1': () => mulVec(projMatrix(col([1, 1])), [4, 2]),
+  'la-09-q2': () => mulVec(projMatrix(col([1, 2])), [2, -1]),
+  'la-09-q3': () => lstsq(col([1, 1, 1]), [2, 3, 7])[0],
+  'la-09-1': ({ a, b }) => mulVec(projMatrix(col(a)), b),
+  'la-09-2': ({ a }) => {
+    // P is fixed by what it does to a basis: a stays, the perpendicular w goes to 0.
+    const B = T([a, [-a[1], a[0]]]);
+    return flat(mul(mul(B, [[1, 0], [0, 0]]), inv(B)));
+  },
+  'la-09-3': ({ t, y }) => lstsq(col(t), y)[0],
+  'la-09-4': ({ A }) => trace(projMatrix(A)),
+  'la-09-5': ({ t, y }) => lstsq(t.map((x) => [1, x]), y),
+  'la-09-6': ({ u1, u2, b }) => mulVec(projMatrix(T([u1, u2])), b),
+  'la-09-x1': ({ a, b }) => lstsq(col(a), b)[0],
+  'la-09-x2': ({ a, b }) => sub2(b, mulVec(projMatrix(col(a)), b)),
+  'la-09-x3': ({ a, b }) => mulVec(projMatrix(col(a)), b),
+  'la-09-x4': ({ A }) => flat(mul(T(A), A)),
+  'la-09-x5': ({ y }) => lstsq(col(y.map(() => 1)), y)[0],
+  'la-09-x6': ({ t, y }) => lstsq(col(t), y)[0],
+});
+
+// la-10 · spectral decomposition
+const quad = (A, x) => dot(x, mulVec(A, x));
+const isEigvec = (A, v) => {
+  const Av = mulVec(A, v);
+  const k = dot(Av, v) / dot(v, v);
+  return Av.every((x, i) => Math.abs(x - k * v[i]) < EPS);
+};
+const parallel = (u, v) => Math.abs(u[0] * v[1] - u[1] * v[0]) < EPS;
+/** 0 positive definite, 1 positive semidefinite only, 2 negative definite, 3 indefinite (as CLASSES in 10-spectral.practice.ts). */
+const definiteness = (ls) => {
+  const pos = ls.filter((l) => l > EPS).length;
+  const neg = ls.filter((l) => l < -EPS).length;
+  if (pos && neg) return 3;
+  if (neg === ls.length) return 2;
+  if (pos === ls.length) return 0;
+  if (!neg && pos) return 1;
+  return -1;
+};
+const byClass = (cls, order) => pickId(Object.fromEntries(order.map((c, i) => ['abcd'[i], () => c === cls])));
+/** QΛQᵀ from unit eigenvectors (columns of Q). */
+const fromEigen = (qs, ls) => {
+  const Q = T(qs.map((q) => q.map((x) => x / norm(q))));
+  return mul(mul(Q, ls.map((l, i) => ls.map((_, j) => (i === j ? l : 0)))), T(Q));
+};
+const Q3 = scale(1 / 3, [[1, 2, 2], [2, 1, -2], [2, -2, 1]]);
+Object.assign(checks, {
+  'la-10-q1': () => {
+    const A = [[5, 2], [2, 2]];
+    const other = (v) => () => isEigvec(A, v) && !parallel(v, [2, 1]);
+    return pickId({ a: other([-1, 2]), b: other([1, 2]), c: other([2, -1]) });
+  },
+  'la-10-q2': () => flat(fromEigen([[1, 1], [1, -1]], [4, 0])),
+  'la-10-q3': () => {
+    const cls = definiteness(eig2([[1, 2], [2, 1]]));
+    return pickId({ a: () => cls === 3, b: () => cls === 0, c: () => cls === 0 });
+  },
+  'la-10-1': ({ A, x }) => quad(A, x),
+  'la-10-2': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => isEigvec(p.A, p[id]) && !parallel(p[id], p.v)]))),
+  'la-10-3': ({ A, order }) => byClass(definiteness(eig2(A)), order),
+  'la-10-4': ({ v, w, l1, l2 }) => flat(fromEigen([v, w], [l1, l2])),
+  'la-10-5': ({ A, x, m }) => mulVec(pow(A, m), x),
+  'la-10-6': ({ a, b }) => range(-60, 200).find((t) => definiteness(eig2([[a, b], [b, t]])) === 0),
+  'la-10-x1': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => flat(p[id]).every((x, i) => x === flat(T(p[id]))[i])]))),
+  'la-10-x2': ({ A, x }) => quad(A, x),
+  'la-10-x3': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => Math.abs(dot(p[id], p.v)) < EPS && norm(p[id]) > EPS]))),
+  'la-10-x4': ({ ls, order }) => byClass(definiteness(ls), order),
+  'la-10-x5': ({ l1, l2 }) => flat(fromEigen([[1, 1], [1, -1]], [l1, l2])),
+  'la-10-x6': ({ ls }) => {
+    const A = mul(mul(Q3, ls.map((l, i) => ls.map((_, j) => (i === j ? l : 0)))), T(Q3));
+    const D = mul(mul(T(Q3), mul(A, A)), Q3);
+    return D.map((row, i) => row[i]).sort((p, q) => q - p);
+  },
+});
+
+// la-11 · SVD and PCA
+/** Eigenvalues of a symmetric matrix by the cyclic Jacobi method, in decreasing order. */
+function symEig(S) {
+  const n = S.length;
+  const A = S.map((row) => [...row]);
+  for (let sweep = 0; sweep < 100; sweep++) {
+    let off = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j] ** 2;
+    if (off < 1e-24) break;
+    for (let p = 0; p < n; p++)
+      for (let q = p + 1; q < n; q++) {
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+        const c = 1 / Math.sqrt(t * t + 1);
+        const s = t * c;
+        for (let k = 0; k < n; k++) {
+          const [akp, akq] = [A[k][p], A[k][q]];
+          A[k][p] = c * akp - s * akq;
+          A[k][q] = s * akp + c * akq;
+        }
+        for (let k = 0; k < n; k++) {
+          const [apk, aqk] = [A[p][k], A[q][k]];
+          A[p][k] = c * apk - s * aqk;
+          A[q][k] = s * apk + c * aqk;
+        }
+      }
+  }
+  return A.map((row, i) => row[i]).sort((x, y) => y - x);
+}
+/** Singular values: square roots of the eigenvalues of AᵀA, decreasing. */
+const svals = (A) => symEig(mul(T(A), A)).map((l) => Math.sqrt(Math.max(0, l)));
+const diagM = (d, rows = d.length, cols = d.length) => Array.from({ length: rows }, (_, i) => Array.from({ length: cols }, (_, j) => (i === j ? d[i] ?? 0 : 0)));
+const frob = (A) => Math.sqrt(flat(A).reduce((s, x) => s + x * x, 0));
+const minus = (A, B) => A.map((row, i) => row.map((x, j) => x - B[i][j]));
+Object.assign(checks, {
+  'la-11-q1': () => svals([[2, 0], [0, -3]]),
+  'la-11-q2': () => rank(diagM([7, 2, 0])),
+  'la-11-q3': () => {
+    const ev = symEig(mul(mul(Q3, diagM([8, 1.5, 0.5])), T(Q3)));
+    return (100 * ev[0]) / ev.reduce((s, x) => s + x, 0);
+  },
+  'la-11-1': ({ A }) => svals(A),
+  'la-11-2': ({ ls }) => {
+    const ev = symEig(diagM(ls));
+    return (100 * (ev[0] + ev[1])) / ev.reduce((s, x) => s + x, 0);
+  },
+  'la-11-3': ({ A }) => svals(A),
+  'la-11-4': ({ s }) => {
+    // A symmetric matrix with these eigenvalues; its best rank-1 approximation keeps the top eigen-direction.
+    const A = mul(mul(Q3, diagM(s)), T(Q3));
+    const q = T(Q3)[0];
+    return frob(minus(A, scale(s[0], q.map((x) => q.map((y) => x * y)))));
+  },
+  'la-11-5': ({ A }) => svals(A),
+  'la-11-6': ({ C }) => {
+    const ev = symEig(C);
+    return ev[0] / (ev[0] + ev[1]);
+  },
+  'la-11-x1': ({ A }) => svals(A),
+  'la-11-x2': ({ m, n, s }) => rank(diagM(s, m, n)),
+  'la-11-x3': ({ s }) => {
+    const A = mul(mul(rot(0.4), diagM(s)), T(rot(1.3)));
+    let best = 0;
+    for (let i = 0; i < 20000; i++) best = Math.max(best, norm(mulVec(A, [Math.cos((i * Math.PI) / 10000), Math.sin((i * Math.PI) / 10000)])));
+    return { v: best, tol: 1e-4 };
+  },
+  'la-11-x4': ({ M }) => symEig(M).map(Math.sqrt),
+  'la-11-x5': (p) => {
+    const top = symEig(p.C)[0];
+    const isPC1 = (v) => () => isEigvec(p.C, v) && Math.abs(dot(mulVec(p.C, v), v) / dot(v, v) - top) < EPS;
+    return pickId({ a: isPC1(p.a), b: isPC1(p.b), c: isPC1(p.c), d: isPC1(p.d) });
+  },
+  'la-11-x6': ({ s }) => {
+    // Centred data with orthogonal columns of these lengths, then its covariance matrix.
+    const c1 = [1, -1, 0].map((x) => x / Math.sqrt(2));
+    const c2 = [1, 1, -2].map((x) => x / Math.sqrt(6));
+    const X = T([c1.map((x) => s[0] * x), c2.map((x) => s[1] * x)]);
+    const ev = symEig(scale(1 / 2, mul(T(X), X)));
+    return ev[0] / (ev[0] + ev[1]);
+  },
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */

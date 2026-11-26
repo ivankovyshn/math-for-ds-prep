@@ -18,7 +18,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'linalg',
     title: 'Linear Algebra',
     blurb: 'Vectors, matrices, eigenvalues, projections and SVD',
-    planned: ['Norms and orthogonality', 'Projections and least squares', 'Spectral decomposition', 'SVD and PCA'],
   },
   {
     id: 'calculus',

@@ -455,6 +455,112 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
       );
     },
   },
+
+  projection: {
+    title: 'The vector b, its projection p onto the line through a, and the error e = b − p, which meets the line at a right angle',
+    viewBox: '0 0 300 200',
+    body: () => {
+      const p = plane(40, 172, 40);
+      const P: Pt = [2.8, 1.4];
+      const B: Pt = [2, 3];
+      const s = 0.22;
+      const ua: Pt = [2 / Math.sqrt(5), 1 / Math.sqrt(5)];
+      const ue: Pt = [-1 / Math.sqrt(5), 2 / Math.sqrt(5)];
+      const corner = [p(P[0] + s * ua[0] * -1, P[1] + s * ua[1] * -1), p(P[0] - s * ua[0] + s * ue[0], P[1] - s * ua[1] + s * ue[1]), p(P[0] + s * ue[0], P[1] + s * ue[1])];
+      return (
+        <>
+          <line x1={p(-0.6, -0.3)[0]} y1={p(-0.6, -0.3)[1]} x2={p(6.2, 3.1)[0]} y2={p(6.2, 3.1)[1]} {...dashed} />
+          <Arrow from={p(0, 0)} to={p(...P)} color={BLUE} width={6} opacity={0.45} />
+          <Arrow from={p(0, 0)} to={p(1.5, 0.75)} color={GREEN} width={2.6} />
+          <Arrow from={p(0, 0)} to={p(...B)} color={YELLOW} width={2.8} />
+          <line x1={p(...P)[0]} y1={p(...P)[1]} x2={p(...B)[0]} y2={p(...B)[1]} stroke={RED} strokeWidth={2.4} strokeDasharray="6 4" />
+          <polyline points={corner.map((q) => q.join(',')).join(' ')} {...thin} strokeWidth={1.4} />
+          <Text at={p(1.5, 0.75)} dx={6} dy={20} color={GREEN}>a</Text>
+          <Text at={p(...B)} dx={-12} dy={-4} color={YELLOW}>b</Text>
+          <Text at={p(...P)} dx={14} dy={18} color={BLUE}>p</Text>
+          <Text at={p(2.4, 2.2)} dx={16} color={RED}>e</Text>
+          <Dot at={p(0, 0)} />
+        </>
+      );
+    },
+  },
+
+  spectral: {
+    title: 'A symmetric matrix maps the unit circle to an ellipse whose axes point along its orthogonal eigenvectors q1 and q2, stretched by λ1 = 3 and λ2 = 1',
+    viewBox: '0 0 300 220',
+    body: () => {
+      const c: Pt = [150, 110];
+      const u = 30;
+      const d = Math.SQRT1_2;
+      return (
+        <>
+          <Axes o={c} x0={20} x1={280} y0={10} y1={210} />
+          <circle cx={c[0]} cy={c[1]} r={u} {...dashed} />
+          <ellipse cx={c[0]} cy={c[1]} rx={3 * u} ry={u} transform={`rotate(-45 ${c[0]} ${c[1]})`} fill={BLUE} fillOpacity={0.1} stroke={BLUE} strokeWidth={1.6} />
+          <Arrow from={c} to={[c[0] + 3 * u * d, c[1] - 3 * u * d]} color={BLUE} width={3} />
+          <Arrow from={c} to={[c[0] + u * d, c[1] + u * d]} color={GREEN} width={3} />
+          <Text at={[c[0] + 3 * u * d, c[1] - 3 * u * d]} dx={26} dy={6} color={BLUE} style={caption}>λ₁q₁</Text>
+          <Text at={[c[0] + u * d, c[1] + u * d]} dx={20} dy={14} color={GREEN} style={caption}>λ₂q₂</Text>
+          <line x1={c[0] - u * d} y1={c[1] - u * d} x2={c[0] - 52} y2={c[1] - 44} {...thin} opacity={0.5} />
+          <Text at={[c[0] - 58, c[1] - 50]} style={caption}>unit circle</Text>
+        </>
+      );
+    },
+  },
+
+  svd: {
+    title: 'The SVD: A maps the unit circle with orthonormal v1 and v2 to an ellipse with semi-axes σ1·u1 and σ2·u2',
+    viewBox: '0 0 340 180',
+    body: () => {
+      const L: Pt = [70, 92];
+      const R: Pt = [250, 92];
+      const at = (o: Pt, len: number, deg: number): Pt => [o[0] + len * Math.cos((deg * Math.PI) / 180), o[1] - len * Math.sin((deg * Math.PI) / 180)];
+      return (
+        <>
+          <circle cx={L[0]} cy={L[1]} r={42} {...thin} opacity={0.6} />
+          <Arrow from={L} to={at(L, 42, 25)} color={BLUE} width={2.6} />
+          <Arrow from={L} to={at(L, 42, 115)} color={GREEN} width={2.6} />
+          <Text at={at(L, 42, 25)} dx={12} dy={-2} color={BLUE}>v₁</Text>
+          <Text at={at(L, 42, 115)} dx={-10} dy={-6} color={GREEN}>v₂</Text>
+          <Arrow from={[128, 92]} to={[180, 92]} width={2} />
+          <Text at={[154, 92]} dy={-10}>A</Text>
+          <ellipse cx={R[0]} cy={R[1]} rx={72} ry={26} transform={`rotate(-55 ${R[0]} ${R[1]})`} fill={BLUE} fillOpacity={0.1} stroke={BLUE} strokeWidth={1.6} />
+          <Arrow from={R} to={at(R, 72, 55)} color={BLUE} width={2.8} />
+          <Arrow from={R} to={at(R, 26, 145)} color={GREEN} width={2.8} />
+          <Text at={at(R, 72, 55)} dx={22} dy={10} color={BLUE} style={caption}>σ₁u₁</Text>
+          <Text at={at(R, 26, 145)} dx={-20} dy={-4} color={GREEN} style={caption}>σ₂u₂</Text>
+        </>
+      );
+    },
+  },
+
+  pca: {
+    title: 'A cloud of centred data points stretched along one direction: PC1 points along the spread, PC2 is perpendicular and short',
+    viewBox: '0 0 300 200',
+    body: () => {
+      const c: Pt = [150, 100];
+      const unit = 48;
+      const u: Pt = [Math.cos(Math.PI / 6), Math.sin(Math.PI / 6)];
+      const w: Pt = [-u[1], u[0]];
+      const at = (t: number, s: number): Pt => [c[0] + unit * (t * u[0] + s * w[0]), c[1] - unit * (t * u[1] + s * w[1])];
+      // An evenly filled ellipse (golden-angle spiral), long along PC1 and short along PC2.
+      const pts = Array.from({ length: 36 }, (_, i) => {
+        const rad = Math.sqrt((i + 0.5) / 36);
+        const ang = i * 2.39996;
+        return at(2.05 * rad * Math.cos(ang), 0.6 * rad * Math.sin(ang));
+      });
+      return (
+        <>
+          <Axes o={c} x0={15} x1={285} y0={10} y1={190} />
+          {pts.map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={3} fill="currentColor" opacity={0.45} />)}
+          <Arrow from={c} to={at(2.2, 0)} color={BLUE} width={3.2} />
+          <Arrow from={c} to={at(0, 0.75)} color={GREEN} width={3.2} />
+          <Text at={at(2.2, 0)} dx={4} dy={-12} color={BLUE} style={caption}>PC1</Text>
+          <Text at={at(0, 0.75)} dx={-18} dy={-4} color={GREEN} style={caption}>PC2</Text>
+        </>
+      );
+    },
+  },
 };
 
 export const DIAGRAM_TYPES = Object.keys(figures);
