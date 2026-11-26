@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './05-induction.extra.ts';
 
 export default defineLesson({
   id: 'ml-05',
@@ -27,6 +28,18 @@ export default defineLesson({
 
 then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside the step is called the <i>inductive hypothesis</i>.`,
         },
+        {
+          kind: 'quiz',
+          id: 'ml-05-q1',
+          prompt: r`Which two facts together prove $P(n)$ for every $n \ge 1$?`,
+          options: [
+            { id: 'a', label: r`$P(1)$ is true, and $P(n) \Rightarrow P(n + 1)$ for every $n \ge 1$` },
+            { id: 'b', label: r`$P(1)$ and $P(2)$ are true`, trapExplanation: r`Checking cases never covers all $n$. Without the step, $P(3)$ could still fail.` },
+            { id: 'c', label: r`$P(n) \Rightarrow P(n + 1)$ for every $n \ge 1$`, trapExplanation: r`The step alone knocks over nothing: without a first domino, the chain never starts.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Base case plus step: the first domino falls, and each falling domino knocks over the next.`,
+        },
       ],
     },
     {
@@ -49,6 +62,18 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
           title: 'Where the work happens',
           text: r`In the step, write the $(n+1)$ case so that the $n$ case appears inside it, replace that part using the hypothesis, then simplify towards the target.`,
         },
+        {
+          kind: 'quiz',
+          id: 'ml-05-q2',
+          prompt: r`Assume $1 + 2 + \dots + n = \frac{n(n+1)}{2}$. Then $1 + 2 + \dots + (n + 1) = \frac{n(n+1)}{2} + (n + 1)$ simplifies to…`,
+          options: [
+            { id: 'a', label: r`$\dfrac{(n + 1)(n + 2)}{2}$` },
+            { id: 'b', label: r`$\dfrac{(n + 1)^2}{2}$`, trapExplanation: r`Test $n = 1$: the sum $1 + 2 = 3$, but $\frac{2^2}{2} = 2$.` },
+            { id: 'c', label: r`$\dfrac{n(n + 1)}{2} + n$`, trapExplanation: r`The new term is $n + 1$, not $n$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Factor out $n + 1$: $\frac{n(n+1)}{2} + \frac{2(n+1)}{2} = \frac{(n+1)(n+2)}{2}$ — exactly the formula with $n + 1$ in place of $n$.`,
+        },
       ],
     },
     {
@@ -63,9 +88,16 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
           tex: r`\sum_{k=1}^{n} k = \frac{n(n+1)}{2}, \qquad \sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}, \qquad \sum_{k=0}^{n} q^{k} = \frac{q^{n+1} - 1}{q - 1}\ (q \ne 1)`,
         },
         {
-          kind: 'check',
+          kind: 'quiz',
+          id: 'ml-05-q3',
           prompt: r`Compute $1 + 3 + 9 + 27 + 81$ with the geometric formula.`,
-          answer: r`$q = 3$, $n = 4$: $\dfrac{3^5 - 1}{3 - 1} = \dfrac{242}{2} = 121$.`,
+          options: [
+            { id: 'a', label: '121', value: 121 },
+            { id: 'b', label: '242', value: 242, trapExplanation: r`$3^5 - 1 = 242$ still has to be divided by $q - 1 = 2$.` },
+            { id: 'c', label: '81', value: 81, trapExplanation: r`81 is only the last term, $3^4$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$q = 3$, last power $3^4$: $\dfrac{3^5 - 1}{3 - 1} = \dfrac{242}{2} = 121$.`,
         },
       ],
     },
@@ -102,6 +134,7 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'ml-05-1',

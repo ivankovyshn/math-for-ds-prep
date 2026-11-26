@@ -59,6 +59,8 @@ export const lessonKey = (lessonId: string) => `lesson:${lessonId}`;
 export const bossKey = (moduleId: ModuleId) => `boss:${moduleId}`;
 
 export const HEARTS_PER_SESSION = 3;
+/** Practice 1 completes a lesson with at most this many mistakes; more open Extra practice. */
+export const PRACTICE_MAX_MISTAKES = 1;
 export const LESSON_BONUS_XP = 20;
 export const BOSS_BONUS_XP = 50;
 export const BOSS_QUESTIONS = 8;

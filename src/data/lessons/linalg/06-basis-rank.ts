@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './06-basis-rank.extra.ts';
 
 export default defineLesson({
   id: 'la-06',
@@ -37,6 +38,18 @@ Otherwise they are <i>dependent</i>: some non-trivial combination gives $\mathbf
 
 • <i>More</i> than $n$ vectors in $\mathbb{R}^n$ are always dependent.`,
         },
+        {
+          kind: 'quiz',
+          id: 'la-06-q1',
+          prompt: r`Are $(1, 2)$ and $(2, 4)$ linearly independent?`,
+          options: [
+            { id: 'a', label: r`No: $(2, 4) = 2 \cdot (1, 2)$` },
+            { id: 'b', label: 'Yes: they are two different vectors', trapExplanation: r`Different is not enough. Independence fails when one vector is a combination of the others.` },
+            { id: 'c', label: 'Yes: neither is the zero vector', trapExplanation: r`Non-zero vectors can still be parallel, and parallel vectors are dependent.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$2(1, 2) - (2, 4) = \mathbf{0}$ is a non-trivial combination equal to zero, so the vectors are dependent: they lie on one line.`,
+        },
       ],
     },
     {
@@ -64,6 +77,18 @@ The unique coefficients are the <i>coordinates</i> of a vector in that basis. Ch
             r`Double the second equation and subtract the first: $3b = 6$, so $b = 2$ and $a = 1$.`,
             r`Coordinates $(1, 2)$. Check: $(2, 1) + 2(1, 2) = (4, 5)$. ✓`,
           ],
+        },
+        {
+          kind: 'quiz',
+          id: 'la-06-q2',
+          prompt: r`Is $\{(1, 0),\ (1, 1)\}$ a basis of $\mathbb{R}^2$?`,
+          options: [
+            { id: 'a', label: 'Yes: two independent vectors in a 2-dimensional space' },
+            { id: 'b', label: 'No: the vectors are not perpendicular', trapExplanation: r`A basis does not have to be orthogonal; it only has to be independent and spanning.` },
+            { id: 'c', label: r`No: a basis of $\mathbb{R}^2$ must contain $(0, 1)$`, trapExplanation: r`$\mathbb{R}^2$ has infinitely many bases; the standard one is just the most convenient.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Neither vector is a multiple of the other, so they are independent; two independent vectors in $\mathbb{R}^2$ automatically span it.`,
         },
       ],
     },
@@ -95,9 +120,16 @@ $\operatorname{rank}A + \dim(\text{null space}) = n$ (the number of columns).`,
           text: r`A $3\times4$ matrix has rank <i>at most</i> 3, but it can be less. Proportional or combined rows lower it. Always reduce before counting.`,
         },
         {
-          kind: 'check',
-          prompt: r`What is the rank of $\begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 3 & 6 & 9 \end{pmatrix}$, and what does the matrix do to $\mathbb{R}^3$?`,
-          answer: r`Every row is a multiple of $(1, 2, 3)$, so the rank is 1. Every column is a multiple of $(1, 2, 3)$ too: the whole of $\mathbb{R}^3$ is squashed onto the line through $(1, 2, 3)$.`,
+          kind: 'quiz',
+          id: 'la-06-q3',
+          prompt: r`What is the rank of $\begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 3 & 6 & 9 \end{pmatrix}$?`,
+          options: [
+            { id: 'a', label: '1', value: 1 },
+            { id: 'b', label: '3', value: 3, trapExplanation: r`A $3 \times 3$ matrix has rank 3 only if its rows are independent. Here every row is a multiple of $(1, 2, 3)$.` },
+            { id: 'c', label: '0', value: 0, trapExplanation: r`Rank 0 belongs to the zero matrix only.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Every row is a multiple of $(1, 2, 3)$, so the rank is 1. Every column is a multiple of $(1, 2, 3)$ too: the whole of $\mathbb{R}^3$ is squashed onto the line through $(1, 2, 3)$.`,
         },
       ],
     },
@@ -119,6 +151,7 @@ $\operatorname{rank}A + \dim(\text{null space}) = n$ (the number of columns).`,
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'la-06-1',

@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './04-determinants.extra.ts';
 
 export default defineLesson({
   id: 'la-04',
@@ -23,6 +24,18 @@ export default defineLesson({
 • $\det A < 0$ means the map flips orientation, like a mirror: going from $\mathbf{e}_1$ to $\mathbf{e}_2$ counter-clockwise becomes clockwise.
 
 • $\det A = 0$ means the square is squashed flat onto a line or a point.`,
+        },
+        {
+          kind: 'quiz',
+          id: 'la-04-q1',
+          prompt: r`Compute $\det\begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}$.`,
+          options: [
+            { id: 'a', label: '$5$', value: 5 },
+            { id: 'b', label: '$7$', value: 7, trapExplanation: r`$ad + bc$: the second product must be subtracted.` },
+            { id: 'c', label: '$6$', value: 6, trapExplanation: r`Only $ad = 6$ was computed; subtract $bc = 1$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$ad - bc = 2 \cdot 3 - 1 \cdot 1 = 5$: this matrix stretches every area by a factor of 5.`,
         },
       ],
     },
@@ -55,6 +68,18 @@ export default defineLesson({
           title: 'Triangular matrices are free',
           text: r`If all entries below (or above) the diagonal are zero, the determinant is just the product of the diagonal entries. That is why elimination is the fastest way to compute large determinants.`,
         },
+        {
+          kind: 'quiz',
+          id: 'la-04-q2',
+          prompt: r`Compute $\det\begin{pmatrix} 2 & 5 & 1 \\ 0 & 3 & 7 \\ 0 & 0 & 4 \end{pmatrix}$.`,
+          options: [
+            { id: 'a', label: '$24$', value: 24 },
+            { id: 'b', label: '$9$', value: 9, trapExplanation: r`9 is the sum of the diagonal (the trace). The determinant of a triangular matrix is the <i>product</i>.` },
+            { id: 'c', label: '$0$', value: 0, trapExplanation: r`Zeros below the diagonal do not make the determinant vanish.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Expanding along the first column leaves only $2 \cdot \det\begin{pmatrix} 3 & 7 \\ 0 & 4 \end{pmatrix} = 2 \cdot 12 = 24$ — the product of the diagonal.`,
+        },
       ],
     },
     {
@@ -85,9 +110,16 @@ export default defineLesson({
           text: r`$cA$ multiplies <i>every</i> row by $c$, and each row contributes one factor. For an $n\times n$ matrix, $\det(cA) = c^{n}\det A$. Doubling a $3\times3$ matrix multiplies the volume by $2^3 = 8$.`,
         },
         {
-          kind: 'check',
-          prompt: r`$\det A = 4$ for a $2\times 2$ matrix $A$. What is $\det(3A)$, and what is $\det(A^2)$?`,
-          answer: r`$\det(3A) = 3^2\cdot 4 = 36$. $\det(A^2) = \det A\cdot\det A = 16$.`,
+          kind: 'quiz',
+          id: 'la-04-q3',
+          prompt: r`$\det A = 4$ for a $2\times 2$ matrix $A$. What is $\det(3A)$?`,
+          options: [
+            { id: 'a', label: '$36$', value: 36 },
+            { id: 'b', label: '$12$', value: 12, trapExplanation: r`$3A$ multiplies <i>each</i> of the 2 rows by 3, so the determinant gains a factor $3^2$, not 3.` },
+            { id: 'c', label: '$108$', value: 108, trapExplanation: r`The power is the size of the matrix, $n = 2$: $3^2 \cdot 4$, not $3^3 \cdot 4$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$\det(3A) = 3^2\cdot 4 = 36$. Similarly $\det(A^2) = \det A\cdot\det A = 16$.`,
         },
       ],
     },
@@ -132,6 +164,7 @@ export default defineLesson({
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'la-04-1',

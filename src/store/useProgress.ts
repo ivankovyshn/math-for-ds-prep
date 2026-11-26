@@ -9,6 +9,7 @@ import type { ExamResult, MistakeEntry } from '../types.ts';
  *   profile(xp, streak_count, last_active_date, theme)
  *   completed_nodes(node_key, best_correct, total, completed_at)   -- node_key: lesson:<id> | boss:<module>
  *   lectures_read(lesson_id, read_at)
+ *   extra_unlocked(lesson_id, unlocked_at)
  *   mistakes(question_id, misses, correct_streak, last_missed_at)
  *   exam_results(id, finished_at, duration_sec, time_limit_sec, question_ids, answers)
  * To move to Supabase/PostgreSQL, replace the `persist` storage below with an
@@ -22,6 +23,8 @@ export interface ProgressData {
   completedNodes: Record<string, { bestCorrect: number; total: number; completedAt: string }>;
   /** lessonId -> ISO time the lecture was first read to the end. */
   lecturesRead: Record<string, string>;
+  /** lessonId -> ISO time Extra practice was opened by a Practice 1 with two or more mistakes. */
+  extraUnlocked: Record<string, string>;
   mistakes: Record<string, MistakeEntry>;
   examResults: ExamResult[];
   theme: 'dark' | 'light';
@@ -33,6 +36,7 @@ interface ProgressActions {
   recordAnswer: (questionId: string, correct: boolean, inReview: boolean) => void;
   completeNode: (key: string, correct: number, total: number) => void;
   markLectureRead: (lessonId: string) => void;
+  unlockExtra: (lessonId: string) => void;
   saveExam: (result: ExamResult) => void;
   touchStreak: () => void;
   toggleTheme: () => void;
@@ -46,6 +50,7 @@ const initial: ProgressData = {
   lastActiveDate: null,
   completedNodes: {},
   lecturesRead: {},
+  extraUnlocked: {},
   mistakes: {},
   examResults: [],
   theme: 'dark',
@@ -105,6 +110,9 @@ export const useProgress = create<ProgressData & ProgressActions>()(
       markLectureRead: (lessonId) =>
         set((s) => (s.lecturesRead[lessonId] ? {} : { lecturesRead: { ...s.lecturesRead, [lessonId]: new Date().toISOString() } })),
 
+      unlockExtra: (lessonId) =>
+        set((s) => (s.extraUnlocked[lessonId] ? {} : { extraUnlocked: { ...s.extraUnlocked, [lessonId]: new Date().toISOString() } })),
+
       saveExam: (result) => set((s) => ({ examResults: [result, ...s.examResults].slice(0, 30) })),
 
       touchStreak: () =>
@@ -143,8 +151,8 @@ export function currentStreak(s: Pick<ProgressData, 'streakCount' | 'lastActiveD
 }
 
 export function exportProgress(): ProgressData {
-  const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, mistakes, examResults, theme } = useProgress.getState();
-  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, mistakes, examResults, theme };
+  const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, examResults, theme } = useProgress.getState();
+  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, examResults, theme };
 }
 
 export function isProgressData(x: unknown): x is ProgressData {

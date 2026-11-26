@@ -12,6 +12,10 @@ export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.m
 
 export const lessonsOf = (moduleId: ModuleId) => LESSONS.filter((l) => l.moduleId === moduleId);
 
+/** Practice 1 questions: the pool for boss quizzes and the exam simulator. */
 export const QUESTIONS = LESSONS.flatMap((l) => l.questions);
 
-export const QUESTION_BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
+/** Every question, Extra practice included, for looking up mistakes. */
+export const ALL_QUESTIONS = LESSONS.flatMap((l) => [...l.questions, ...l.extra]);
+
+export const QUESTION_BY_ID = Object.fromEntries(ALL_QUESTIONS.map((q) => [q.id, q]));

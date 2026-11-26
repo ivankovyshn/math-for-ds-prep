@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ExamResult, ModuleId, Question } from './types.ts';
-import { BOSS_BONUS_XP, LESSON_BONUS_XP, MODULE_BY_ID, bossKey, lessonKey } from './data/modules.ts';
+import { BOSS_BONUS_XP, LESSON_BONUS_XP, MODULE_BY_ID, PRACTICE_MAX_MISTAKES, bossKey, lessonKey } from './data/modules.ts';
 import { LESSON_BY_ID, lessonsOf } from './data/questions.ts';
-import { buildBoss, buildExam, buildLessonSession, buildReview } from './lib/session.ts';
+import { buildBoss, buildExam, buildExtraSession, buildLessonSession, buildReview } from './lib/session.ts';
 import { useProgress } from './store/useProgress.ts';
 import { Dashboard } from './views/Dashboard.tsx';
 import { Exam } from './views/Exam.tsx';
@@ -16,6 +16,7 @@ type View =
   | { name: 'home' }
   | { name: 'lecture'; lessonId: string; run: number }
   | { name: 'practice'; lessonId: string; questions: Question[]; run: number }
+  | { name: 'extra'; lessonId: string; questions: Question[]; run: number }
   | { name: 'boss'; moduleId: ModuleId; questions: Question[]; run: number }
   | { name: 'review'; questions: Question[]; run: number }
   | { name: 'exam'; questions: Question[]; run: number }
@@ -48,6 +49,7 @@ export default function App() {
   const home = () => setView({ name: 'home' });
   const openLecture = (lessonId: string) => setView({ name: 'lecture', lessonId, run: Date.now() });
   const startPractice = (lessonId: string) => setView({ name: 'practice', lessonId, questions: buildLessonSession(lessonId), run: Date.now() });
+  const startExtra = (lessonId: string) => setView({ name: 'extra', lessonId, questions: buildExtraSession(lessonId), run: Date.now() });
   const startBoss = (moduleId: ModuleId) => setView({ name: 'boss', moduleId, questions: buildBoss(moduleId), run: Date.now() });
   const startReview = () => {
     const questions = buildReview(useProgress.getState().mistakes);
@@ -62,6 +64,7 @@ export default function App() {
         <Dashboard
           onOpenLecture={openLecture}
           onStartPractice={startPractice}
+          onStartExtra={startExtra}
           onStartBoss={startBoss}
           onStartReview={startReview}
           onStartExam={startExam}
@@ -91,6 +94,26 @@ export default function App() {
           bonusXp={LESSON_BONUS_XP}
           onExit={home}
           onRetry={() => startPractice(lesson.id)}
+          onOpenLecture={() => openLecture(lesson.id)}
+          maxMistakes={PRACTICE_MAX_MISTAKES}
+          onUnlockExtra={() => useProgress.getState().unlockExtra(lesson.id)}
+          onStartExtra={() => startExtra(lesson.id)}
+        />
+      );
+    }
+
+    case 'extra': {
+      const lesson = LESSON_BY_ID[view.lessonId];
+      return (
+        <Quiz
+          key={view.run}
+          title={`Lesson ${lessonNumber(lesson.id)} · Extra practice`}
+          questions={view.questions}
+          mode="lesson"
+          nodeKey={lessonKey(lesson.id)}
+          bonusXp={LESSON_BONUS_XP}
+          onExit={home}
+          onRetry={() => startExtra(lesson.id)}
           onOpenLecture={() => openLecture(lesson.id)}
         />
       );

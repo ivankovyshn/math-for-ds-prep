@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './07-eigen.extra.ts';
 
 export default defineLesson({
   id: 'la-07',
@@ -28,6 +29,18 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
         {
           kind: 'text',
           text: r`Any non-zero multiple of an eigenvector is again an eigenvector with the same $\lambda$ — it is really a <i>direction</i> that matters. The zero vector is excluded because $A\mathbf{0} = \lambda\mathbf{0}$ for every $\lambda$.`,
+        },
+        {
+          kind: 'quiz',
+          id: 'la-07-q1',
+          prompt: r`$A = \begin{pmatrix} 3 & 1 \\ 0 & 2 \end{pmatrix}$. Is $(1, 0)$ an eigenvector, and with which eigenvalue?`,
+          options: [
+            { id: 'a', label: r`Yes, $\lambda = 3$`, value: 3 },
+            { id: 'b', label: r`Yes, $\lambda = 2$`, value: 2, trapExplanation: r`$A(1, 0)$ is the first column, $(3, 0) = 3 \cdot (1, 0)$.` },
+            { id: 'c', label: 'No', value: -99, trapExplanation: r`$A(1, 0) = (3, 0)$ stays on the same line as $(1, 0)$, so it is an eigenvector.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$A(1, 0) = (3, 0) = 3 \cdot (1, 0)$: the direction survives and is stretched by 3.`,
         },
       ],
     },
@@ -60,6 +73,18 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
           title: 'Triangular matrices',
           text: r`For a triangular (or diagonal) matrix the eigenvalues are simply the diagonal entries — the determinant of $A - \lambda I$ is the product of $(a_{ii} - \lambda)$. For any other matrix the diagonal tells you nothing directly.`,
         },
+        {
+          kind: 'quiz',
+          id: 'la-07-q2',
+          prompt: r`What are the eigenvalues of $\begin{pmatrix} 1 & 2 \\ 2 & 1 \end{pmatrix}$?`,
+          options: [
+            { id: 'a', label: r`$-1$ and $3$`, value: [-1, 3] },
+            { id: 'b', label: r`$1$ and $1$`, value: [1, 1], trapExplanation: r`The diagonal gives the eigenvalues only for triangular matrices.` },
+            { id: 'c', label: r`$1$ and $3$`, value: [1, 3], trapExplanation: r`The product of the eigenvalues must equal $\det A = 1 - 4 = -3$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$(1 - \lambda)^2 - 4 = 0$ gives $1 - \lambda = \pm 2$, so $\lambda = -1$ or $3$. Check: sum 2 = trace, product $-3$ = det.`,
+        },
       ],
     },
     {
@@ -80,9 +105,16 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
           ],
         },
         {
-          kind: 'check',
-          prompt: r`Find an eigenvector of the same $A$ for $\lambda = 2$.`,
-          answer: r`$A - 2I = \begin{pmatrix} 2 & 1 \\ 2 & 1 \end{pmatrix}$, so $2x + y = 0$: $\mathbf{v} = (1, -2)$. Check: $A(1, -2) = (2, -4) = 2(1, -2)$.`,
+          kind: 'quiz',
+          id: 'la-07-q3',
+          prompt: r`Which vector is an eigenvector of the same $A$ for $\lambda = 2$?`,
+          options: [
+            { id: 'a', label: r`$(1, -2)$` },
+            { id: 'b', label: r`$(1, 1)$`, trapExplanation: r`$A(1, 1) = (5, 5)$: this is the eigenvector for $\lambda = 5$.` },
+            { id: 'c', label: r`$(2, 1)$`, trapExplanation: r`$A(2, 1) = (9, 7)$ is not a multiple of $(2, 1)$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$A - 2I = \begin{pmatrix} 2 & 1 \\ 2 & 1 \end{pmatrix}$, so $2x + y = 0$: $\mathbf{v} = (1, -2)$. Check: $A(1, -2) = (2, -4) = 2(1, -2)$.`,
         },
       ],
     },
@@ -132,6 +164,7 @@ $\lambda_1 + \dots + \lambda_n = \operatorname{tr}A$ and $\lambda_1\cdots\lambda
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'la-07-1',

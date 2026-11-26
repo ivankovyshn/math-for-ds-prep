@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Check, Crown, Flame, GraduationCap, Lock, Moon, RotateCcw, Settings as SettingsIcon, Sun, Target, Zap } from 'lucide-react';
+import { BookOpen, Check, Crown, Dumbbell, Flame, GraduationCap, Lock, Moon, RotateCcw, Settings as SettingsIcon, Sun, Target, Zap } from 'lucide-react';
 import type { Lesson, ModuleId } from '../types.ts';
 import { BOSS_QUESTIONS, EXAM_QUESTIONS, EXAM_SECONDS, MODULES, bossKey, lessonKey, type ModuleMeta } from '../data/modules.ts';
 import { QUESTIONS, QUESTION_BY_ID, lessonsOf } from '../data/questions.ts';
@@ -12,18 +12,20 @@ import { SettingsDialog } from './SettingsDialog.tsx';
 interface Props {
   onOpenLecture: (lessonId: string) => void;
   onStartPractice: (lessonId: string) => void;
+  onStartExtra: (lessonId: string) => void;
   onStartBoss: (moduleId: ModuleId) => void;
   onStartReview: () => void;
   onStartExam: () => void;
 }
 
-export function Dashboard({ onOpenLecture, onStartPractice, onStartBoss, onStartReview, onStartExam }: Props) {
+export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStartBoss, onStartReview, onStartExam }: Props) {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => currentStreak(s));
   const theme = useProgress((s) => s.theme);
   const toggleTheme = useProgress((s) => s.toggleTheme);
   const completed = useProgress((s) => s.completedNodes);
   const lecturesRead = useProgress((s) => s.lecturesRead);
+  const extraUnlocked = useProgress((s) => s.extraUnlocked);
   const mistakes = useProgress((s) => s.mistakes);
   const lastExam = useProgress((s) => s.examResults[0]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -103,9 +105,11 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartBoss, onStart
               lessons={lessonsOf(m.id)}
               completed={completed}
               lecturesRead={lecturesRead}
+              extraUnlocked={extraUnlocked}
               pendingMistakes={mistakeIds.filter((id) => QUESTION_BY_ID[id].moduleId === m.id).length}
               onOpenLecture={onOpenLecture}
               onStartPractice={onStartPractice}
+              onStartExtra={onStartExtra}
               onStartBoss={onStartBoss}
               onStartReview={onStartReview}
             />
@@ -128,14 +132,16 @@ interface PathProps {
   lessons: Lesson[];
   completed: ProgressData['completedNodes'];
   lecturesRead: ProgressData['lecturesRead'];
+  extraUnlocked: ProgressData['extraUnlocked'];
   pendingMistakes: number;
   onOpenLecture: (lessonId: string) => void;
   onStartPractice: (lessonId: string) => void;
+  onStartExtra: (lessonId: string) => void;
   onStartBoss: (moduleId: ModuleId) => void;
   onStartReview: () => void;
 }
 
-function ModulePath({ module: m, number, lessons, completed, lecturesRead, pendingMistakes, onOpenLecture, onStartPractice, onStartBoss, onStartReview }: PathProps) {
+function ModulePath({ module: m, number, lessons, completed, lecturesRead, extraUnlocked, pendingMistakes, onOpenLecture, onStartPractice, onStartExtra, onStartBoss, onStartReview }: PathProps) {
   const color = moduleColor(m.id);
   const hasContent = lessons.length > 0;
   const steps = lessons.length + 1; // every lesson + the boss quiz
@@ -183,15 +189,18 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, pendi
             const passed = completed[lessonKey(l.id)];
             const unlocked = li === 0 || !!completed[lessonKey(lessons[li - 1].id)];
             const read = !!lecturesRead[l.id];
+            const extra = !!extraUnlocked[l.id] && l.extra.length > 0;
             const isNext = unlocked && !passed;
-            const primary = () => (read ? onStartPractice(l.id) : onOpenLecture(l.id));
+            const primary = () => (!read ? onOpenLecture(l.id) : extra && !passed ? onStartExtra(l.id) : onStartPractice(l.id));
             const status = !unlocked
               ? `Pass lesson ${li} to unlock`
               : passed
                 ? `Best ${passed.bestCorrect}/${passed.total} · practise again any time`
-                : read
-                  ? `Lecture read · practice: ${l.questions.length} questions`
-                  : `${l.minutes}-minute lecture, then ${l.questions.length} questions`;
+                : extra
+                  ? `Extra practice: ${l.extra.length} questions to pass this lesson`
+                  : read
+                    ? `Lecture read · practice: ${l.questions.length} questions, at most 1 mistake`
+                    : `${l.minutes}-minute lecture, then ${l.questions.length} questions`;
             return (
               <PathRow key={l.id} color={color} done={!!passed} connector>
                 <NodeButton
@@ -213,9 +222,14 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, pendi
                     <StepChip label="Lecture" active={!read} done={read} color={color} onClick={() => onOpenLecture(l.id)}>
                       <BookOpen size={17} />
                     </StepChip>
-                    <StepChip label="Practice" active={read && !passed} done={!!passed} disabled={!read} color={color} onClick={() => onStartPractice(l.id)}>
+                    <StepChip label="Practice" active={read && !passed && !extra} done={!!passed} disabled={!read} color={color} onClick={() => onStartPractice(l.id)}>
                       <Target size={17} />
                     </StepChip>
+                    {extra && (
+                      <StepChip label="Extra practice" active={!passed} done={false} color={color} onClick={() => onStartExtra(l.id)}>
+                        <Dumbbell size={17} />
+                      </StepChip>
+                    )}
                   </div>
                 )}
               </PathRow>

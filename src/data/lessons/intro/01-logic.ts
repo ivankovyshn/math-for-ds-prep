@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './01-logic.extra.ts';
 
 export default defineLesson({
   id: 'ml-01',
@@ -47,9 +48,16 @@ Statements are combined with five connectives: $\neg P$ (not $P$), $P \land Q$ (
           text: r`The <i>converse</i> of $P \Rightarrow Q$ is $Q \Rightarrow P$. "If $n$ is divisible by 4 then $n$ is even" is true; its converse "if $n$ is even then $n$ is divisible by 4" is false ($n = 6$). Only the contrapositive is guaranteed to mean the same.`,
         },
         {
-          kind: 'check',
-          prompt: r`Negate "the function is continuous and bounded".`,
-          answer: r`By De Morgan: "the function is not continuous <i>or</i> not bounded" (or both). The "and" becomes "or".`,
+          kind: 'quiz',
+          id: 'ml-01-q1',
+          prompt: r`Which sentence is the negation of "the function is continuous and bounded"?`,
+          options: [
+            { id: 'a', label: 'The function is not continuous or not bounded' },
+            { id: 'b', label: 'The function is not continuous and not bounded', trapExplanation: r`De Morgan's law turns "and" into "or". A continuous but unbounded function also makes the original false.` },
+            { id: 'c', label: 'The function is continuous or bounded', trapExplanation: r`Nothing was negated here; this is weaker than the original, not its opposite.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$\neg(C \wedge B) \equiv \neg C \vee \neg B$: it is enough for <i>one</i> of the two properties to fail.`,
         },
       ],
     },
@@ -72,6 +80,18 @@ Statements are combined with five connectives: $\neg P$ (not $P$), $P \land Q$ (
 
 $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is larger than all numbers": false. Swapping $\forall$ and $\exists$ changed the meaning completely.`,
         },
+        {
+          kind: 'quiz',
+          id: 'ml-01-q2',
+          prompt: r`Let $S = \{1, 2, 3\}$. Which statement is true?`,
+          options: [
+            { id: 'a', label: r`$\forall x \in S\ \exists y \in S:\ x + y = 4$` },
+            { id: 'b', label: r`$\exists y \in S\ \forall x \in S:\ x + y = 4$`, trapExplanation: r`One fixed $y$ would have to work for $x = 1$ and $x = 3$ at once, which needs $y = 3$ and $y = 1$.` },
+            { id: 'c', label: r`$\forall x \in S\ \forall y \in S:\ x + y = 4$`, trapExplanation: r`$x = y = 1$ gives $2 \ne 4$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`For each $x$ choose $y = 4 - x$, which is again in $S$. In (a) $y$ may depend on $x$; in (b) it may not — the order of quantifiers matters.`,
+        },
       ],
     },
     {
@@ -93,6 +113,18 @@ $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is
             r`Result: $\exists \varepsilon > 0\ \forall N\ \exists n \ge N:\ |a_n - L| \ge \varepsilon$ — "some tolerance is broken again and again, however far you go".`,
           ],
         },
+        {
+          kind: 'quiz',
+          id: 'ml-01-q3',
+          prompt: r`Which sentence is the negation of "every student passed the exam"?`,
+          options: [
+            { id: 'a', label: 'At least one student did not pass' },
+            { id: 'b', label: 'No student passed', trapExplanation: r`That is much stronger than the negation. If one student failed and the rest passed, "every student passed" is already false.` },
+            { id: 'c', label: 'At least one student passed', trapExplanation: r`This can be true together with the original, so it cannot be its negation.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$\neg \forall x\ P(x) \equiv \exists x\ \neg P(x)$: to refute "every", one counterexample is enough.`,
+        },
       ],
     },
     {
@@ -113,6 +145,7 @@ $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'ml-01-1',

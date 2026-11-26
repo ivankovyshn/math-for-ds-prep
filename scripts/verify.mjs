@@ -7,7 +7,7 @@
 // unknown diagrams.
 
 import { readFileSync } from 'node:fs';
-import { LESSONS, QUESTIONS } from '../src/data/questions.ts';
+import { ALL_QUESTIONS as QUESTIONS, LESSONS } from '../src/data/questions.ts';
 
 // ---------- numeric helpers ----------
 const EPS = 1e-9;
@@ -471,8 +471,441 @@ const checks = {
   'la-07-6': () => pow([[2, 1], [0, 1]], 10)[0][1],
 };
 
+// ml-01 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-01-q1': () => {
+    const target = (C, B) => !(C && B);
+    return pickId({
+      a: () => equivalent(target, (C, B) => !C || !B, 2),
+      b: () => equivalent(target, (C, B) => !C && !B, 2),
+      c: () => equivalent(target, (C, B) => C || B, 2),
+    });
+  },
+  'ml-01-q2': () => {
+    const S = [1, 2, 3];
+    return pickId({
+      a: () => S.every((x) => S.some((y) => x + y === 4)),
+      b: () => S.some((y) => S.every((x) => x + y === 4)),
+      c: () => S.every((x) => S.every((y) => x + y === 4)),
+    });
+  },
+  'ml-01-q3': () => {
+    const D = [0, 1, 2];
+    const preds = allPredicates(D.map((x) => [x]));
+    const negates = (form) => () => preds.every((P) => form(P) === !D.every((x) => P(x)));
+    return pickId({
+      a: negates((P) => D.some((x) => !P(x))),
+      b: negates((P) => D.every((x) => !P(x))),
+      c: negates((P) => D.some((x) => P(x))),
+    });
+  },
+  'ml-01-x1': () => {
+    const target = (P, Q) => implies(P, Q);
+    return pickId({
+      a: () => equivalent(target, (P, Q) => implies(!Q, !P), 2),
+      b: () => equivalent(target, (P, Q) => implies(Q, P), 2),
+      c: () => equivalent(target, (P, Q) => implies(!P, !Q), 2),
+      d: () => equivalent(target, (P, Q) => P && !Q, 2),
+    });
+  },
+  'ml-01-x2': () => {
+    const value = implies(2 + 2 === 5, false);
+    return pickId({ a: () => value === true, b: () => value === false, c: () => false, d: () => false });
+  },
+  'ml-01-x3': () => {
+    // Two unary predicates (prime, even) on a 3-element domain: every combination.
+    const D = [0, 1, 2];
+    const preds = allPredicates(D.map((x) => [x]));
+    const pairs = preds.flatMap((p) => preds.map((e) => [p, e]));
+    const original = ([p, e]) => D.some((x) => p(x) && e(x));
+    const negates = (form) => () => pairs.every((pe) => form(pe) === !original(pe));
+    return pickId({
+      a: negates(([p, e]) => D.every((x) => implies(p(x), !e(x)))),
+      b: negates(([p, e]) => D.some((x) => p(x) && !e(x))),
+      c: negates(([p, e]) => D.some((x) => e(x) && !p(x))),
+      d: negates(([, e]) => D.every((x) => !e(x))),
+    });
+  },
+  'ml-01-x4': () => {
+    const S = [1, 2, 3];
+    return pickId({
+      a: () => !S.some((y) => S.every((x) => x <= y)),
+      b: () => !S.every((x) => S.some((y) => x <= y)),
+      c: () => !S.every((x) => S.some((y) => y < x)),
+      d: () => !S.some((x) => S.every((y) => x <= y)),
+    });
+  },
+  'ml-01-x5': () => {
+    const target = (P, Q) => !implies(P, Q);
+    return pickId({
+      a: () => equivalent(target, (P, Q) => P && !Q, 2),
+      b: () => equivalent(target, (P, Q) => implies(P, !Q), 2),
+      c: () => equivalent(target, (P, Q) => implies(!P, !Q), 2),
+      d: () => equivalent(target, (P, Q) => !P && Q, 2),
+    });
+  },
+  'ml-01-x6': () => {
+    const D = [0, 1, 2];
+    const preds = allPredicates(D.flatMap((x) => D.map((y) => [x, y])));
+    const original = (R) => D.every((x) => D.some((y) => R(x, y)));
+    const negates = (form) => () => preds.every((R) => form(R) === !original(R));
+    return pickId({
+      a: negates((R) => D.some((x) => D.every((y) => !R(x, y)))),
+      b: negates((R) => D.every((x) => D.some((y) => !R(x, y)))),
+      c: negates((R) => D.some((x) => D.some((y) => !R(x, y)))),
+      d: negates((R) => D.every((x) => D.every((y) => !R(x, y)))),
+    });
+  },
+});
+
+// ml-02 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-02-q1': () => new Set(['1', '2', '{1,2}', '{}']).size,
+  'ml-02-q2': () => {
+    const B = new Set([2, 4, 6]);
+    return [1, 2, 3, 4].filter((x) => B.has(x));
+  },
+  'ml-02-q3': () => {
+    const english = new Set(range(0, 17));
+    const german = new Set(range(13, 24)); // overlap 13..17 = 5 people
+    if ([...english].filter((x) => german.has(x)).length !== 5) throw new Error('overlap should be 5');
+    return range(0, 29).filter((x) => !english.has(x) && !german.has(x)).length;
+  },
+  'ml-02-x1': () => [...new Set([1, 2, 3, 3, 4])].sort((a, b) => a - b),
+  'ml-02-x2': () => subsetsOf(4).length,
+  'ml-02-x3': () => [0, 1].flatMap((x) => ['a', 'b', 'c'].map((y) => [x, y])).length,
+  'ml-02-x4': () => {
+    const tea = new Set(range(0, 24));
+    const coffee = new Set(range(20, 39));
+    if (new Set([...tea, ...coffee]).size !== 40) throw new Error('union should be 40');
+    return [...tea].filter((x) => coffee.has(x)).length;
+  },
+  'ml-02-x5': () => {
+    const U = 0b111;
+    const pairs = subsetsOf(3).flatMap((A) => subsetsOf(3).map((B) => [A, B]));
+    const same = (f) => () => pairs.every(([A, B]) => (U & ~(A & B)) === (f(A, B) & U));
+    return pickId({ a: same((A, B) => ~A | ~B), b: same((A, B) => ~A & ~B), c: same((A, B) => A | B), d: same((A, B) => ~A & B) });
+  },
+  'ml-02-x6': () => {
+    const U = 0b111;
+    const pairs = subsetsOf(3).flatMap((A) => subsetsOf(3).map((B) => [A, B]));
+    const same = (f) => () => pairs.every(([A, B]) => (A & ~B & U) === (f(A, B) & U));
+    return pickId({ a: same((A, B) => A & ~B), b: same((A, B) => B & ~A), c: same((A, B) => ~A & B), d: same((A, B) => (A | B) & ~A) });
+  },
+});
+
+// ml-03 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-03-q1': () => {
+    const collides = (f) => () => {
+      const xs = range(-20, 20).map((x) => x / 2);
+      return new Set(xs.map(f)).size < xs.length;
+    };
+    return pickId({ a: collides((x) => x * x), b: collides((x) => 2 * x + 1), c: collides((x) => x ** 3) });
+  },
+  'ml-03-q2': () => {
+    const f = (x) => x + 1;
+    const g = (x) => x * x;
+    return f(g(2));
+  },
+  'ml-03-q3': () => {
+    const n = 4;
+    let count = 0;
+    for (let m = 0; m < n ** n; m++) {
+      const images = Array.from({ length: n }, (_, i) => Math.floor(m / n ** i) % n);
+      if (new Set(images).size === n) count++;
+    }
+    return count;
+  },
+  'ml-03-x1': () => {
+    const f = (x) => 3 * x - 1;
+    const g = (x) => x * x;
+    return f(g(2));
+  },
+  'ml-03-x2': () => {
+    // Does f take the value y somewhere on a fine grid of [-10, 10]? (sign change of f - y)
+    const takes = (f, y) => {
+      const xs = range(-1000, 1000).map((i) => i / 100);
+      return xs.some((x, i) => i > 0 && (f(xs[i - 1]) - y) * (f(x) - y) <= 0);
+    };
+    const onto = (f) => () => [-8, -1, 0, 2, 8].every((y) => takes(f, y));
+    return pickId({ a: onto((x) => x ** 3), b: onto((x) => x * x), c: onto(Math.exp), d: onto(Math.sin) });
+  },
+  'ml-03-x3': () => {
+    const f = (x) => 2 * x + 3;
+    const undoes = (g) => () => range(-5, 5).every((x) => Math.abs(g(f(x)) - x) < 1e-12);
+    return pickId({ a: undoes((x) => (x - 3) / 2), b: undoes((x) => (x + 3) / 2), c: undoes((x) => 1 / (2 * x + 3)), d: undoes((x) => 2 * x - 3) });
+  },
+  'ml-03-x4': () => {
+    let count = 0;
+    for (const f1 of ['a', 'b', 'c']) for (const f2 of ['a', 'b', 'c']) count += f1 && f2 ? 1 : 0;
+    return count;
+  },
+  'ml-03-x5': () => {
+    const f = { 1: 2, 2: 3, 3: 1 };
+    return Number(Object.keys(f).find((x) => f[x] === 1));
+  },
+  'ml-03-x6': () => {
+    const f = (n) => n + 1;
+    const N = range(-50, 50);
+    const injective = new Set(N.map(f)).size === N.length;
+    const surjective = range(-10, 10).every((m) => N.some((n) => f(n) === m));
+    return pickId({ a: () => injective && surjective, b: () => injective && !surjective, c: () => !injective && surjective, d: () => !injective && !surjective });
+  },
+});
+
+// ml-04 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-04-q1': () => {
+    const odds = range(-15, 15).filter((n) => Math.abs(n % 2) === 1);
+    const sums = odds.flatMap((a) => odds.map((b) => a + b));
+    return pickId({ a: () => sums.every((s) => s % 2 === 0), b: () => sums.every((s) => Math.abs(s % 2) === 1), c: () => sums.some((s) => s % 2 === 0) && sums.some((s) => s % 2 !== 0) });
+  },
+  'ml-04-q2': () => {
+    // P = "n^2 is even", Q = "n is even"; the contrapositive is ¬Q ⇒ ¬P.
+    const target = (P, Q) => implies(!Q, !P);
+    return pickId({
+      a: () => equivalent(target, (P, Q) => implies(!Q, !P), 2),
+      b: () => equivalent(target, (P, Q) => implies(!P, !Q), 2),
+      c: () => equivalent(target, (P, Q) => implies(Q, P), 2),
+    });
+  },
+  'ml-04-x1': () => pickId(Object.fromEntries([['a', 9], ['b', 7], ['c', 2], ['d', 11]].map(([id, n]) => [id, () => n > 1 && n % 2 === 1 && !isPrime(n)]))),
+  'ml-04-x2': () => {
+    const squares = range(-20, 20).map((k) => (2 * k + 1) ** 2);
+    return pickId({ a: () => squares.every((s) => s % 2 === 1), b: () => squares.every((s) => s % 2 === 0), c: () => squares.every((s) => s % 4 === 3), d: () => squares.every((s) => s % 4 === 0) });
+  },
+  'ml-04-x4': () => {
+    const rems = new Set(range(-20, 20).map((k) => (((3 * k + 1) ** 2 % 3) + 3) % 3));
+    if (rems.size !== 1) throw new Error('remainder should not depend on k');
+    return [...rems][0];
+  },
+  'ml-04-x5': () => {
+    const Z = range(-12, 12);
+    const all = (p) => () => Z.every((a) => Z.every((b) => p(a, b)));
+    const even = (x) => x % 2 === 0;
+    return pickId({
+      a: all((a, b) => implies(even(a) && even(b), (a * b) % 4 === 0)),
+      b: all((a, b) => implies(even(a * b), even(a) && even(b))),
+      c: all((a, b) => implies(even(a + b), even(a) && even(b))),
+      d: all((a, b) => implies((a * b) % 4 === 0, a % 4 === 0 || b % 4 === 0)),
+    });
+  },
+  'ml-04-x6': () => pickId(Object.fromEntries([['a', 2], ['b', 4], ['c', 3], ['d', 8]].map(([id, n]) => [id, () => (n * n) % 4 === 0 && n % 4 !== 0]))),
+});
+
+// ml-05 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-05-q2': () => {
+    const sum = (n) => range(1, n).reduce((s, k) => s + k, 0);
+    const matches = (f) => () => range(1, 30).every((n) => Math.abs(sum(n + 1) - f(n)) < 1e-9);
+    return pickId({ a: matches((n) => ((n + 1) * (n + 2)) / 2), b: matches((n) => (n + 1) ** 2 / 2), c: matches((n) => (n * (n + 1)) / 2 + n) });
+  },
+  'ml-05-q3': () => [1, 3, 9, 27, 81].reduce((s, x) => s + x, 0),
+  'ml-05-x1': () => range(1, 20).reduce((s, k) => s + k, 0),
+  'ml-05-x2': () => range(1, 10).reduce((s, n) => s + 2 * n - 1, 0),
+  'ml-05-x3': () => range(0, 5).reduce((s, k) => s + 2 ** k, 0),
+  'ml-05-x4': () => {
+    const S = (n) => range(1, n).reduce((s, k) => s + k * k, 0);
+    const step = (f) => () => range(1, 30).every((n) => S(n + 1) - S(n) === f(n));
+    return pickId({ a: step((n) => (n + 1) ** 2), b: step((n) => n * n + 1), c: step((n) => 2 * n + 1), d: step((n) => n + 1) });
+  },
+  'ml-05-x5': () => range(1, 100).find((n) => range(1, n).reduce((s, k) => s + k, 0) === 55),
+  'ml-05-x6': () => range(1, 30).find((n0) => range(n0, 60).every((n) => 2 ** n > 3 * n)),
+});
+
+// ml-06 · quick checks and Extra practice
+Object.assign(checks, {
+  'ml-06-q1': () => round(cpow([0, 1], 3)),
+  'ml-06-q2': () => {
+    const [a, b] = [-2, 1];
+    return pickId({ a: () => a < 0 && b > 0, b: () => a > 0 && b > 0, c: () => a < 0 && b < 0 });
+  },
+  'ml-06-q3': () => {
+    const p = (z) => {
+      const v = [cmul(z, z)[0] + 2 * z[0] + 5, cmul(z, z)[1] + 2 * z[1]];
+      return cabs(v) < 1e-9;
+    };
+    const both = (re, im) => () => p([re, im]) && p([re, -im]);
+    return pickId({ a: both(-1, 2), b: both(1, 2), c: both(-1, 4) });
+  },
+  'ml-06-x1': () => [1 + 3, 2 - 1],
+  'ml-06-x2': () => round(cpow([1, 1], 2)),
+  'ml-06-x3': () => { const [a, b] = [3, -5]; return [a, -b]; },
+  'ml-06-x4': () => cabs([6, 8]),
+  'ml-06-x5': () => {
+    const p = cmul([2, 3], [2, -3]);
+    if (Math.abs(p[1]) > 1e-12) throw new Error('z times its conjugate must be real');
+    return p[0];
+  },
+  'ml-06-x6': () => {
+    const polar = (r, d) => [r * Math.cos((d * Math.PI) / 180), r * Math.sin((d * Math.PI) / 180)];
+    return round(cmul(polar(2, 30), polar(3, 60)));
+  },
+});
+
+// la-01 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-01-q1': () => [0, 1].map((i) => [1, -2][i] - 2 * [3, 4][i]),
+  'la-01-q2': () => dot([1, 2], [3, -1]),
+  'la-01-q3': () => {
+    const reachable = rank([[2, -1], [4, -2]]) === rank([[2, -1, 1], [4, -2, 0]]);
+    return pickId({ a: () => !reachable, b: () => reachable, c: () => reachable });
+  },
+  'la-01-x1': () => [0, 1, 2].map((i) => [1, 2, 3][i] + [4, 0, -1][i]),
+  'la-01-x2': () => [2, -1].map((x) => 3 * x),
+  'la-01-x3': () => norm([3, 4]),
+  'la-01-x4': () => dot([2, -1, 3], [1, 4, 2]),
+  'la-01-x5': () => angle([2, 3], [-3, 2]),
+  'la-01-x6': () => solve([[1, 1], [1, -1]], [5, 1]),
+});
+
+// la-02 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-02-q1': () => {
+    const [x, y] = [1, 2];
+    const e1 = x + y === 3;
+    const e2 = 2 * x - y === 0;
+    return pickId({ a: () => e1 && e2, b: () => e1 && !e2, c: () => !e1 && e2 });
+  },
+  'la-02-q2': () => [0, 1, 2].map((i) => [3, 1, 5][i] - 3 * [1, 2, 5][i]),
+  'la-02-q3': () => solutionKind([[1, 3, 0, 2], [0, 0, 1, -1], [0, 0, 0, 0]], [1, 4, 0]),
+  'la-02-x1': () => solve([[1, 1], [1, -1]], [5, 1]),
+  'la-02-x2': () => solutionKind([[1, 1], [1, 1]], [2, 5]),
+  'la-02-x3': () => solutionKind([[1, 1], [0, 0]], [2, 3]),
+  'la-02-x4': () => solve([[1, 1, 1], [0, 1, 1], [0, 0, 1]], [6, 5, 3]),
+  'la-02-x5': () => {
+    const good = range(-200, 200).map((i) => i / 10).filter((k) => solutionKind([[1, 2], [2, 4]], [3, k]) > 0);
+    if (good.length !== 1) throw new Error(`expected one value of k, got [${good}]`);
+    return good[0];
+  },
+  'la-02-x6': () => solutionKind([[1, 1, 1], [2, 2, 2]], [1, 2]),
+});
+
+// la-03 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-03-q1': () => mulVec([[1, 2], [3, 4]], [1, 1]),
+  'la-03-q2': () => flat(mul([[1, 1], [0, 1]], [[1, 0], [1, 1]])),
+  'la-03-q3': () => {
+    const reflect = ([x, y]) => [-x, y];
+    return flat(T([reflect([1, 0]), reflect([0, 1])]));
+  },
+  'la-03-x1': () => {
+    const C = mul(Array.from({ length: 3 }, () => [1, 2]), Array.from({ length: 2 }, () => [1, 2, 3, 4, 5]));
+    return [C.length, C[0].length];
+  },
+  'la-03-x2': () => mulVec([[2, 0], [1, 3]], [1, 2]),
+  'la-03-x3': () => flat(T([[1, 2, 3], [4, 5, 6]])),
+  'la-03-x4': () => mul([[2, 1], [0, 3]], [[1, 4], [2, -1]])[0][1],
+  'la-03-x5': () => flat(pow([[0, 1], [1, 0]], 2)),
+  'la-03-x6': () => {
+    const stretch = ([x, y]) => [2 * x, y];
+    return flat(T([stretch([1, 0]), stretch([0, 1])]));
+  },
+});
+
+// la-04 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-04-q1': () => det([[2, 1], [1, 3]]),
+  'la-04-q2': () => det([[2, 5, 1], [0, 3, 7], [0, 0, 4]]),
+  'la-04-q3': () => det(scale(3, [[2, 1], [0, 2]])),
+  'la-04-x1': () => det([[5, 2], [1, 1]]),
+  'la-04-x2': () => det([[1, 2], [2, 4]]),
+  'la-04-x3': () => Math.abs(det(T([[2, 0], [1, 3]]))),
+  'la-04-x4': () => det([[2, 0, 0], [0, -1, 0], [0, 0, 3]]),
+  'la-04-x5': () => det(inv([[5, 1], [0, 1]])),
+  'la-04-x6': () => {
+    const A = [[1, 2, 0], [0, 1, 3], [2, 0, 1]];
+    const k = 7 / det(A); // rescale the first row so that det A = 7
+    const A7 = [A[0].map((x) => k * x), A[1], A[2]];
+    return det([A7[1], A7[0], A7[2]]);
+  },
+});
+
+// la-05 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-05-q1': () => flat(inv([[2, 0], [0, 2]])),
+  'la-05-q2': () => flat(inv([[1, 1], [0, 1]])),
+  'la-05-q3': () => flat(inv([[2, 0, 0], [0, 5, 0], [0, 0, -1]])),
+  'la-05-x1': () => flat(inv([[3, 0], [0, 4]])),
+  'la-05-x2': () => {
+    const ok = (A) => () => Math.abs(det(A)) > EPS;
+    return pickId({ a: ok([[1, 2], [3, 4]]), b: ok([[2, 4], [1, 2]]), c: ok([[0, 0], [1, 1]]), d: ok([[3, 6], [1, 2]]) });
+  },
+  'la-05-x3': () => flat(mul([[2, 1], [1, 1]], [[1, -1], [-1, 2]])),
+  'la-05-x4': () => flat(inv([[4, 7], [2, 4]])),
+  'la-05-x5': () => solve(inv([[2, -1], [-1, 1]]), [3, 4]),
+  'la-05-x6': () => flat(inv([[1, 2], [0, 1]])),
+});
+
+// la-06 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-06-q1': () => {
+    const independent = rank([[1, 2], [2, 4]]) === 2;
+    return pickId({ a: () => !independent, b: () => independent, c: () => independent });
+  },
+  'la-06-q2': () => {
+    const basis = rank([[1, 0], [1, 1]]) === 2;
+    return pickId({ a: () => basis, b: () => !basis, c: () => !basis });
+  },
+  'la-06-q3': () => rank([[1, 2, 3], [2, 4, 6], [3, 6, 9]]),
+  'la-06-x1': () => {
+    const dep = (A) => () => rank(A) < 2;
+    return pickId({ a: dep([[1, 2], [3, 6]]), b: dep([[1, 0], [0, 1]]), c: dep([[1, 1], [1, -1]]), d: dep([[2, 1], [1, 2]]) });
+  },
+  'la-06-x2': () => rank([[1, 0, 0], [0, 1, 0], [1, 1, 0]]),
+  'la-06-x3': () => rank(I(3)),
+  'la-06-x4': () => rank([[1, 2], [2, 4], [0, 1]]),
+  'la-06-x5': () => {
+    const A = [[1, 0, 0, 1, 2], [0, 1, 0, 3, 1], [0, 0, 1, 1, 1]];
+    if (rank(A) !== 3) throw new Error('example should have rank 3');
+    return A[0].length - rank(A);
+  },
+  'la-06-x6': () => solve(T([[1, 0], [1, 1]]), [3, 5]),
+});
+
+// la-07 · quick checks and Extra practice
+Object.assign(checks, {
+  'la-07-q1': () => {
+    const Av = mulVec([[3, 1], [0, 2]], [1, 0]);
+    if (Math.abs(Av[1]) > EPS) return -99;
+    return Av[0];
+  },
+  'la-07-q2': () => eig2([[1, 2], [2, 1]]),
+  'la-07-q3': () => {
+    const A = [[4, 1], [2, 3]];
+    const isEig = (v) => () => {
+      const Av = mulVec(A, v);
+      return Av.every((x, i) => Math.abs(x - 2 * v[i]) < EPS);
+    };
+    return pickId({ a: isEig([1, -2]), b: isEig([1, 1]), c: isEig([2, 1]) });
+  },
+  'la-07-x1': () => eig2([[3, 0], [0, -2]]),
+  'la-07-x2': () => {
+    const Av = mulVec([[5, 0], [0, 2]], [1, 0]);
+    if (Math.abs(Av[1]) > EPS) return -99;
+    return Av[0];
+  },
+  'la-07-x3': () => {
+    const A = [[2, 1], [0, 4]];
+    const Av = mulVec(A, [1, 2]);
+    if (Av[0] !== 4 || Av[1] !== 8) throw new Error('example matrix must satisfy Av = 4v');
+    return mulVec(A, [3, 6]);
+  },
+  'la-07-x4': () => eig2([[2, 1], [1, 2]]),
+  'la-07-x5': () => eig2([[7, -10], [1, 0]]),
+  'la-07-x6': () => {
+    const A = [[3, 1], [0, 2]];
+    const A2v = mulVec(pow(A, 2), [1, 0]);
+    if (Math.abs(A2v[1]) > EPS) throw new Error('v must stay an eigenvector');
+    return A2v[0];
+  },
+});
+
+// @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
+
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */
-const CONCEPTUAL = new Set(['la-02-2', 'la-06-2', 'ml-04-1', 'ml-04-5', 'ml-05-6']);
+const CONCEPTUAL = new Set(['ml-05-q1', 'ml-04-x3', 'ml-04-q3', 'la-02-2', 'la-06-2', 'ml-04-1', 'ml-04-5', 'ml-05-6']);
 
 // ---------- comparison ----------
 const closeNum = (a, b, tol) => a === b || Math.abs(a - b) <= tol;
@@ -497,6 +930,7 @@ const DIAGRAMS = new Set([...diagramSource.matchAll(/^  (\w+): \{$/gm)].map((m) 
 
 // Lessons and lectures
 const lessonIds = new Set();
+const quickChecks = [];
 for (const l of LESSONS) {
   if (lessonIds.has(l.id)) fail(l.id, 'duplicate lesson id');
   lessonIds.add(l.id);
@@ -504,13 +938,22 @@ for (const l of LESSONS) {
   if (l.minutes < 5 || l.minutes > 8) fail(l.id, 'lectures are planned for 5–8 minutes');
   if (l.questions.length < 5) fail(l.id, 'needs at least 5 practice questions');
   for (const d of [1, 2, 3]) if (!l.questions.some((q) => q.difficulty === d)) fail(l.id, `has no level-${d} question`);
+  if (l.extra.length < 5) fail(l.id, 'needs at least 5 Extra practice questions');
+  if (l.extra.some((q) => q.difficulty > 2)) fail(l.id, 'Extra practice is gentler: difficulty 1–2 only');
+  const quizzes = l.lecture.flatMap((s) => s.blocks.filter((b) => b.kind === 'quiz'));
+  if (quizzes.length < 2) fail(l.id, 'a lecture needs at least 2 quick checks');
   for (const s of l.lecture) {
     if (!s.blocks.length) fail(l.id, `section "${s.title}" is empty`);
     for (const b of s.blocks) {
-      const texts = { text: [b.text], formula: [b.caption ?? ''], box: [b.title, b.text], example: [b.prompt, ...(b.steps ?? [])], diagram: [b.caption ?? ''], check: [b.prompt, b.answer] }[b.kind];
+      const texts = { text: [b.text], formula: [b.caption ?? ''], box: [b.title, b.text], example: [b.prompt, ...(b.steps ?? [])], diagram: [b.caption ?? ''], quiz: [b.prompt, b.explanation, ...(b.options ?? []).flatMap((o) => [o.label, o.trapExplanation ?? ''])] }[b.kind];
       if (!texts) { fail(l.id, `unknown block kind "${b.kind}"`); continue; }
       for (const t of texts) dollars(`${l.id} / ${s.title}`, t);
       if (b.kind === 'diagram' && !DIAGRAMS.has(b.type)) fail(l.id, `unknown diagram "${b.type}"`);
+      if (b.kind === 'quiz') {
+        if (!b.id.startsWith(`${l.id}-q`)) fail(b.id, `quick-check id should start with ${l.id}-q`);
+        if (b.options.length < 3 || b.options.length > 4) fail(b.id, 'a quick check needs 3–4 options');
+        quickChecks.push(b);
+      }
     }
   }
 }
@@ -535,23 +978,38 @@ for (const q of QUESTIONS) {
   if (q.stepByStepSolution.length < 3) fail(q.id, 'needs at least 3 solution steps');
   for (const text of [q.promptText, ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution]) dollars(q.id, text);
 
-  if (CONCEPTUAL.has(q.id)) continue;
+  verifyKey(q);
+}
+
+for (const b of quickChecks) {
+  if (seen.has(b.id)) fail(b.id, 'duplicate id');
+  seen.add(b.id);
+  const correct = b.options.find((o) => o.id === b.correctOptionId);
+  if (!correct) { fail(b.id, 'correctOptionId does not match any option'); continue; }
+  if (new Set(b.options.map((o) => o.id)).size !== b.options.length) fail(b.id, 'duplicate option ids');
+  if (correct.trapExplanation) fail(b.id, 'correct option must not have a trapExplanation');
+  verifyKey(b);
+}
+
+/** Recomputes the answer of a question or quick check and compares it with the key. */
+function verifyKey(q) {
+  if (CONCEPTUAL.has(q.id)) return;
+  const correct = q.options.find((o) => o.id === q.correctOptionId);
   const check = checks[q.id];
-  if (!check) { fail(q.id, 'no independent check defined'); continue; }
+  if (!check) return fail(q.id, 'no independent check defined');
 
   let res;
   try {
     res = check();
   } catch (e) {
-    fail(q.id, `check threw: ${e.message}`);
-    continue;
+    return fail(q.id, `check threw: ${e.message}`);
   }
   recomputed++;
   if (res && typeof res === 'object' && 'id' in res) {
     if (res.id !== q.correctOptionId) fail(q.id, `computation picks option ${res.id}, key says ${q.correctOptionId}`);
-    continue;
+    return;
   }
-  if (q.options.some((o) => o.value === undefined)) { fail(q.id, 'every option needs a value'); continue; }
+  if (q.options.some((o) => o.value === undefined)) return fail(q.id, 'every option needs a value');
   const v = res && typeof res === 'object' && 'v' in res ? res.v : res;
   const tol = res && typeof res === 'object' && 'tol' in res ? res.tol : 1e-6;
   if (!same(correct.value, v, tol)) fail(q.id, `computed ${show(v)}, key option ${correct.id} = ${show(correct.value)}`);
@@ -561,11 +1019,12 @@ for (const q of QUESTIONS) {
 console.log(`Lessons: ${LESSONS.length}   Questions: ${QUESTIONS.length}`);
 for (const l of LESSONS) {
   const t = [1, 2, 3].map((d) => l.questions.filter((q) => q.difficulty === d).length);
-  console.log(`  ${l.id.padEnd(7)} ${l.title.padEnd(42)} ${l.lecture.length} sections · questions ${t.join('/')}`);
+  const nq = l.lecture.flatMap((s) => s.blocks).filter((b) => b.kind === 'quiz').length;
+  console.log(`  ${l.id.padEnd(7)} ${l.title.padEnd(42)} ${l.lecture.length} sections · ${nq} checks · practice ${t.join('/')} · extra ${l.extra.length}`);
 }
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):`);
   for (const e of errors) console.error('  ✗ ' + e);
   process.exit(1);
 }
-console.log(`\nAll ${QUESTIONS.length} answer keys confirmed (${recomputed} recomputed, ${CONCEPTUAL.size} conceptual).`);
+console.log(`\nAll ${QUESTIONS.length + quickChecks.length} answer keys confirmed (${QUESTIONS.length} questions + ${quickChecks.length} quick checks; ${recomputed} recomputed, ${CONCEPTUAL.size} conceptual).`);

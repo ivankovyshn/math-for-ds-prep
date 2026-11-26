@@ -17,6 +17,12 @@ export function buildLessonSession(lessonId: string): Question[] {
   return ([1, 2, 3] as const).flatMap((d) => shuffle(qs.filter((q) => q.difficulty === d)));
 }
 
+/** Extra practice (Practice 2): easiest first, like Practice 1. */
+export function buildExtraSession(lessonId: string): Question[] {
+  const qs = LESSON_BY_ID[lessonId].extra;
+  return ([1, 2, 3] as const).flatMap((d) => shuffle(qs.filter((q) => q.difficulty === d)));
+}
+
 /** Boss quiz: the harder questions of the module, spread over its lessons. */
 export function buildBoss(moduleId: ModuleId): Question[] {
   const pool = QUESTIONS.filter((q) => q.moduleId === moduleId && q.difficulty >= 2);

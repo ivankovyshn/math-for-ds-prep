@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './04-proofs.extra.ts';
 
 export default defineLesson({
   id: 'ml-04',
@@ -41,6 +42,18 @@ Most first-year proofs use one of four patterns.`,
             r`$a + b + 1$ is an integer, so $m + n$ is even. $\blacksquare$`,
           ],
         },
+        {
+          kind: 'quiz',
+          id: 'ml-04-q1',
+          prompt: r`Write two odd numbers as $2a + 1$ and $2b + 1$. What does their sum show?`,
+          options: [
+            { id: 'a', label: r`The sum $2(a + b + 1)$ is always even` },
+            { id: 'b', label: r`The sum is always odd`, trapExplanation: r`$(2a + 1) + (2b + 1) = 2a + 2b + 2$: the two 1s add up to 2, which is even.` },
+            { id: 'c', label: r`It can be even or odd`, trapExplanation: r`The algebra covers every pair of odd numbers at once, so there is only one possible answer.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$(2a + 1) + (2b + 1) = 2(a + b + 1)$, which has the form $2m$. That is a complete direct proof: it works for <i>every</i> $a$, $b$.`,
+        },
       ],
     },
     {
@@ -65,6 +78,18 @@ Most first-year proofs use one of four patterns.`,
             r`Both $p$ and $q$ are even — they share the factor 2, contradicting lowest terms. So $\sqrt2$ is irrational. $\blacksquare$`,
           ],
         },
+        {
+          kind: 'quiz',
+          id: 'ml-04-q2',
+          prompt: r`To prove "if $n^2$ is even, then $n$ is even" by contrapositive, you…`,
+          options: [
+            { id: 'a', label: r`assume $n$ is odd and show $n^2$ is odd` },
+            { id: 'b', label: r`assume $n^2$ is odd and show $n$ is odd`, trapExplanation: r`This proves "if $n$ is even then $n^2$ is even" — the converse, a different statement.` },
+            { id: 'c', label: r`assume $n$ is even and show $n^2$ is even`, trapExplanation: r`This proves the converse directly. It says nothing about the original implication.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`The contrapositive of $P \Rightarrow Q$ is $\neg Q \Rightarrow \neg P$: assume "not $n$ even" and show "not $n^2$ even".`,
+        },
       ],
     },
     {
@@ -83,9 +108,16 @@ Examples can be deceiving. $n^2 + n + 41$ is prime for $n = 0, 1, 2, \dots, 39$.
           text: r`A "proof" that $1 = 2$: let $a = b$; then $a^2 - b^2 = ab - b^2$, i.e. $(a + b)(a - b) = b(a - b)$; cancel $(a - b)$ to get $a + b = b$, so $2b = b$ and $2 = 1$. The cancellation divides by $a - b = 0$. Always check that what you divide by is non-zero.`,
         },
         {
-          kind: 'check',
-          prompt: r`Which kind of argument would you use for "there exists an integer $n$ with $n^2 = 2n$"?`,
-          answer: r`An existence claim needs just one example: $n = 2$ (or $n = 0$). No general argument is required.`,
+          kind: 'quiz',
+          id: 'ml-04-q3',
+          prompt: r`What is enough to prove "there exists an integer $n$ with $n^2 = 2n$"?`,
+          options: [
+            { id: 'a', label: r`One example, such as $n = 2$` },
+            { id: 'b', label: r`A proof that $n^2 = 2n$ for every integer $n$`, trapExplanation: r`That would be a much stronger claim — and it is false ($n = 1$). An existence claim needs only one witness.` },
+            { id: 'c', label: r`A counterexample`, trapExplanation: r`A counterexample disproves a "for all" claim. Here we are proving an "exists" claim.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`An existence claim needs just one example: $2^2 = 4 = 2 \cdot 2$ (or $n = 0$). No general argument is required.`,
         },
       ],
     },
@@ -105,6 +137,7 @@ Examples can be deceiving. $n^2 + n + 41$ is prime for $n = 0, 1, 2, \dots, 39$.
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'ml-04-1',

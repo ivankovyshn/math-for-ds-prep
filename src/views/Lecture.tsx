@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Clock, Eye, HelpCircle, Lightbulb, PenLine, Sparkles, Target, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, HelpCircle, Lightbulb, PenLine, Sparkles, Target, X, XCircle } from 'lucide-react';
 import type { LectureBlock, Lesson } from '../types.ts';
 import { MODULE_BY_ID } from '../data/modules.ts';
 import { useProgress } from '../store/useProgress.ts';
 import { Diagram } from '../components/Diagram.tsx';
+import { OptionList } from '../components/QuestionCard.tsx';
+import { shuffle } from '../lib/session.ts';
 import { Inline, RichText, Tex } from '../components/RichText.tsx';
 import { Button, IconButton, Kbd, ProgressBar } from '../components/ui.tsx';
 
@@ -26,6 +28,9 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
   const sections = lesson.lecture;
   const section = sections[idx];
   const last = idx === sections.length - 1;
+  // Quick checks answered in this visit: quiz id -> picked option id.
+  const [picks, setPicks] = useState<Record<string, string>>({});
+  const pending = section.blocks.filter((b) => b.kind === 'quiz' && !picks[b.id]).length;
 
   useEffect(() => {
     if (last) markLectureRead(lesson.id);
@@ -35,7 +40,11 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
     window.scrollTo({ top: 0 });
   }, [idx]);
 
-  const next = () => (last ? onStartPractice() : setIdx(idx + 1));
+  const next = () => {
+    if (pending) return;
+    if (last) onStartPractice();
+    else setIdx(idx + 1);
+  };
   const back = () => setIdx(Math.max(0, idx - 1));
 
   useEffect(() => {
@@ -78,7 +87,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
           >
             <h2 className="text-2xl font-extrabold leading-tight text-accent">{section.title}</h2>
             {section.blocks.map((b, i) => (
-              <LectureBlockView key={i} block={b} />
+              <LectureBlockView key={i} block={b} picked={b.kind === 'quiz' ? picks[b.id] : undefined} onPick={(id, option) => setPicks((p) => ({ ...p, [id]: option }))} />
             ))}
             {last && (
               <div className="rounded-2xl border-2 border-primary bg-primary-soft px-4 py-3 text-[15px]">
@@ -98,9 +107,17 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
             <ArrowLeft size={20} />
           </Button>
           <span className="hidden flex-1 items-center gap-1.5 text-xs text-muted sm:flex">
-            <Kbd>←</Kbd> <Kbd>→</Kbd> navigate
+            {pending ? (
+              <>
+                <HelpCircle size={14} /> Answer the quick check{pending > 1 ? 's' : ''} to continue
+              </>
+            ) : (
+              <>
+                <Kbd>←</Kbd> <Kbd>→</Kbd> navigate
+              </>
+            )}
           </span>
-          <Button tone={last ? 'primary' : 'accent'} className="flex-1 sm:flex-none sm:w-60" onClick={next}>
+          <Button tone={last ? 'primary' : 'accent'} className="flex-1 sm:flex-none sm:w-60" onClick={next} disabled={pending > 0}>
             {last ? (
               <>
                 <Target size={18} /> Start practice
@@ -124,8 +141,11 @@ const boxStyles = {
   pitfall: { icon: AlertTriangle, tone: 'border-danger bg-danger-soft', head: 'text-danger', label: 'Common trap' },
 } as const;
 
-/** Renders one lecture block; also used by the author's page (#all). */
-export function LectureBlockView({ block }: { block: LectureBlock }) {
+/**
+ * Renders one lecture block; also used by the author's page (#all).
+ * A quiz block is controlled through `picked` / `onPick` when the lecture tracks it.
+ */
+export function LectureBlockView({ block, picked, onPick }: { block: LectureBlock; picked?: string; onPick?: (quizId: string, optionId: string) => void }) {
   switch (block.kind) {
     case 'text':
       return <RichText text={block.text} className="text-[17px] leading-relaxed" />;
@@ -172,8 +192,8 @@ export function LectureBlockView({ block }: { block: LectureBlock }) {
         </figure>
       );
 
-    case 'check':
-      return <Check block={block} />;
+    case 'quiz':
+      return <QuickCheck block={block} picked={picked} onPick={onPick} />;
   }
 }
 
@@ -217,23 +237,33 @@ function Example({ block }: { block: Extract<LectureBlock, { kind: 'example' }> 
   );
 }
 
-/** "Check yourself": think first, then reveal. */
-function Check({ block }: { block: Extract<LectureBlock, { kind: 'check' }> }) {
-  const [open, setOpen] = useState(false);
+/** Quick check: one multiple-choice question, no hearts, the explanation appears at once. */
+function QuickCheck({ block, picked, onPick }: { block: Extract<LectureBlock, { kind: 'quiz' }>; picked?: string; onPick?: (quizId: string, optionId: string) => void }) {
+  const [local, setLocal] = useState<string | undefined>(undefined);
+  const choice = picked ?? local;
+  const options = useMemo(() => shuffle(block.options), [block]);
+  const correct = choice === block.correctOptionId;
+  const pickedOption = block.options.find((o) => o.id === choice);
+  const select = (id: string) => {
+    if (choice) return;
+    setLocal(id);
+    onPick?.(block.id, id);
+  };
   return (
     <section className="rounded-2xl border-2 border-dashed border-warn px-4 py-3">
       <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-warn">
-        <HelpCircle size={15} /> Check yourself
+        <HelpCircle size={15} /> Quick check
       </h3>
-      <RichText text={block.prompt} className="leading-relaxed" />
-      {open ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 rounded-xl bg-surface px-3 py-2">
-          <RichText text={block.answer} className="leading-relaxed" />
+      <RichText text={block.prompt} className="mb-3 leading-relaxed" />
+      <OptionList options={options} selectedId={choice ?? null} onSelect={select} revealCorrectId={choice ? block.correctOptionId : undefined} />
+      {choice && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`mt-3 rounded-xl px-3 py-2 ${correct ? 'bg-primary-soft' : 'bg-danger-soft'}`}>
+          <div className={`mb-1 flex items-center gap-1.5 font-extrabold ${correct ? 'text-primary' : 'text-danger'}`}>
+            {correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />} {correct ? 'Right' : 'Not quite'}
+          </div>
+          {!correct && pickedOption?.trapExplanation && <RichText text={pickedOption.trapExplanation} className="mb-1.5 leading-relaxed" />}
+          <RichText text={block.explanation} className="leading-relaxed" />
         </motion.div>
-      ) : (
-        <button type="button" onClick={() => setOpen(true)} className="mt-3 flex items-center gap-1.5 rounded-xl bg-surface px-3 py-2 text-sm font-extrabold text-warn">
-          <Eye size={16} /> Show answer
-        </button>
       )}
     </section>
   );

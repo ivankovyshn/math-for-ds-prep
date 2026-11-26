@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './01-vectors.extra.ts';
 
 export default defineLesson({
   id: 'la-01',
@@ -42,9 +43,16 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
         },
         { kind: 'diagram', type: 'vectorAdd', caption: r`Tip to tail in either order gives the same sum: $\mathbf{u} + \mathbf{v} = \mathbf{v} + \mathbf{u}$.` },
         {
-          kind: 'check',
+          kind: 'quiz',
+          id: 'la-01-q1',
           prompt: r`Let $\mathbf{u} = (1, -2)$ and $\mathbf{v} = (3, 4)$. What is $\mathbf{u} - 2\mathbf{v}$?`,
-          answer: r`$2\mathbf{v} = (6, 8)$, so $\mathbf{u} - 2\mathbf{v} = (1 - 6,\ -2 - 8) = (-5, -10)$.`,
+          options: [
+            { id: 'a', label: r`$(-5, -10)$`, value: [-5, -10] },
+            { id: 'b', label: r`$(-2, -6)$`, value: [-2, -6], trapExplanation: r`That is $\mathbf{u} - \mathbf{v}$: the factor 2 was not applied to $\mathbf{v}$.` },
+            { id: 'c', label: r`$(7, 6)$`, value: [7, 6], trapExplanation: r`That is $\mathbf{u} + 2\mathbf{v}$. The minus sign applies to every component of $2\mathbf{v}$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$2\mathbf{v} = (6, 8)$, so $\mathbf{u} - 2\mathbf{v} = (1 - 6,\ -2 - 8) = (-5, -10)$.`,
         },
       ],
     },
@@ -82,6 +90,18 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
           variant: 'pitfall',
           title: 'Length is not a sum',
           text: r`$\|(3, -4)\| = \sqrt{9 + 16} = 5$, not $3 + 4 = 7$ and not $3 - 4 = -1$. Square, add, then take the root.`,
+        },
+        {
+          kind: 'quiz',
+          id: 'la-01-q2',
+          prompt: r`Compute $(1, 2) \cdot (3, -1)$.`,
+          options: [
+            { id: 'a', label: '$1$', value: 1 },
+            { id: 'b', label: r`$(3, -2)$`, value: [3, -2], trapExplanation: r`The products of the components must also be added: the dot product is a number.` },
+            { id: 'c', label: '$5$', value: 5, trapExplanation: r`$2 \cdot (-1) = -2$, so the sum is $3 - 2$, not $3 + 2$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$1 \cdot 3 + 2 \cdot (-1) = 3 - 2 = 1$.`,
         },
       ],
     },
@@ -140,13 +160,21 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
 • Finding coefficients of a linear combination = solving a linear system.`,
         },
         {
-          kind: 'check',
+          kind: 'quiz',
+          id: 'la-01-q3',
           prompt: r`Can $(2, 4)$ and $(-1, -2)$ together reach the point $(1, 0)$?`,
-          answer: r`No. $(2, 4) = -2\cdot(-1, -2)$, so both vectors lie on the line $y = 2x$ and their span is only that line. The point $(1, 0)$ is not on it.`,
+          options: [
+            { id: 'a', label: r`No: both lie on the line $y = 2x$` },
+            { id: 'b', label: r`Yes: two vectors in the plane always span it`, trapExplanation: r`Only two <i>independent</i> vectors span the plane. Here $(2, 4) = -2 \cdot (-1, -2)$.` },
+            { id: 'c', label: r`Yes, but only with negative coefficients`, trapExplanation: r`Any combination $a(2, 4) + b(-1, -2) = (2a - b)(1, 2)$ stays on the line $y = 2x$, whatever the signs.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$(2, 4) = -2\cdot(-1, -2)$, so both vectors lie on the line $y = 2x$ and their span is only that line. The point $(1, 0)$ is not on it.`,
         },
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'la-01-1',

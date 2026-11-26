@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './06-complex.extra.ts';
 
 export default defineLesson({
   id: 'ml-06',
@@ -31,6 +32,18 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
             r`Result: $\dfrac{1 + 5i}{2} = \tfrac12 + \tfrac52 i$.`,
           ],
         },
+        {
+          kind: 'quiz',
+          id: 'ml-06-q1',
+          prompt: r`What is $i^3$?`,
+          options: [
+            { id: 'a', label: r`$-i$`, value: [0, -1] },
+            { id: 'b', label: r`$i$`, value: [0, 1], trapExplanation: r`$i^3 = i^2 \cdot i = -i$. The powers of $i$ cycle $i, -1, -i, 1$.` },
+            { id: 'c', label: r`$-1$`, value: [-1, 0], trapExplanation: r`$-1$ is $i^2$. One more factor of $i$ gives $-i$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$i^3 = i^2 \cdot i = (-1) \cdot i = -i$.`,
+        },
       ],
     },
     {
@@ -51,6 +64,18 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
           variant: 'pitfall',
           title: 'Mind the quadrant',
           text: r`$\tan\varphi = b/a$ does not determine $\varphi$ on its own: $1 + i$ and $-1 - i$ have the same ratio but opposite directions. Always check which quadrant the point is in.`,
+        },
+        {
+          kind: 'quiz',
+          id: 'ml-06-q2',
+          prompt: r`In which quadrant of the complex plane does $z = -2 + i$ lie?`,
+          options: [
+            { id: 'a', label: 'Second (upper left)' },
+            { id: 'b', label: 'First (upper right)', trapExplanation: r`The real part $-2$ is negative, so the point is left of the imaginary axis.` },
+            { id: 'c', label: 'Third (lower left)', trapExplanation: r`The imaginary part $+1$ is positive, so the point is above the real axis.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$z = a + bi$ is the point $(a, b)$. Here $(-2, 1)$: left and up — the second quadrant.`,
         },
       ],
     },
@@ -89,9 +114,16 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
           text: r`Every polynomial of degree $n \ge 1$ with complex coefficients has exactly $n$ complex roots, counted with multiplicity. If the coefficients are real, non-real roots come in conjugate pairs $z$, $\bar z$.`,
         },
         {
-          kind: 'check',
-          prompt: r`Solve $z^2 + 2z + 5 = 0$.`,
-          answer: r`$z = \frac{-2 \pm \sqrt{4 - 20}}{2} = \frac{-2 \pm 4i}{2} = -1 \pm 2i$ — a conjugate pair, as expected for real coefficients.`,
+          kind: 'quiz',
+          id: 'ml-06-q3',
+          prompt: r`Which numbers solve $z^2 + 2z + 5 = 0$?`,
+          options: [
+            { id: 'a', label: r`$z = -1 \pm 2i$` },
+            { id: 'b', label: r`$z = 1 \pm 2i$`, trapExplanation: r`The roots have real part $-\frac{b}{2a} = -1$. A sign was lost.` },
+            { id: 'c', label: r`$z = -1 \pm 4i$`, trapExplanation: r`$\sqrt{-16} = 4i$ must still be divided by $2a = 2$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$z = \frac{-2 \pm \sqrt{4 - 20}}{2} = \frac{-2 \pm 4i}{2} = -1 \pm 2i$ — a conjugate pair, as expected for real coefficients.`,
         },
       ],
     },
@@ -111,6 +143,7 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'ml-06-1',

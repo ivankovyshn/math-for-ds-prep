@@ -11,10 +11,14 @@ Runs entirely in the browser. No account, no server, no API keys.
 - **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
   Optimization, Programming Foundations. Mathematical Language (6 lessons) and Linear Algebra (7 lessons) are
   available; the other modules show their planned lessons as "coming soon".
-- **Lessons** — each lesson is a lecture followed by practice. The lecture is shown one section at a time,
-  with definition / key-fact / trap boxes, step-by-step worked examples and "check yourself" questions.
-  Reading it to the end unlocks the practice; passing the practice unlocks the next lesson.
-- **Practice** — 6 questions per lesson, easiest first, 3 hearts, streak counter, XP.
+- **Lessons** — lecture → Practice 1 → (Extra practice if needed) → next lesson. The lecture is shown one
+  section at a time, with definition / key-fact / trap boxes, step-by-step worked examples and 2–3 quick checks:
+  multiple-choice questions with an instant explanation and no hearts. Answering a section's quick checks
+  opens the next section; reading to the end unlocks the practice.
+- **Practice 1** — 6 questions per lesson, easiest first, 3 hearts, streak counter, XP. At most one mistake
+  passes the lesson.
+- **Extra practice (Practice 2)** — opens when Practice 1 ends with two or more mistakes (or out of hearts):
+  6 new, gentler questions on the same ideas and traps. Passing it also passes the lesson.
 - **Feedback drawer** — after every answer: the step-by-step first-principles breakdown and, if you were wrong,
   an explanation of why the option you picked is a trap.
 - **Boss Quiz** — 8 mixed questions from the whole module, unlocked after every lesson is passed.
@@ -66,12 +70,19 @@ export default defineLesson({
         { kind: 'box', variant: 'definition', title: 'Orthogonal', text: r`…` },   // definition | theorem | tip | pitfall
         { kind: 'example', title: 'A worked example', prompt: r`…`, steps: [r`…`, r`…`] },
         { kind: 'diagram', type: 'vectorAdd', caption: r`…` },                    // a figure from src/components/Diagram.tsx
-        { kind: 'check', prompt: r`A quick question`, answer: r`Revealed on tap` },
+        {
+          kind: 'quiz', id: 'la-08-q1',                                          // quick check: 3–4 options
+          prompt: r`A quick question`,
+          options: [{ id: 'a', label: r`…`, value: 1 }, { id: 'b', label: r`…`, value: 2, trapExplanation: r`…` }, /* … */],
+          correctOptionId: 'a',
+          explanation: r`Shown after any answer`,
+        },
       ],
     },
-    // at least 3 sections; the last one is usually a summary
+    // at least 3 sections and 2 quick checks; the last section is usually a summary
   ],
-  questions: [ /* see below */ ],
+  questions: [ /* Practice 1, see below */ ],
+  extra,      // Extra practice, kept in 08-orthogonality.extra.ts: ids la-08-x1…, difficulty 1–2 only
 });
 ```
 
@@ -104,10 +115,12 @@ Rules of the format:
 - `<i>word</i>` emphasises a word (it may contain maths).
 - `value` is the option as a number or a list of numbers (a vector, or a matrix read row by row). The app does
   not show it; it exists so that the checker can confirm the key.
-- Every lesson needs at least 5 questions and at least one of each difficulty.
+- Every lesson needs at least 5 Practice 1 questions with at least one of each difficulty, at least 5 Extra
+  practice questions (difficulty 1–2) and at least 2 quick checks in the lecture.
 - The order of options does not matter — the app shuffles them.
 
-Then add an independent computation of the answer to `checks` in `scripts/verify.mjs`
+Then add an independent computation of the answer — for every question and every quick check — to `checks`
+in `scripts/verify.mjs`
 (helpers for determinants, inverses, rank, eigenvalues and solving systems are at the top):
 
 ```js

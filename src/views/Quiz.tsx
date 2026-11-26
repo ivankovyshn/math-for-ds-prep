@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, ChevronDown, Clock, Flame, Heart, HeartCrack, Lightbulb, Target, Trophy, X, XCircle, Zap } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Clock, Dumbbell, Flame, Heart, HeartCrack, Lightbulb, Target, Trophy, X, XCircle, Zap } from 'lucide-react';
 import type { Question } from '../types.ts';
 import { HEARTS_PER_SESSION } from '../data/modules.ts';
 import { formatClock, shuffle, xpForQuestion } from '../lib/session.ts';
@@ -21,11 +21,18 @@ export interface QuizProps {
   onRetry: () => void;
   /** When set, the result screen offers to re-read the lesson's lecture. */
   onOpenLecture?: () => void;
+  /**
+   * Practice 1 of a lesson: the node completes only with at most this many mistakes.
+   * More mistakes (or running out of hearts) open Extra practice instead.
+   */
+  maxMistakes?: number;
+  onUnlockExtra?: () => void;
+  onStartExtra?: () => void;
 }
 
 type Phase = 'answering' | 'feedback';
 
-export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQuestion, onExit, onRetry, onOpenLecture }: QuizProps) {
+export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQuestion, onExit, onRetry, onOpenLecture, maxMistakes, onUnlockExtra, onStartExtra }: QuizProps) {
   const { addXp, recordAnswer, completeNode, touchStreak } = useProgress.getState();
 
   const [idx, setIdx] = useState(0);
@@ -39,7 +46,9 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
   const [correctCount, setCorrectCount] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [lastXp, setLastXp] = useState(0);
-  const [outcome, setOutcome] = useState<null | 'passed' | 'failed'>(null);
+  const [outcome, setOutcome] = useState<null | Outcome>(null);
+  // A lesson that was already passed stays passed; Practice 1 only gates the first pass.
+  const [wasCompleted] = useState(() => !!(nodeKey && useProgress.getState().completedNodes[nodeKey]));
   const [timeLeft, setTimeLeft] = useState(secondsPerQuestion ?? 0);
   const [showSteps, setShowSteps] = useState(false);
 
@@ -74,6 +83,10 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
 
   const finish = (result: 'passed' | 'failed') => {
     touchStreak();
+    const mistakes = idx + 1 - correctCount;
+    const tooMany = maxMistakes !== undefined && mistakes > maxMistakes;
+    if (onUnlockExtra && (result === 'failed' || tooMany)) onUnlockExtra();
+    if (result === 'passed' && tooMany && !wasCompleted) return setOutcome('extra');
     if (result === 'passed' && nodeKey) {
       completeNode(nodeKey, correctCount, questions.length);
       addXp(bonusXp);
@@ -135,6 +148,8 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
         onExit={onExit}
         onRetry={onRetry}
         onOpenLecture={onOpenLecture}
+        onStartExtra={onStartExtra}
+        maxMistakes={maxMistakes}
       />
     );
   }
@@ -292,8 +307,10 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
   );
 }
 
+type Outcome = 'passed' | 'failed' | 'extra';
+
 function ResultScreen(p: {
-  outcome: 'passed' | 'failed';
+  outcome: Outcome;
   mode: 'lesson' | 'review';
   title: string;
   correct: number;
@@ -304,8 +321,12 @@ function ResultScreen(p: {
   onExit: () => void;
   onRetry: () => void;
   onOpenLecture?: () => void;
+  onStartExtra?: () => void;
+  maxMistakes?: number;
 }) {
   const passed = p.outcome === 'passed';
+  const extra = p.outcome === 'extra';
+  const finished = passed || extra;
   const pending = useProgress((s) => Object.keys(s.mistakes).length);
 
   useEffect(() => {
@@ -322,16 +343,20 @@ function ResultScreen(p: {
         initial={{ scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-        className={`flex h-28 w-28 items-center justify-center rounded-full ${passed ? 'bg-primary-soft text-primary' : 'bg-danger-soft text-danger'}`}
+        className={`flex h-28 w-28 items-center justify-center rounded-full ${passed ? 'bg-primary-soft text-primary' : extra ? 'bg-accent-soft text-accent' : 'bg-danger-soft text-danger'}`}
       >
-        {passed ? <Trophy size={60} /> : <HeartCrack size={60} />}
+        {passed ? <Trophy size={60} /> : extra ? <Dumbbell size={60} /> : <HeartCrack size={60} />}
       </motion.div>
       <div>
         <h1 className="text-3xl font-extrabold">
-          {passed ? (p.mode === 'review' ? 'Review complete' : 'Complete!') : 'Out of hearts'}
+          {passed ? (p.mode === 'review' ? 'Review complete' : 'Complete!') : extra ? 'Almost there' : 'Out of hearts'}
         </h1>
         <p className="mt-2 text-muted">
-          {passed
+          {extra
+            ? `${p.total - p.correct} mistakes — this lesson needs at most ${p.maxMistakes}. Extra practice has new, gentler questions on the same ideas; pass it to unlock the next lesson.`
+            : !passed && p.onStartExtra
+              ? 'Three mistakes end a session. Extra practice is now open: new, gentler questions on the same ideas. Passing it unlocks the next lesson.'
+              : passed
             ? p.mode === 'review'
               ? pending > 0
                 ? `${pending} question${pending === 1 ? '' : 's'} still in your review queue. A question leaves the queue after two correct answers in a row.`
@@ -343,12 +368,17 @@ function ResultScreen(p: {
         </p>
       </div>
       <div className="grid w-full grid-cols-3 gap-3">
-        <Stat label="Correct" value={`${p.correct}/${passed ? p.total : p.answered}`} tone="text-primary" />
+        <Stat label="Correct" value={`${p.correct}/${finished ? p.total : p.answered}`} tone="text-primary" />
         <Stat label="XP earned" value={`+${p.xp}`} tone="text-warn" />
         <Stat label="Best streak" value={String(p.bestCombo)} tone="text-accent" />
       </div>
       <div className="flex w-full flex-col gap-3">
-        {!passed && <Button full tone="accent" onClick={p.onRetry}>Try again</Button>}
+        {!passed && p.onStartExtra && (
+          <Button full tone="accent" onClick={p.onStartExtra}>
+            <Dumbbell size={18} /> Start extra practice
+          </Button>
+        )}
+        {!passed && <Button full tone={p.onStartExtra ? 'neutral' : 'accent'} onClick={p.onRetry}>Try again</Button>}
         {!passed && p.onOpenLecture && <Button full tone="neutral" onClick={p.onOpenLecture}>Re-read the lecture</Button>}
         <Button full tone={passed ? 'primary' : 'neutral'} onClick={p.onExit}>
           {passed ? 'Continue' : 'Back to path'}

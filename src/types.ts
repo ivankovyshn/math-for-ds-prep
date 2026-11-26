@@ -32,6 +32,8 @@ export interface Question {
   /** First-principles breakdown, one step per entry. Supports $...$. */
   stepByStepSolution: string[];
   keyConceptTag: string;
+  /** Set on Extra practice (Practice 2) questions; they stay out of boss quizzes and exams. */
+  extra?: boolean;
 }
 
 /** A question as written in a lesson file; the lesson fills in moduleId and lessonId. */
@@ -47,7 +49,17 @@ export type LectureBlock =
   | { kind: 'box'; variant: 'definition' | 'theorem' | 'tip' | 'pitfall'; title: string; text: string }
   | { kind: 'example'; title: string; prompt: string; steps: string[] }
   | { kind: 'diagram'; type: string; caption?: string }
-  | { kind: 'check'; prompt: string; answer: string };
+  | {
+      /** A quick multiple-choice question inside the lecture: no hearts, instant explanation. */
+      kind: 'quiz';
+      /** <lesson id>-q<n>; scripts/verify.mjs re-checks it like a practice question. */
+      id: string;
+      prompt: string;
+      options: QuestionOption[];
+      correctOptionId: string;
+      /** Shown after any answer. */
+      explanation: string;
+    };
 
 export interface LectureSection {
   title: string;
@@ -62,7 +74,10 @@ export interface Lesson {
   /** Estimated reading time of the lecture, in minutes. */
   minutes: number;
   lecture: LectureSection[];
+  /** Practice 1: passed with at most one mistake, it completes the lesson. */
   questions: Question[];
+  /** Practice 2 (Extra practice): easier questions on the same ideas, opened by a rough Practice 1. */
+  extra: Question[];
 }
 
 export interface MistakeEntry {

@@ -1,4 +1,5 @@
 import { defineLesson, r } from '../define.ts';
+import { extra } from './02-systems.extra.ts';
 
 export default defineLesson({
   id: 'la-02',
@@ -31,6 +32,18 @@ All the information sits in the numbers, so we drop the letters and keep a table
           variant: 'theorem',
           title: 'Only three possibilities',
           text: r`Every linear system has either <i>no solution</i>, <i>exactly one</i>, or <i>infinitely many</i>. It can never have exactly two: if $\mathbf{p}$ and $\mathbf{q}$ are solutions, so is every point $\mathbf{p} + t(\mathbf{q} - \mathbf{p})$ on the line through them.`,
+        },
+        {
+          kind: 'quiz',
+          id: 'la-02-q1',
+          prompt: r`Is $(x, y) = (1, 2)$ a solution of the system $x + y = 3$, $2x - y = 0$?`,
+          options: [
+            { id: 'a', label: 'Yes: it satisfies both equations' },
+            { id: 'b', label: 'No: it satisfies only the first equation', trapExplanation: r`Check the second one too: $2 \cdot 1 - 2 = 0$. It holds.` },
+            { id: 'c', label: 'No: it satisfies only the second equation', trapExplanation: r`$1 + 2 = 3$, so the first equation holds as well.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`$1 + 2 = 3$ and $2 \cdot 1 - 2 = 0$. A solution must satisfy <i>every</i> equation — this one does.`,
         },
       ],
     },
@@ -82,6 +95,18 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
           title: 'Always check in the original system',
           text: r`Arithmetic slips are the most common error in elimination. Substituting the answer into <i>every</i> original equation takes a few seconds and catches them.`,
         },
+        {
+          kind: 'quiz',
+          id: 'la-02-q2',
+          prompt: r`The rows are $R_1 = (1 \ \ 2 \mid 5)$ and $R_2 = (3 \ \ 1 \mid 5)$. What is $R_2 - 3R_1$?`,
+          options: [
+            { id: 'a', label: r`$(0 \ \ {-5} \mid {-10})$`, value: [0, -5, -10] },
+            { id: 'b', label: r`$(0 \ \ {-5} \mid 10)$`, value: [0, -5, 10], trapExplanation: r`The right side changes too: $5 - 3 \cdot 5 = -10$.` },
+            { id: 'c', label: r`$(2 \ \ {-1} \mid 0)$`, value: [2, -1, 0], trapExplanation: r`That is $R_2 - R_1$. To clear the 3 below the pivot 1 you subtract $3R_1$.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Entry by entry: $3 - 3 = 0$, $1 - 6 = -5$, $5 - 15 = -10$. The $x$ entry is now 0, so $R_2$ reads $-5y = -10$, $y = 2$.`,
+        },
       ],
     },
     {
@@ -108,9 +133,16 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
           text: r`A row $(0\ 0\ 0 \mid 0)$ says $0 = 0$. It is not a contradiction — it only shows that one equation was a combination of the others.`,
         },
         {
-          kind: 'check',
-          prompt: r`An echelon form has rows $(1, 3, 0, 2 \mid 1)$, $(0, 0, 1, -1 \mid 4)$ and $(0, 0, 0, 0 \mid 0)$. How many solutions are there, and which variables are free?`,
-          answer: r`Pivots are in the columns of $x_1$ and $x_3$; there is no contradictory row. So $x_2$ and $x_4$ are free and there are infinitely many solutions (a two-parameter family).`,
+          kind: 'quiz',
+          id: 'la-02-q3',
+          prompt: r`An echelon form has rows $(1, 3, 0, 2 \mid 1)$, $(0, 0, 1, -1 \mid 4)$ and $(0, 0, 0, 0 \mid 0)$. What does it tell you?`,
+          options: [
+            { id: 'a', label: r`Infinitely many solutions; $x_2$ and $x_4$ are free`, value: 2 },
+            { id: 'b', label: r`Infinitely many solutions; only $x_4$ is free`, value: 1, trapExplanation: r`$x_2$ has no pivot either: the pivots are in the columns of $x_1$ and $x_3$ only.` },
+            { id: 'c', label: 'No solution, because of the zero row', value: -1, trapExplanation: r`A zero row with 0 on the right says $0 = 0$, which is harmless. Only $(0 \cdots 0 \mid c)$ with $c \ne 0$ is a contradiction.` },
+          ],
+          correctOptionId: 'a',
+          explanation: r`Pivots are in the columns of $x_1$ and $x_3$; there is no contradictory row. So $x_2$ and $x_4$ are free and there are infinitely many solutions (a two-parameter family).`,
         },
       ],
     },
@@ -132,6 +164,7 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
       ],
     },
   ],
+  extra,
   questions: [
     {
       id: 'la-02-1',
