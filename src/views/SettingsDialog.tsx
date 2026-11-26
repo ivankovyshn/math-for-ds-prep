@@ -1,15 +1,13 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Trash2, Upload, X } from 'lucide-react';
-import { QUESTION_BY_ID } from '../data/questions.ts';
 import { exportProgress, isProgressData, useProgress } from '../store/useProgress.ts';
 import { Button, IconButton } from '../components/ui.tsx';
 
-/** Data management: move progress between devices, reset, exam history. */
+/** Data management: move progress between devices, reset. */
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const exams = useProgress((s) => s.examResults);
 
   const download = () => {
     const blob = new Blob([JSON.stringify(exportProgress(), null, 2)], { type: 'application/json' });
@@ -38,7 +36,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
   };
 
   const reset = () => {
-    if (window.confirm('Delete all progress (XP, streak, completed nodes, mistakes, exams)? This cannot be undone.')) {
+    if (window.confirm('Delete all progress (XP, streak, completed lessons, mistakes)? This cannot be undone.')) {
       useProgress.getState().reset();
       setMessage('Progress reset.');
     }
@@ -72,25 +70,6 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                 <input ref={fileInput} type="file" accept="application/json,.json" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
               </div>
               {message && <p className="rounded-xl bg-accent-soft px-3 py-2 text-sm font-bold" role="status">{message}</p>}
-            </section>
-
-            <section className="space-y-2">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted">Exam history</h3>
-              {exams.length === 0 ? (
-                <p className="text-sm text-muted">No exams taken yet.</p>
-              ) : (
-                <ul className="divide-y-2 divide-line rounded-2xl border-2 border-line">
-                  {exams.slice(0, 8).map((e) => {
-                    const correct = e.questionIds.filter((id) => e.answers[id] === QUESTION_BY_ID[id]?.correctOptionId).length;
-                    return (
-                      <li key={e.id} className="flex justify-between px-3 py-2 text-sm">
-                        <span className="text-muted">{new Date(e.finishedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        <span className="font-extrabold tabular-nums">{correct} / {e.questionIds.length}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
             </section>
 
             <section className="space-y-3">

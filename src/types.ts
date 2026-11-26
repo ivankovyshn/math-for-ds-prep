@@ -32,7 +32,7 @@ export interface Question {
   /** First-principles breakdown, one step per entry. Supports $...$. */
   stepByStepSolution: string[];
   keyConceptTag: string;
-  /** Set on Extra practice (Practice 2) questions; they stay out of boss quizzes and exams. */
+  /** Set on Extra practice (Practice 2) questions; they stay out of module tests. */
   extra?: boolean;
   /**
    * Parametric questions: builds a fresh variant (new numbers, same idea and traps) from a random source.
@@ -125,16 +125,4 @@ export interface MistakeEntry {
   lastMissedAt: string;
   /** Seed of the missed variant of a parametric question, so Review can show the same numbers once. */
   seed?: number;
-}
-
-export interface ExamResult {
-  id: string;
-  finishedAt: string;
-  durationSec: number;
-  timeLimitSec: number;
-  questionIds: string[];
-  /** questionId -> chosen option id (missing = unanswered). */
-  answers: Record<string, string>;
-  /** questionId -> seed of the variant shown (parametric questions only). */
-  seeds?: Record<string, number>;
 }

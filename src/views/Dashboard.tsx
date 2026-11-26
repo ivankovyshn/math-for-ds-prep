@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Check, Crown, Dumbbell, Flame, GraduationCap, Lock, Moon, RotateCcw, Settings as SettingsIcon, Sun, Target, Zap } from 'lucide-react';
+import { BookOpen, Check, Crown, Dumbbell, Flame, Lock, Moon, RotateCcw, Settings as SettingsIcon, Shuffle, Sun, Target, Zap } from 'lucide-react';
 import type { Lesson, ModuleId } from '../types.ts';
-import { BOSS_QUESTIONS, EXAM_QUESTIONS, EXAM_SECONDS, MODULES, bossKey, lessonKey, type ModuleMeta } from '../data/modules.ts';
-import { QUESTIONS, QUESTION_BY_ID, lessonsOf } from '../data/questions.ts';
+import { TEST_QUESTIONS, MODULES, testKey, lessonKey, type ModuleMeta } from '../data/modules.ts';
+import { LESSONS, QUESTION_BY_ID, lessonsOf } from '../data/questions.ts';
 import { currentStreak, useProgress, type ProgressData } from '../store/useProgress.ts';
 import { ModuleIcon, moduleColor } from '../components/ModuleIcon.tsx';
 import { IconButton, ProgressBar } from '../components/ui.tsx';
@@ -13,12 +13,12 @@ interface Props {
   onOpenLecture: (lessonId: string) => void;
   onStartPractice: (lessonId: string) => void;
   onStartExtra: (lessonId: string) => void;
-  onStartBoss: (moduleId: ModuleId) => void;
+  onStartTest: (moduleId: ModuleId) => void;
+  onStartMistakes: () => void;
   onStartReview: () => void;
-  onStartExam: () => void;
 }
 
-export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStartBoss, onStartReview, onStartExam }: Props) {
+export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStartTest, onStartMistakes, onStartReview }: Props) {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => currentStreak(s));
   const theme = useProgress((s) => s.theme);
@@ -27,14 +27,11 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStar
   const lecturesRead = useProgress((s) => s.lecturesRead);
   const extraUnlocked = useProgress((s) => s.extraUnlocked);
   const mistakes = useProgress((s) => s.mistakes);
-  const lastExam = useProgress((s) => s.examResults[0]);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const mistakeIds = Object.keys(mistakes).filter((id) => QUESTION_BY_ID[id]);
   const level = Math.floor(xp / 100) + 1;
-  const lastExamScore = lastExam
-    ? `${lastExam.questionIds.filter((id) => lastExam.answers[id] === QUESTION_BY_ID[id]?.correctOptionId).length}/${lastExam.questionIds.length}`
-    : null;
+  const passedLessons = LESSONS.filter((l) => completed[lessonKey(l.id)]).length;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-16">
@@ -71,21 +68,21 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStar
       {/* Quick actions */}
       <div className="mb-8 grid grid-cols-2 gap-3">
         <ActionCard
-          onClick={onStartReview}
+          onClick={onStartMistakes}
           disabled={mistakeIds.length === 0}
           icon={<RotateCcw size={24} />}
           tone="danger"
-          title="Review Mistakes"
+          title="Mistakes"
           text={mistakeIds.length ? `${mistakeIds.length} to re-solve` : 'Queue is empty'}
           badge={mistakeIds.length || undefined}
         />
         <ActionCard
-          onClick={onStartExam}
-          disabled={QUESTIONS.length === 0}
-          icon={<GraduationCap size={24} />}
+          onClick={onStartReview}
+          disabled={passedLessons === 0}
+          icon={<Shuffle size={24} />}
           tone="accent"
-          title="Exam Simulator"
-          text={lastExamScore ? `Last result ${lastExamScore}` : `${EXAM_QUESTIONS} questions · ${EXAM_SECONDS / 60} min`}
+          title="Review"
+          text={passedLessons ? `Mixed questions from ${passedLessons} passed lesson${passedLessons === 1 ? '' : 's'}` : 'Pass a lesson to unlock'}
         />
       </div>
 
@@ -110,8 +107,8 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStar
               onOpenLecture={onOpenLecture}
               onStartPractice={onStartPractice}
               onStartExtra={onStartExtra}
-              onStartBoss={onStartBoss}
-              onStartReview={onStartReview}
+              onStartTest={onStartTest}
+              onStartMistakes={onStartMistakes}
             />
           </motion.section>
         ))}
@@ -137,15 +134,15 @@ interface PathProps {
   onOpenLecture: (lessonId: string) => void;
   onStartPractice: (lessonId: string) => void;
   onStartExtra: (lessonId: string) => void;
-  onStartBoss: (moduleId: ModuleId) => void;
-  onStartReview: () => void;
+  onStartTest: (moduleId: ModuleId) => void;
+  onStartMistakes: () => void;
 }
 
-function ModulePath({ module: m, number, lessons, completed, lecturesRead, extraUnlocked, pendingMistakes, onOpenLecture, onStartPractice, onStartExtra, onStartBoss, onStartReview }: PathProps) {
+function ModulePath({ module: m, number, lessons, completed, lecturesRead, extraUnlocked, pendingMistakes, onOpenLecture, onStartPractice, onStartExtra, onStartTest, onStartMistakes }: PathProps) {
   const color = moduleColor(m.id);
   const hasContent = lessons.length > 0;
-  const steps = lessons.length + 1; // every lesson + the boss quiz
-  const done = lessons.filter((l) => completed[lessonKey(l.id)]).length + (completed[bossKey(m.id)] ? 1 : 0);
+  const steps = lessons.length + 1; // every lesson + the module test
+  const done = lessons.filter((l) => completed[lessonKey(l.id)]).length + (completed[testKey(m.id)] ? 1 : 0);
   const allDone = hasContent && done === steps;
   // 100 % is reserved for a finished path with no open mistakes.
   const mastery = !hasContent ? 0 : allDone && pendingMistakes > 0 ? 90 : Math.round((done / steps) * 100);
@@ -178,7 +175,7 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, extra
       )}
 
       {allDone && pendingMistakes > 0 && (
-        <button type="button" onClick={onStartReview} className="mx-4 mb-3 block w-[calc(100%-2rem)] rounded-xl bg-danger-soft px-3 py-2 text-left text-sm font-bold text-danger">
+        <button type="button" onClick={onStartMistakes} className="mx-4 mb-3 block w-[calc(100%-2rem)] rounded-xl bg-danger-soft px-3 py-2 text-left text-sm font-bold text-danger">
           Re-solve {pendingMistakes} missed question{pendingMistakes === 1 ? '' : 's'} to reach 100 %
         </button>
       )}
@@ -238,16 +235,16 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, extra
 
           {(() => {
             const unlocked = lessons.every((l) => completed[lessonKey(l.id)]);
-            const best = completed[bossKey(m.id)];
+            const best = completed[testKey(m.id)];
             return (
               <PathRow color={color} done={!!best}>
-                <NodeButton color={color} unlocked={unlocked} pulse={unlocked && !best} done={!!best} label={`Boss Quiz${best ? ', completed' : unlocked ? '' : ', locked'}`} onClick={() => onStartBoss(m.id)}>
+                <NodeButton color={color} unlocked={unlocked} pulse={unlocked && !best} done={!!best} label={`Module Test${best ? ', completed' : unlocked ? '' : ', locked'}`} onClick={() => onStartTest(m.id)}>
                   <Crown size={26} strokeWidth={2.4} />
                 </NodeButton>
-                <button type="button" disabled={!unlocked} onClick={() => onStartBoss(m.id)} className="min-w-0 flex-1 text-left disabled:opacity-50">
-                  <div className="font-extrabold">Boss Quiz</div>
+                <button type="button" disabled={!unlocked} onClick={() => onStartTest(m.id)} className="min-w-0 flex-1 text-left disabled:opacity-50">
+                  <div className="font-extrabold">Module Test</div>
                   <div className="text-sm text-muted">
-                    {best ? `Best ${best.bestCorrect}/${best.total} · tap to try again` : unlocked ? `${BOSS_QUESTIONS} mixed questions from the whole module` : 'Pass every lesson to unlock'}
+                    {best ? `Best ${best.bestCorrect}/${best.total} · tap to try again` : unlocked ? `${TEST_QUESTIONS} mixed questions from the whole module` : 'Pass every lesson to unlock'}
                   </div>
                 </button>
               </PathRow>

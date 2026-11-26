@@ -12,8 +12,11 @@ import { Button, IconButton, Kbd, ProgressBar } from '../components/ui.tsx';
 export interface QuizProps {
   title: string;
   questions: Question[];
-  /** 'lesson' uses hearts and can complete a node; 'review' has no hearts and clears mistakes. */
-  mode: 'lesson' | 'review';
+  /**
+   * 'lesson' uses hearts and can complete a node; 'mistakes' has no hearts and clears mistakes;
+   * 'review' (mixed review of passed lessons) has no hearts and only records new mistakes.
+   */
+  mode: QuizMode;
   nodeKey?: string;
   bonusXp?: number;
   secondsPerQuestion?: number;
@@ -62,9 +65,9 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
     if (phase !== 'answering' || outcome) return;
     if (!timeout && !selected) return;
     const correct = !timeout && selected === q.correctOptionId;
-    recordAnswer(q.id, correct, mode === 'review', q.seed);
+    recordAnswer(q.id, correct, mode === 'mistakes', q.seed);
     if (correct) {
-      const xp = mode === 'review' ? 5 : xpForQuestion(q);
+      const xp = mode === 'mistakes' ? 5 : xpForQuestion(q);
       addXp(xp);
       setLastXp(xp);
       setXpEarned((v) => v + xp);
@@ -308,10 +311,11 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
 }
 
 type Outcome = 'passed' | 'failed' | 'extra';
+export type QuizMode = 'lesson' | 'mistakes' | 'review';
 
 function ResultScreen(p: {
   outcome: Outcome;
-  mode: 'lesson' | 'review';
+  mode: QuizMode;
   title: string;
   correct: number;
   total: number;
@@ -349,7 +353,7 @@ function ResultScreen(p: {
       </motion.div>
       <div>
         <h1 className="text-3xl font-extrabold">
-          {passed ? (p.mode === 'review' ? 'Review complete' : 'Complete!') : extra ? 'Almost there' : 'Out of hearts'}
+          {passed ? (p.mode === 'mistakes' ? 'Mistakes cleared up' : p.mode === 'review' ? 'Review complete' : 'Complete!') : extra ? 'Almost there' : 'Out of hearts'}
         </h1>
         <p className="mt-2 text-muted">
           {extra
@@ -358,13 +362,17 @@ function ResultScreen(p: {
               ? 'Three mistakes end a session. Extra practice is now open: new, gentler questions on the same ideas. Passing it unlocks the next lesson.'
               : passed
             ? p.mode === 'review'
+              ? p.correct === p.total
+                ? 'A clean sheet: every topic you have passed is still solid.'
+                : `${p.total - p.correct} missed question${p.total - p.correct === 1 ? '' : 's'} went to Mistakes. Re-solve them there.`
+              : p.mode === 'mistakes'
               ? pending > 0
-                ? `${pending} question${pending === 1 ? '' : 's'} still in your review queue. A question leaves the queue after two correct answers in a row.`
-                : 'Your review queue is empty. Every missed concept has been re-solved.'
+                ? `${pending} question${pending === 1 ? '' : 's'} still in Mistakes. A question leaves after two correct answers in a row.`
+                : 'Mistakes is empty: every missed concept has been re-solved.'
               : p.title
             : p.onOpenLecture
-              ? 'Three mistakes end a session. Re-read the lecture — the missed questions are also waiting in Review Mistakes.'
-              : 'Three mistakes end a session. The missed questions are waiting in Review Mistakes — study the breakdowns, then try again.'}
+              ? 'Three mistakes end a session. Re-read the lecture — the missed questions are also waiting in Mistakes.'
+              : 'Three mistakes end a session. The missed questions are waiting in Mistakes — study the breakdowns, then try again.'}
         </p>
       </div>
       <div className="grid w-full grid-cols-3 gap-3">

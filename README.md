@@ -21,10 +21,11 @@ Runs entirely in the browser. No account, no server, no API keys.
   6 new, gentler questions on the same ideas and traps. Passing it also passes the lesson.
 - **Feedback drawer** — after every answer: the step-by-step first-principles breakdown and, if you were wrong,
   an explanation of why the option you picked is a trap.
-- **Boss Quiz** — 8 mixed questions from the whole module, unlocked after every lesson is passed.
-- **Review Mistakes** — every missed question is queued. It leaves the queue after two correct answers in a row.
+- **Module Test** — 8 mixed questions from the whole module, unlocked after every lesson is passed.
+- **Mistakes** — every missed question is queued. It leaves the queue after two correct answers in a row.
   A module shows 100 % only when its path is finished *and* its queue is empty.
-- **Exam Simulator** — 10 mixed questions in 15 minutes, no feedback until the end, then a diagnostic by topic.
+- **Review** — 15 mixed questions from the lessons passed so far, spread evenly over them; a lesson joins the
+  pool as soon as it is passed. No hearts, instant feedback; missed questions go to Mistakes.
 - Numeric questions are parametric: every attempt brings new numbers (same idea, same traps).
 - Every answer key is re-computed by `npm run verify` — for parametric questions, on 300 generated variants each.
 - Dark mode by default, light mode toggle. Keyboard: `1`–`5` select, `Enter` check / continue, `←` `→` in lectures.
@@ -136,8 +137,8 @@ The deployment runs the same check, so a broken question cannot be published.
 ### Parametric questions (fresh numbers on every attempt)
 
 A numeric question can be written as a template: `generate` draws random values from a seeded source and
-returns the prompt, options, traps and solution built from them. Every practice session, boss quiz and exam
-draws new numbers; Review Mistakes first shows the exact numbers that were missed (the seed is stored), then
+returns the prompt, options, traps and solution built from them. Every practice session, module test and review
+draws new numbers; Mistakes first shows the exact numbers that were missed (the seed is stored), then
 fresh ones. Linear Algebra uses templates for all numeric questions (`NN-name.practice.ts`, `NN-name.extra.ts`).
 
 ```ts

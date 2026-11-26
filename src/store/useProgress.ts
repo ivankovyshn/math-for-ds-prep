@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ExamResult, MistakeEntry } from '../types.ts';
+import type { MistakeEntry } from '../types.ts';
 
 /**
  * Everything that describes a learner. This is the only state that is persisted.
@@ -11,7 +11,6 @@ import type { ExamResult, MistakeEntry } from '../types.ts';
  *   lectures_read(lesson_id, read_at)
  *   extra_unlocked(lesson_id, unlocked_at)
  *   mistakes(question_id, misses, correct_streak, last_missed_at)
- *   exam_results(id, finished_at, duration_sec, time_limit_sec, question_ids, answers)
  * To move to Supabase/PostgreSQL, replace the `persist` storage below with an
  * adapter that reads and writes these rows; the components do not need to change.
  */
@@ -26,7 +25,6 @@ export interface ProgressData {
   /** lessonId -> ISO time Extra practice was opened by a Practice 1 with two or more mistakes. */
   extraUnlocked: Record<string, string>;
   mistakes: Record<string, MistakeEntry>;
-  examResults: ExamResult[];
   theme: 'dark' | 'light';
 }
 
@@ -37,7 +35,6 @@ interface ProgressActions {
   completeNode: (key: string, correct: number, total: number) => void;
   markLectureRead: (lessonId: string) => void;
   unlockExtra: (lessonId: string) => void;
-  saveExam: (result: ExamResult) => void;
   touchStreak: () => void;
   toggleTheme: () => void;
   importData: (data: ProgressData) => void;
@@ -52,7 +49,6 @@ const initial: ProgressData = {
   lecturesRead: {},
   extraUnlocked: {},
   mistakes: {},
-  examResults: [],
   theme: 'dark',
 };
 
@@ -114,8 +110,6 @@ export const useProgress = create<ProgressData & ProgressActions>()(
       unlockExtra: (lessonId) =>
         set((s) => (s.extraUnlocked[lessonId] ? {} : { extraUnlocked: { ...s.extraUnlocked, [lessonId]: new Date().toISOString() } })),
 
-      saveExam: (result) => set((s) => ({ examResults: [result, ...s.examResults].slice(0, 30) })),
-
       touchStreak: () =>
         set((s) => {
           const today = localDate();
@@ -128,18 +122,22 @@ export const useProgress = create<ProgressData & ProgressActions>()(
 
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
-      importData: (data) => set({ ...initial, ...data }),
+      // Files exported before v3 may still carry exam results; only known fields are taken.
+      importData: ({ xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme }) =>
+        set({ ...initial, xp, streakCount, lastActiveDate, completedNodes, lecturesRead: lecturesRead ?? {}, extraUnlocked: extraUnlocked ?? {}, mistakes, theme: theme ?? 'dark' }),
 
       reset: () => set((s) => ({ ...initial, theme: s.theme })),
     }),
     {
       name: 'mathds-progress',
-      version: 2,
+      version: 3,
       // v1 was the entrance-exam trainer: its questions are gone, so only XP, streak and theme carry over.
       migrate: (persisted, version) => {
         const old = (persisted ?? {}) as Partial<ProgressData>;
         if (version < 2) return { ...initial, xp: old.xp ?? 0, streakCount: old.streakCount ?? 0, lastActiveDate: old.lastActiveDate ?? null, theme: old.theme ?? 'dark' };
-        return { ...initial, ...old };
+        // v3 retired the exam simulator: its results are dropped.
+        const { examResults: _dropped, ...rest } = old as Partial<ProgressData> & { examResults?: unknown };
+        return { ...initial, ...rest };
       },
     },
   ),
@@ -152,8 +150,8 @@ export function currentStreak(s: Pick<ProgressData, 'streakCount' | 'lastActiveD
 }
 
 export function exportProgress(): ProgressData {
-  const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, examResults, theme } = useProgress.getState();
-  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, examResults, theme };
+  const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme } = useProgress.getState();
+  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme };
 }
 
 export function isProgressData(x: unknown): x is ProgressData {
@@ -162,7 +160,6 @@ export function isProgressData(x: unknown): x is ProgressData {
   return (
     typeof d.xp === 'number' &&
     typeof d.completedNodes === 'object' && d.completedNodes !== null &&
-    typeof d.mistakes === 'object' && d.mistakes !== null &&
-    Array.isArray(d.examResults)
+    typeof d.mistakes === 'object' && d.mistakes !== null
   );
 }
