@@ -23,7 +23,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'calculus',
     title: 'Calculus & Analysis',
     blurb: 'Limits, derivatives, integrals and gradients in many variables',
-    planned: ['Limits and continuity', 'The derivative', "Taylor's formula", 'The integral', 'Partial derivatives and the gradient', 'The multivariable chain rule', 'Jacobians and Hessians'],
   },
   {
     id: 'probability',

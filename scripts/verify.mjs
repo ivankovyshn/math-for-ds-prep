@@ -1161,6 +1161,270 @@ Object.assign(checks, {
   },
 });
 
+// ---------- calculus: everything numerically, from the function itself ----------
+/** Polynomial from ascending coefficients. */
+const P = (cs) => (x) => cs.reduce((s, c, i) => s + c * x ** i, 0);
+/** Two-sided limit: the average of f just left and right of a (both sides must agree). */
+const limitAt = (f, a, h = 1e-6) => {
+  const [l, r] = [f(a - h), f(a + h)];
+  if (Math.abs(l - r) > 1e-3) throw new Error(`one-sided limits differ: ${l} vs ${r}`);
+  return { v: (l + r) / 2, tol: 1e-4 };
+};
+const atInfinity = (f) => ({ v: f(1e7), tol: 1e-4 });
+/** Derivative by a central difference with Richardson extrapolation. */
+const D1 = (f, x) => {
+  const d = (h) => (f(x + h) - f(x - h)) / (2 * h);
+  return (4 * d(5e-4) - d(1e-3)) / 3;
+};
+/** n-th derivative by repeated central differences (Richardson-extrapolated); fine for n ≤ 4. */
+const binom = (n, k) => (k < 0 || k > n ? 0 : k === 0 ? 1 : (binom(n - 1, k - 1) * n) / k);
+const Dn = (f, x, n) => {
+  if (n === 0) return f(x);
+  const d = (h) => range(0, n).reduce((s, k) => s + (-1) ** k * binom(n, k) * f(x + (n / 2 - k) * h), 0) / h ** n;
+  return (4 * d(0.01) - d(0.02)) / 3;
+};
+/** Simpson's rule. */
+const integral = (f, a, b, n = 2000) => {
+  const h = (b - a) / n;
+  let s = f(a) + f(b);
+  for (let i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * f(a + i * h);
+  return (s * h) / 3;
+};
+const near = (v, tol = 1e-5) => ({ v, tol });
+
+// ca-01 · limits and continuity
+Object.assign(checks, {
+  'ca-01-q1': () => limitAt((x) => (x * x - 4) / (x - 2), 2),
+  'ca-01-q2': () => atInfinity((x) => (5 * x ** 3 - x) / (2 * x ** 3 + 7)),
+  'ca-01-q3': () => {
+    // The k for which the right piece at x = 2 equals the left limit.
+    const left = limitAt((x) => x * x + 1, 2).v;
+    return near((left + 1) / 2);
+  },
+  'ca-01-1': ({ cs, a }) => limitAt(P(cs), a),
+  'ca-01-2': ({ num, den, a }) => limitAt((x) => P(num)(x) / P(den)(x), a),
+  'ca-01-3': ({ num, den }) => atInfinity((x) => P(num)(x) / P(den)(x)),
+  'ca-01-4': ({ k, m }) => limitAt((x) => Math.sin(k * x) / (m * x), 0),
+  'ca-01-5': ({ a, c, d }) => near((a * (a - 1e-9) + c - d) / a, 1e-6),
+  'ca-01-6': ({ a, k }) => limitAt((x) => (Math.sqrt(k * x + a * a) - a) / x, 0, 1e-5),
+  'ca-01-x1': ({ cs, a }) => limitAt(P(cs), a),
+  'ca-01-x2': ({ num, den }) => atInfinity((x) => P(num)(x) / P(den)(x)),
+  'ca-01-x3': ({ num, den, a }) => limitAt((x) => P(num)(x) / P(den)(x), a),
+  'ca-01-x4': ({ num, den, a }) => limitAt((x) => P(num)(x) / P(den)(x), a),
+  'ca-01-x5': ({ k, m }) => limitAt((x) => Math.sin(k * x) / (m * x), 0),
+  'ca-01-x6': ({ cs, a }) => limitAt(P(cs), a),
+});
+
+// ca-02 · the derivative
+const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+/** Points where f' changes sign from − to + (local minima), scanning [lo, hi]. */
+const localMinima = (f, lo = -10, hi = 10, step = 1e-3) => {
+  const out = [];
+  let prev = D1(f, lo);
+  for (let x = lo + step; x <= hi; x += step) {
+    const d = D1(f, x);
+    if (prev < 0 && d >= 0) out.push(x);
+    prev = d;
+  }
+  return out;
+};
+/** Is f decreasing exactly on {x : dir·(x − bound) > 0}? Probed at a few points on each side. */
+const decreasingOn = (f, [dir, bound]) => () =>
+  [0.3, 1, 3].every((t) => D1(f, bound + dir * t) < 0 && D1(f, bound - dir * t) > 0);
+Object.assign(checks, {
+  'ca-02-q1': () => {
+    const f = (x) => x * x;
+    return (f(3) - f(1)) / (3 - 1);
+  },
+  'ca-02-q2': () => D1(P([7, -5, 0, 2]), 1),
+  'ca-02-q3': () => D1((x) => x * Math.exp(x), 0),
+  'ca-02-1': ({ cs, a }) => D1(P(cs), a),
+  'ca-02-2': ({ cs, a }) => {
+    const m = D1(P(cs), a);
+    return [P(cs)(a) - m * a, m];
+  },
+  'ca-02-3': ({ p, q, k }) => D1((x) => (p * x + q) * Math.exp(k * x), 0),
+  'ca-02-4': ({ p, q, n, a }) => D1((x) => (p * x + q) ** n, a),
+  'ca-02-5': ({ cs }) => {
+    const mins = localMinima(P(cs));
+    if (mins.length !== 1) throw new Error(`expected one local minimum, got ${mins.length}`);
+    return { v: mins[0], tol: 2e-3 };
+  },
+  'ca-02-6': ({ pn, pd }) => {
+    const p = pn / pd;
+    return D1(sigmoid, Math.log(p / (1 - p)));
+  },
+  'ca-02-x1': ({ cs, a }) => D1(P(cs), a),
+  'ca-02-x2': ({ cs }) => [D1(P(cs), 0), D1(P(cs), 1) - D1(P(cs), 0)],
+  'ca-02-x3': ({ cs, a, b }) => (P(cs)(b) - P(cs)(a)) / (b - a),
+  'ca-02-x4': ({ p, q, a }) => D1((x) => Math.log(p * x + q), a),
+  'ca-02-x5': ({ cs, a }) => D1(P(cs), a),
+  'ca-02-x6': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, decreasingOn(P(p.cs), p[id])]))),
+});
+
+// ca-03 · Taylor's formula
+/** Taylor coefficient f^(n)(a) / n!, from numerical derivatives (relative tolerance for higher orders). */
+const taylorCoef = (f, a, n) => Dn(f, a, n) / factorial(n);
+const rel = (v, r = 1e-3) => ({ v, tol: r * Math.max(1, Math.abs(v)) });
+/** Value of the degree-n Taylor polynomial of f at 0, evaluated at h. */
+const taylorAt = (f, n, h) => range(0, n).reduce((s, j) => s + taylorCoef(f, 0, j) * h ** j, 0);
+Object.assign(checks, {
+  'ca-03-q1': () => Math.exp(0) + D1(Math.exp, 0) * 0.1,
+  'ca-03-q2': () => rel(taylorCoef(Math.exp, 0, 3)),
+  'ca-03-q3': () => rel(taylorCoef((x) => Math.exp(3 * x), 0, 2)),
+  'ca-03-1': ({ s, d }) => s + D1(Math.sqrt, s * s) * d,
+  'ca-03-2': ({ k, n }) => rel(taylorCoef((x) => Math.exp(k * x), 0, n)),
+  'ca-03-3': ({ k }) => ({ v: [0, 1, 2].map((j) => taylorCoef((x) => 1 / (1 - k * x), 0, j)), tol: 1e-3 }),
+  'ca-03-4': ({ k }) => rel(taylorCoef((x) => Math.sin(k * x), 0, 3)),
+  'ca-03-5': ({ k, h }) => near(taylorAt((x) => Math.exp(k * x), 2, h), 1e-6),
+  'ca-03-6': ({ n, a }) => rel(taylorCoef((x) => x ** n, a, 2)),
+  'ca-03-x1': ({ a, y0, m, h }) => y0 + D1((x) => y0 + m * (x - a) + 2 * (x - a) ** 2, a) * h,
+  'ca-03-x2': ({ n }) => rel(taylorCoef(Math.exp, 0, n)),
+  'ca-03-x3': ({ k }) => [Math.exp(0), D1((x) => Math.exp(k * x), 0)],
+  'ca-03-x4': ({ k }) => rel(taylorCoef((x) => Math.cos(k * x), 0, 2)),
+  'ca-03-x5': ({ n, a }) => D1((x) => x ** n, a),
+  'ca-03-x6': ({ h }) => near(taylorAt((x) => Math.log(1 + x), 2, h), 1e-6),
+});
+
+// ca-04 · the integral
+/** Is F an antiderivative of f? Compared at a few points. */
+const isAntiderivative = (F, f) => () => [-1.3, -0.4, 0.7, 1.6].every((x) => Math.abs(D1(F, x) - f(x)) < 1e-6 * Math.max(1, Math.abs(f(x))));
+Object.assign(checks, {
+  'ca-04-q1': () => range(0, 3).reduce((s, i) => s + i * 1, 0),
+  'ca-04-q2': () => {
+    const f = (x) => 6 * x * x;
+    return pickId({ a: isAntiderivative((x) => 2 * x ** 3, f), b: isAntiderivative((x) => 12 * x, f), c: isAntiderivative((x) => 6 * x ** 3, f) });
+  },
+  'ca-04-q3': () => integral(Math.sin, 0, Math.PI),
+  'ca-04-1': ({ cs, a, b }) => integral(P(cs), a, b),
+  'ca-04-2': (p) => {
+    const f = (x) => p.k * x ** p.n;
+    return pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, isAntiderivative(P(p[id]), f)])));
+  },
+  'ca-04-3': ({ cs, a, b }) => integral(P(cs), a, b),
+  'ca-04-4': ({ cs, a, b }) => integral(P(cs), a, b),
+  'ca-04-5': ({ c, m, n }) => integral((x) => 2 * x * (x * x + m) ** n, 0, c),
+  'ca-04-6': ({ n }) => integral((x) => x * (n + 1) * x ** n, 0, 1),
+  'ca-04-x1': ({ cs, a, b }) => integral(P(cs), a, b),
+  'ca-04-x2': ({ k }) => {
+    const f = (x) => Math.exp(k * x);
+    return pickId({
+      a: isAntiderivative((x) => Math.exp(k * x) / k, f),
+      b: isAntiderivative((x) => k * Math.exp(k * x), f),
+      c: isAntiderivative((x) => Math.exp(k * x), f),
+      d: isAntiderivative((x) => Math.exp((k + 1) * x) / (k + 1), f),
+    });
+  },
+  'ca-04-x3': ({ n }) => range(0, n - 1).reduce((s, i) => s + i * i * 1, 0),
+  'ca-04-x4': ({ cs, a, b }) => integral(P(cs), a, b),
+  'ca-04-x5': ({ c, a }) => D1((x) => integral((t) => t * t + c, 0, x), a),
+  'ca-04-x6': ({ p, b }) => integral((x) => p * x, 0, b) / b,
+});
+
+// ca-05 · partial derivatives and the gradient
+/** Numerical gradient of f(x₁, …, xₙ) at the point P. */
+const grad = (f, P) => P.map((_, i) => D1((t) => f(...P.map((x, j) => (j === i ? t : x))), P[i]));
+/** Numerical Hessian: differentiate the numerical gradient once more. */
+const hessian = (f, P) => P.map((_, i) => grad((...Q) => grad(f, Q)[i], P));
+const quad2 = ([a, b, c]) => (x, y) => a * x * x + b * x * y + c * y * y;
+Object.assign(checks, {
+  'ca-05-q1': () => grad((x, y) => 3 * x * x + x * y, [1, 2])[0],
+  'ca-05-q2': () => norm(grad((x, y) => x * x + y * y, [3, 4])),
+  'ca-05-q3': () => sub2([4, -2], grad((x, y) => x * x + y * y, [4, -2]).map((d) => 0.25 * d)),
+  'ca-05-1': ({ k, P }) => grad(quad2(k), P)[0],
+  'ca-05-2': ({ k: [a, b, c], P }) => grad((x, y) => a * x + b * y + c * x * y, P),
+  'ca-05-3': ({ k: [a, c], P }) => norm(grad((x, y) => a * x * x + c * y * y, P)),
+  'ca-05-4': ({ P, u }) => dot(grad((x, y) => x * x * y, P), u),
+  'ca-05-5': ({ k: [a, b], P, eta }) => sub2(P, grad((x, y) => a * x * x + b * y * y, P).map((d) => eta * d)),
+  'ca-05-6': ({ k: [a, b, c, d, e] }) => {
+    // A quadratic is its own second-order Taylor polynomial: solve H x = -∇f(0).
+    const f = (x, y) => a * x * x + b * x * y + c * y * y + d * x + e * y;
+    return near(solve(hessian(f, [0, 0]), grad(f, [0, 0]).map((v) => -v)), 1e-4);
+  },
+  'ca-05-x1': ({ k: [a, b, c] }) => grad((x, y) => a * x + b * y + c, [0.3, -1.2]),
+  'ca-05-x2': ({ P }) => grad((x, y) => x * x * y ** 3, P)[1],
+  'ca-05-x3': ({ grad: gr }) => norm(gr),
+  'ca-05-x4': ({ w, t, eta }) => w - eta * D1((v) => (v - t) ** 2, w),
+  'ca-05-x5': ({ grad: gr }) => gr.map((x) => -x / norm(gr)),
+  'ca-05-x6': ({ a, b }) => grad((x, y) => Math.exp(a * x + b * y), [0, 0])[0],
+});
+
+// ca-06 · the multivariable chain rule: differentiate the whole composition numerically
+const logit = (p) => Math.log(p / (1 - p));
+Object.assign(checks, {
+  'ca-06-q1': () => D1((t) => t * t * (3 * t), 1),
+  'ca-06-q2': () => D1((b) => (2 * 3 + b) ** 2, 1),
+  'ca-06-q3': () => D1((w) => 0.5 * (w * 3 - 4) ** 2, 2),
+  'ca-06-1': ({ a, b, c, t }) => D1((s) => a * s * (b * s + c), t),
+  'ca-06-2': ({ x0, g0, g1, A, B }) => {
+    // Concrete f and g with exactly these values: g linear, f quadratic with f'(g0) = A and f'(x0) = B.
+    const g = (x) => g0 + g1 * (x - x0);
+    const al = (A - B) / (2 * (g0 - x0));
+    const be = A - 2 * al * g0;
+    return D1((x) => al * g(x) ** 2 + be * g(x), x0);
+  },
+  'ca-06-3': ({ w, x, b }) => D1((v) => (v * x + b) ** 2, w),
+  'ca-06-4': ({ s, t }) => D1((v) => (s + v) ** 2 * (s - v), t),
+  'ca-06-5': ({ w1, w2, x, y }) => D1((v) => 0.5 * (w2 * Math.max(0, v * x) - y) ** 2, w1),
+  'ca-06-6': ({ pn, pd, y, x }) => {
+    const w = logit(pn / pd) / x;
+    const L = (v) => {
+      const p = sigmoid(v * x);
+      return -(y * Math.log(p) + (1 - y) * Math.log(1 - p));
+    };
+    return D1(L, w);
+  },
+  'ca-06-x1': ({ A, B, a }) => D1((x) => A * (2 + B * (x - a)), a),
+  'ca-06-x2': ({ a, b, t }) => D1((s) => a * s + (b * s) ** 2, t),
+  'ca-06-x3': ({ p, y }) => D1((v) => (v - y) ** 2, p),
+  'ca-06-x4': ({ a, b, x }) => D1((v) => (a * v + b) ** 2, x),
+  'ca-06-x5': ({ k, c }) => D1((t) => Math.exp(t) * (c + k * t), 0),
+  'ca-06-x6': ({ w, x, y }) => D1((v) => 0.5 * (v * x - y) ** 2, w),
+});
+
+// ca-07 · Jacobians and Hessians
+/** Numerical Jacobian of F: ℝⁿ → ℝᵐ (F returns an array) at P. */
+const jac = (F, P) => {
+  const m = F(...P).length;
+  return range(0, m - 1).map((i) => grad((...Q) => F(...Q)[i], P));
+};
+/** Second-derivative test from a numerical Hessian: 0 min, 1 max, 2 saddle, 3 inconclusive. */
+const criticalKind = (f, P) => {
+  const H = hessian(f, P);
+  const d = H[0][0] * H[1][1] - H[0][1] * H[1][0];
+  if (Math.abs(d) < 1e-5) return 3;
+  return d < 0 ? 2 : H[0][0] > 0 ? 0 : 1;
+};
+const quadForm = (A) => (...x) => 0.5 * dot(x, mulVec(A, x));
+Object.assign(checks, {
+  'ca-07-q1': () => flat(jac((x, y) => [x + y, x * y], [2, 3])),
+  'ca-07-q2': () => flat(hessian((x, y) => x * x + 3 * x * y + 2 * y * y, [0.4, -0.7])),
+  'ca-07-q3': () => {
+    const k = criticalKind((x, y) => x * x - 4 * x * y + y * y, [0, 0]);
+    return pickId({ a: () => k === 2, b: () => k === 0, c: () => k === 1 });
+  },
+  'ca-07-1': ({ M }) => flat(jac((x, y) => mulVec(M, [x, y]), [0.3, 0.8])),
+  'ca-07-2': ({ k }) => flat(hessian(quad2(k), [0.5, -0.3])),
+  'ca-07-3': ({ P }) => flat(jac((x, y) => [x * x * y, x + y ** 3], P)),
+  'ca-07-4': ({ k, order }) => byClass(criticalKind(quad2(k), [0, 0]), order),
+  'ca-07-5': ({ A, b, x0 }) => {
+    const f = (...x) => quadForm(A)(...x) - dot(b, x);
+    const step = solve(hessian(f, x0), grad(f, x0));
+    return near(sub2(x0, step), 1e-4);
+  },
+  'ca-07-6': ({ P }) => hessian((x, y) => x ** 3 * y * y, P)[0][1],
+  'ca-07-x1': ({ a, b, c }) => flat(jac((x, y) => [a * x + b, c * y], [0.7, -0.2])),
+  'ca-07-x2': ({ k }) => flat(hessian(quad2(k), [0.5, -0.3])),
+  'ca-07-x3': ({ n, m }) => {
+    const M = range(1, m).map((i) => range(1, n).map((j) => i + 2 * j));
+    const J = jac((...x) => mulVec(M, x), Array(n).fill(0.5));
+    return [J.length, J[0].length];
+  },
+  'ca-07-x4': ({ H, order }) => byClass(criticalKind(quadForm(H), [0, 0]), order),
+  'ca-07-x5': ({ a, b, P }) => hessian((x, y) => a * x * x * y + b * x * y ** 3, P)[0][1],
+  'ca-07-x6': ({ M }) => Math.abs(det(jac((x, y) => mulVec(M, [x, y]), [0.1, 0.2]))),
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */

@@ -9,7 +9,7 @@ Runs entirely in the browser. No account, no server, no API keys.
 ## What is inside
 
 - **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
-  Optimization, Programming Foundations. Mathematical Language (6 lessons) and Linear Algebra (11 lessons) are
+  Optimization, Programming Foundations. Mathematical Language (6 lessons), Linear Algebra (11 lessons) and Calculus & Analysis (7 lessons) are
   available; the other modules show their planned lessons as "coming soon".
 - **Lessons** — lecture → Practice 1 → (Extra practice if needed) → next lesson. The lecture is shown one
   section at a time, with definition / key-fact / trap boxes, step-by-step worked examples and 2–3 quick checks:
@@ -139,7 +139,8 @@ The deployment runs the same check, so a broken question cannot be published.
 A numeric question can be written as a template: `generate` draws random values from a seeded source and
 returns the prompt, options, traps and solution built from them. Every practice session, module test and review
 draws new numbers; Mistakes first shows the exact numbers that were missed (the seed is stored), then
-fresh ones. Linear Algebra and Mathematical Language use templates (`NN-name.practice.ts`, `NN-name.extra.ts`); in
+fresh ones. All three modules use templates (`NN-name.practice.ts`, `NN-name.extra.ts`). Calculus answers are re-checked
+numerically from the function itself (finite differences, Simpson's rule, limits evaluated near the point); in
 logic and proofs the variation comes from pools of statements, sets and functions rather than only from numbers.
 
 ```ts

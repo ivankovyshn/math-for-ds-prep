@@ -456,6 +456,159 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
     },
   },
 
+  tangent: {
+    title: 'A curve with a point a on it: two secant lines through a and points further right, and the tangent line at a that the secants approach',
+    viewBox: '0 0 300 210',
+    body: () => {
+      const p = plane(30, 190, 40);
+      const f = (x: number) => 0.1 * x * x + 0.5;
+      const a = 2.5;
+      const curve = Array.from({ length: 61 }, (_, i) => p(0.2 + i * 0.105, f(0.2 + i * 0.105)).join(',')).join(' ');
+      const line = (x0: number, x1: number, slope: number) => [p(x0, f(a) + slope * (x0 - a)), p(x1, f(a) + slope * (x1 - a))];
+      const sec = (b: number) => line(0.6, b + 0.6, (f(b) - f(a)) / (b - a));
+      const tan = line(0.4, 6.2, 0.2 * a);
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={15} x1={290} y0={10} y1={200} />
+          <polyline points={curve} {...thin} strokeWidth={2.2} />
+          {[5.5, 4].map((b, i) => (
+            <g key={b}>
+              <line x1={sec(b)[0][0]} y1={sec(b)[0][1]} x2={sec(b)[1][0]} y2={sec(b)[1][1]} stroke={YELLOW} strokeWidth={1.8} strokeDasharray="6 4" opacity={i ? 0.85 : 0.5} />
+              <Dot at={p(b, f(b))} color={YELLOW} />
+            </g>
+          ))}
+          <line x1={tan[0][0]} y1={tan[0][1]} x2={tan[1][0]} y2={tan[1][1]} stroke={BLUE} strokeWidth={2.8} />
+          <Dot at={p(a, f(a))} color={GREEN} />
+          <Text at={p(a, f(a))} dx={4} dy={22} color={GREEN}>a</Text>
+          <Text at={p(5.5, f(5.5))} dx={-30} dy={-6} color={YELLOW} style={caption}>secant</Text>
+          <Text at={tan[1]} dx={-22} dy={22} color={BLUE} style={caption}>tangent</Text>
+          <Text at={p(6.2, f(6.2))} dx={-6} dy={-10}>f</Text>
+        </>
+      );
+    },
+  },
+
+  taylor: {
+    title: 'The graph of sin x with its Taylor polynomials T1(x) = x and T3(x) = x − x³/6 around 0; T3 stays close to sin x over a wider range',
+    viewBox: '0 0 320 200',
+    body: () => {
+      const p = plane(160, 100, 36);
+      const path = (f: (x: number) => number, lo: number, hi: number) =>
+        Array.from({ length: 121 }, (_, i) => lo + ((hi - lo) * i) / 120)
+          .map((x) => [x, f(x)] as const)
+          .filter(([, y]) => Math.abs(y) < 2.6)
+          .map(([x, y]) => p(x, y).join(','))
+          .join(' ');
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={10} x1={310} y0={8} y1={192} />
+          <polyline points={path(Math.sin, -4.1, 4.1)} {...thin} strokeWidth={2.4} />
+          <polyline points={path((x) => x, -2.6, 2.6)} fill="none" stroke={YELLOW} strokeWidth={2} strokeDasharray="6 4" />
+          <polyline points={path((x) => x - x ** 3 / 6, -4.1, 4.1)} fill="none" stroke={BLUE} strokeWidth={2.2} />
+          <Text at={p(2.3, 2.3)} dx={18} dy={6} color={YELLOW} style={caption}>T₁</Text>
+          <Text at={p(3.6, -0.9)} dx={-6} dy={22} color={BLUE} style={caption}>T₃</Text>
+          <Text at={p(-2.9, -0.55)} dy={22} style={caption}>sin x</Text>
+        </>
+      );
+    },
+  },
+
+  riemann: {
+    title: 'An increasing curve over an interval split into five strips; each rectangle takes its height from the left end of its strip, so the rectangles stay under the curve',
+    viewBox: '0 0 300 200',
+    body: () => {
+      const p = plane(30, 180, 42);
+      const f = (x: number) => 0.11 * x * x + 0.5;
+      const [a, b, n] = [0.5, 5.5, 5];
+      const w = (b - a) / n;
+      const curve = Array.from({ length: 61 }, (_, i) => p(0.2 + i * 0.095, f(0.2 + i * 0.095)).join(',')).join(' ');
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={12} x1={292} y0={8} y1={192} />
+          {Array.from({ length: n }, (_, i) => {
+            const x = a + i * w;
+            const [x0, y0] = p(x, f(x));
+            const [x1, y1] = p(x + w, 0);
+            return <rect key={i} x={x0} y={y0} width={x1 - x0} height={y1 - y0} fill={BLUE} fillOpacity={0.22} stroke={BLUE} strokeWidth={1.4} />;
+          })}
+          <polyline points={curve} {...thin} strokeWidth={2.4} />
+          <Text at={p(a, 0)} dy={16} style={caption}>a</Text>
+          <Text at={p(b, 0)} dy={16} style={caption}>b</Text>
+          <Text at={p(5.9, f(5.9))} dx={-4} dy={-10}>f</Text>
+          <Text at={p(a + 2.5 * w, 0)} dy={16} color={BLUE} style={caption}>Δx</Text>
+        </>
+      );
+    },
+  },
+
+  contours: {
+    title: 'Level curves of f(x, y) = x² + 2y² are nested ellipses; at a point on one of them the gradient arrow points outward, perpendicular to the curve, and minus the gradient points inward',
+    viewBox: '0 0 300 200',
+    body: () => {
+      const c: Pt = [150, 100];
+      const u = 38;
+      const P: Pt = [1.6, Math.sqrt((4 - 1.6 * 1.6) / 2)];
+      const g: Pt = [2 * P[0], 4 * P[1]];
+      const at = (x: number, y: number): Pt => [c[0] + u * x, c[1] - u * y];
+      const k = 0.32;
+      return (
+        <>
+          <Axes o={c} x0={10} x1={290} y0={8} y1={192} />
+          {[1, 2, 4, 7].map((lvl) => (
+            <ellipse key={lvl} cx={c[0]} cy={c[1]} rx={u * Math.sqrt(lvl)} ry={u * Math.sqrt(lvl / 2)} {...thin} opacity={lvl === 4 ? 0.85 : 0.4} />
+          ))}
+          <Arrow from={at(...P)} to={at(P[0] + k * g[0], P[1] + k * g[1])} color={GREEN} width={2.8} />
+          <Arrow from={at(...P)} to={at(P[0] - k * g[0] * 0.6, P[1] - k * g[1] * 0.6)} color={YELLOW} width={2.4} dash="5 4" />
+          <Dot at={at(...P)} />
+          <Text at={at(P[0] + k * g[0], P[1] + k * g[1])} dx={18} dy={4} color={GREEN} style={caption}>∇f</Text>
+          <Text at={at(P[0] - k * g[0] * 0.6, P[1] - k * g[1] * 0.6)} dx={16} dy={18} color={YELLOW} style={caption}>−∇f</Text>
+          <Text at={at(0, 0)} dx={-16} dy={16} style={caption}>min</Text>
+        </>
+      );
+    },
+  },
+
+  compGraph: {
+    title: 'Computational graph of L = (wx + b)²: inputs w, x and b feed a node u = wx + b, which feeds L = u². Backward arrows carry 2u from L to u, then 2u·x to w and 2u·1 to b',
+    viewBox: '0 0 330 180',
+    body: () => {
+      const node = (at: Pt, label: string, color = 'currentColor', rad = 17) => (
+        <g>
+          <circle cx={at[0]} cy={at[1]} r={rad} fill="none" stroke={color} strokeWidth={1.8} />
+          <Text at={at} dy={5} color={color}>{label}</Text>
+        </g>
+      );
+      const [W, X, B, U, L]: Pt[] = [[38, 38], [38, 92], [38, 146], [170, 92], [285, 92]];
+      const edge = (a: Pt, b: Pt, ra = 17, rb = 22) => {
+        const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const ux = (b[0] - a[0]) / d;
+        const uy = (b[1] - a[1]) / d;
+        return <Arrow from={[a[0] + ux * ra, a[1] + uy * ra]} to={[b[0] - ux * rb, b[1] - uy * rb]} width={1.8} opacity={0.8} />;
+      };
+      return (
+        <>
+          {edge(W, U)}
+          {edge(X, U)}
+          {edge(B, U)}
+          {edge(U, L, 22, 17)}
+          {node(W, 'w', GREEN)}
+          {node(X, 'x')}
+          {node(B, 'b', GREEN)}
+          {node(U, 'u', BLUE, 22)}
+          {node(L, 'L', YELLOW)}
+          <Text at={U} dy={-32} color={BLUE} style={caption}>u = wx + b</Text>
+          <Text at={L} dy={-28} color={YELLOW} style={caption}>L = u²</Text>
+          <Arrow from={[265, 118]} to={[192, 118]} color={RED} width={1.8} dash="5 4" />
+          <Text at={[228, 118]} dy={16} color={RED} style={caption}>∂L/∂u = 2u</Text>
+          <Arrow from={[150, 76]} to={[62, 40]} color={RED} width={1.8} dash="5 4" />
+          <Text at={[106, 50]} dx={4} dy={-8} color={RED} style={caption}>· x</Text>
+          <Arrow from={[150, 110]} to={[62, 146]} color={RED} width={1.8} dash="5 4" />
+          <Text at={[106, 136]} dx={6} dy={14} color={RED} style={caption}>· 1</Text>
+        </>
+      );
+    },
+  },
+
   projection: {
     title: 'The vector b, its projection p onto the line through a, and the error e = b − p, which meets the line at a right angle',
     viewBox: '0 0 300 200',

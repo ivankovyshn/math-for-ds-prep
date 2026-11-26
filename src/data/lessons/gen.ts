@@ -119,3 +119,38 @@ export function lineTex(c: number, d: number, t = 't'): string {
 
 /** A coefficient in front of a vector or symbol: 1 -> "", -1 -> "-", 3 -> "3". */
 export const coef = (k: number) => (k === 1 ? '' : k === -1 ? '-' : `${k}`);
+
+/** A polynomial from ascending coefficients: poly([1, -2, 3]) -> "3x^{2} - 2x + 1". */
+export function poly(cs: number[], v = 'x'): string {
+  let out = '';
+  for (let i = cs.length - 1; i >= 0; i--) {
+    const c = cs[i];
+    if (c === 0) continue;
+    const abs = Math.abs(c);
+    const mono = i === 0 ? '' : i === 1 ? v : `${v}^{${i}}`;
+    const body = i === 0 ? `${abs}` : `${abs === 1 ? '' : abs}${mono}`;
+    out += out === '' ? (c < 0 ? `-${body}` : body) : ` ${c < 0 ? '-' : '+'} ${body}`;
+  }
+  return out || '0';
+}
+
+/** A decimal without floating-point noise: dec(0.1 + 0.2) -> "0.3". */
+export const dec = (x: number) => `${Math.round(x * 1e6) / 1e6 + 0}`;
+
+export const factorial = (n: number): number => (n <= 1 ? 1 : n * factorial(n - 1));
+
+/** A polynomial with fractional coefficients, ascending [numerator, denominator] pairs: "1 + 2x + \tfrac{9}{2}x^{2}". */
+export function fracPoly(cs: number[][], v = 'x'): string {
+  let out = '';
+  cs.forEach(([n, d], i) => {
+    if (n === 0) return;
+    const abs = frac(Math.abs(n), d);
+    const mono = i === 0 ? '' : i === 1 ? v : `${v}^{${i}}`;
+    const body = i === 0 ? abs : `${abs === '1' ? '' : abs}${mono}`;
+    out += out === '' ? (n * d < 0 ? `-${body}` : body) : ` ${n * d < 0 ? '-' : '+'} ${body}`;
+  });
+  return out || '0';
+}
+
+/** Binomial coefficient C(n, k). */
+export const binomial = (n: number, k: number): number => (k < 0 || k > n ? 0 : factorial(n) / (factorial(k) * factorial(n - k)));
