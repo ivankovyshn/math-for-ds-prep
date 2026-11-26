@@ -31,7 +31,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
       useProgress.getState().importData(data);
       setMessage('Progress imported.');
     } catch {
-      setMessage('This file is not a valid Advanced Math Trainer progress export.');
+      setMessage('This file is not a valid Math Foundations of Data Science progress export.');
     } finally {
       if (fileInput.current) fileInput.current.value = '';
     }

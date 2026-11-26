@@ -1,6 +1,6 @@
-# Advanced Math Trainer
+# Math Foundations of Data Science
 
-A gamified introduction to first-year university mathematics. Every lesson starts with a short lecture
+A gamified course in the mathematics behind data science and machine learning. Every lesson starts with a short lecture
 (5–8 minutes: key ideas, formulas, diagrams and worked examples) and ends with practice questions that train
 reasoning from first principles and spotting the trap in a tempting wrong answer.
 
@@ -8,8 +8,9 @@ Runs entirely in the browser. No account, no server, no API keys.
 
 ## What is inside
 
-- **Modules** — Mathematical Language, Linear Algebra, Analytic Geometry, Analysis I, Programming & Data Analysis.
-  Linear Algebra is complete (the pilot); the other modules show their planned lessons as "coming soon".
+- **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
+  Optimization, Programming Foundations. Mathematical Language (6 lessons) and Linear Algebra (7 lessons) are
+  available; the other modules show their planned lessons as "coming soon".
 - **Lessons** — each lesson is a lecture followed by practice. The lecture is shown one section at a time,
   with definition / key-fact / trap boxes, step-by-step worked examples and "check yourself" questions.
   Reading it to the end unlocks the practice; passing the practice unlocks the next lesson.

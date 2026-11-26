@@ -308,6 +308,153 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
       );
     },
   },
+
+  vennOps: {
+    title: 'Three Venn diagrams: the union of A and B, their intersection, and the difference A minus B, each shaded',
+    viewBox: '0 0 345 140',
+    body: () => {
+      const panel = (x: number, name: string, shade: ReactNode) => (
+        <g key={name}>
+          <rect x={x + 4} y={8} width={104} height={100} rx={8} {...faint} opacity={0.5} />
+          {shade}
+          <circle cx={x + 42} cy={58} r={29} {...thin} strokeWidth={1.8} />
+          <circle cx={x + 70} cy={58} r={29} {...thin} strokeWidth={1.8} />
+          <text x={x + 28} y={34} {...label} fontSize={13}>A</text>
+          <text x={x + 86} y={34} {...label} fontSize={13}>B</text>
+          <text x={x + 56} y={130} {...caption} fontSize={13}>{name}</text>
+        </g>
+      );
+      return (
+        <>
+          <defs>
+            <clipPath id="venn-clip-a">
+              <circle cx={159} cy={58} r={29} />
+            </clipPath>
+            <mask id="venn-mask-diff">
+              <circle cx={276} cy={58} r={29} fill="white" />
+              <circle cx={304} cy={58} r={29} fill="black" />
+            </mask>
+          </defs>
+          {panel(0, 'A ∪ B', (
+            <g opacity={0.4}>
+              <circle cx={42} cy={58} r={29} fill={BLUE} />
+              <circle cx={70} cy={58} r={29} fill={BLUE} />
+            </g>
+          ))}
+          {panel(117, 'A ∩ B', <circle cx={187} cy={58} r={29} fill={BLUE} fillOpacity={0.4} clipPath="url(#venn-clip-a)" />)}
+          {panel(234, 'A \\ B', <rect x={240} y={20} width={100} height={80} fill={BLUE} fillOpacity={0.4} mask="url(#venn-mask-diff)" />)}
+        </>
+      );
+    },
+  },
+
+  mappingKinds: {
+    title: 'Three functions drawn as arrows between two sets: injective but not surjective, surjective but not injective, and bijective',
+    viewBox: '0 0 345 150',
+    body: () => {
+      const panel = (x: number, name: string, left: number[], right: number[], arrows: [number, number][], missed?: number) => (
+        <g key={name}>
+          <ellipse cx={x + 24} cy={62} rx={17} ry={46} {...thin} opacity={0.6} />
+          <ellipse cx={x + 88} cy={62} rx={17} ry={46} {...thin} opacity={0.6} />
+          {arrows.map(([a, b], i) => (
+            <Arrow key={i} from={[x + 29, left[a]]} to={[x + 82, right[b]]} color={BLUE} width={2} />
+          ))}
+          {left.map((y, i) => <Dot key={`l${i}`} at={[x + 24, y]} />)}
+          {right.map((y, i) => <Dot key={`r${i}`} at={[x + 88, y]} color={i === missed ? RED : 'currentColor'} />)}
+          <text x={x + 24} y={124} {...label} fontSize={13}>X</text>
+          <text x={x + 88} y={124} {...label} fontSize={13}>Y</text>
+          <text x={x + 56} y={143} {...caption} fontSize={12}>{name}</text>
+        </g>
+      );
+      return (
+        <>
+          {panel(0, 'injective only', [45, 80], [37, 62, 87], [[0, 0], [1, 1]], 2)}
+          {panel(117, 'surjective only', [37, 62, 87], [45, 80], [[0, 0], [1, 0], [2, 1]])}
+          {panel(234, 'bijective', [37, 62, 87], [37, 62, 87], [[0, 1], [1, 2], [2, 0]])}
+        </>
+      );
+    },
+  },
+
+  dominoes: {
+    title: 'A row of dominoes: the first one is pushed (base case) and each falling domino knocks over the next (inductive step)',
+    viewBox: '0 0 340 150',
+    body: () => {
+      const tilt = [62, 38, 14, 0, 0, 0];
+      return (
+        <>
+          <line x1={10} y1={110} x2={330} y2={110} {...thin} opacity={0.5} />
+          {tilt.map((t, i) => {
+            const x = 40 + i * 48;
+            return (
+              <g key={i} transform={`rotate(${t} ${x + 14} 110)`}>
+                <rect x={x} y={50} width={14} height={60} rx={3} fill={i < 3 ? YELLOW : 'currentColor'} fillOpacity={i < 3 ? 0.55 : 0.18} stroke={i < 3 ? YELLOW : 'currentColor'} strokeWidth={1.5} />
+              </g>
+            );
+          })}
+          {tilt.map((_, i) => (
+            <text key={i} x={47 + i * 48} y={128} {...label} fontSize={12}>{`P(${i + 1})`}</text>
+          ))}
+          <path d="M150 40 Q178 14 206 40" {...thin} strokeWidth={2} stroke={GREEN} />
+          <polygon points="208,44 198,40 206,34" fill={GREEN} />
+          <text x={178} y={16} {...caption} fill={GREEN} opacity={1}>P(n) ⇒ P(n+1)</text>
+          <text x={47} y={146} {...caption} fontSize={11.5}>base case</text>
+        </>
+      );
+    },
+  },
+
+  complexPlane: {
+    title: 'The complex plane: z = a + bi is the point (a, b), at distance r = |z| from 0 and angle φ from the positive real axis; its conjugate is the mirror image below the real axis',
+    viewBox: '0 0 300 235',
+    body: () => {
+      const p = plane(55, 125, 34);
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={15} x1={290} y0={10} y1={225} />
+          <text x={284} y={118} {...caption}>Re</text>
+          <text x={68} y={18} {...caption}>Im</text>
+          <line x1={p(3, 2)[0]} y1={p(3, 2)[1]} x2={p(3, 0)[0]} y2={p(3, 0)[1]} {...dashed} />
+          <line x1={p(3, 2)[0]} y1={p(3, 2)[1]} x2={p(0, 2)[0]} y2={p(0, 2)[1]} {...dashed} />
+          <line x1={p(3, -2)[0]} y1={p(3, -2)[1]} x2={p(3, 0)[0]} y2={p(3, 0)[1]} {...dashed} />
+          <Arrow from={p(0, 0)} to={p(3, 2)} color={BLUE} width={3} />
+          <Arrow from={p(0, 0)} to={p(3, -2)} color={GREEN} width={2.2} opacity={0.7} />
+          <path d={`M${p(1.1, 0)} A37 37 0 0 0 ${p(0.915, 0.61)}`} {...thin} stroke={YELLOW} strokeWidth={2} />
+          <Text at={p(1.35, 0.32)} color={YELLOW}>φ</Text>
+          <Text at={p(1.5, 1)} dx={-8} dy={-8} color={BLUE}>r</Text>
+          <Text at={p(3, 2)} dx={50} dy={-2} color={BLUE}>z = a + bi</Text>
+          <Text at={p(3, -2)} dx={50} dy={6} color={GREEN}>z̄ = a − bi</Text>
+          <Text at={p(3, 0)} dx={8} dy={18}>a</Text>
+          <Text at={p(0, 2)} dx={-12} dy={5}>b</Text>
+          <Dot at={p(3, 2)} color={BLUE} />
+        </>
+      );
+    },
+  },
+
+  rootsOfUnity: {
+    title: 'The six solutions of z^6 = 1 lie on the unit circle at angles 0, 60, 120, 180, 240 and 300 degrees, forming a regular hexagon',
+    viewBox: '0 0 300 220',
+    body: () => {
+      const c: Pt = [150, 110];
+      const R = 82;
+      const pts = [0, 1, 2, 3, 4, 5].map((k): Pt => [c[0] + R * Math.cos((k * Math.PI) / 3), c[1] - R * Math.sin((k * Math.PI) / 3)]);
+      return (
+        <>
+          <Axes o={c} x0={30} x1={270} y0={12} y1={208} />
+          <circle cx={c[0]} cy={c[1]} r={R} {...thin} opacity={0.6} />
+          <polygon points={pts.map((q) => q.join(',')).join(' ')} fill={BLUE} fillOpacity={0.12} stroke={BLUE} strokeWidth={1.5} />
+          <path d={`M${c[0] + 26} ${c[1]} A26 26 0 0 0 ${c[0] + 13} ${c[1] - 22.5}`} {...thin} stroke={YELLOW} strokeWidth={2} />
+          <text x={c[0] + 32} y={c[1] - 12} {...caption} fill={YELLOW} opacity={1}>60°</text>
+          {pts.map((q, k) => <Dot key={k} at={q} color={k === 0 ? GREEN : BLUE} />)}
+          <Text at={pts[0]} dx={12} dy={-8} color={GREEN}>1</Text>
+          <Text at={pts[1]} dx={10} dy={-6} color={BLUE}>ω</Text>
+          <Text at={pts[2]} dx={-12} dy={-6} color={BLUE}>ω²</Text>
+          <Text at={pts[3]} dx={-16} dy={-6} color={BLUE}>−1</Text>
+        </>
+      );
+    },
+  },
 };
 
 export const DIAGRAM_TYPES = Object.keys(figures);

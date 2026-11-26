@@ -1,14 +1,16 @@
-import { Axis3d, Database, Grid3x3, Infinity as InfinityIcon, Sigma } from 'lucide-react';
+import { ChartSpline, CodeXml, Dices, Grid3x3, Infinity as InfinityIcon, Mountain, Sigma } from 'lucide-react';
 import type { ModuleId } from '../types.ts';
 
-const icons = { intro: InfinityIcon, linalg: Grid3x3, geometry: Axis3d, analysis: Sigma, datasci: Database };
+const icons = { intro: InfinityIcon, linalg: Grid3x3, calculus: Sigma, probability: Dices, statistics: ChartSpline, optimization: Mountain, programming: CodeXml };
 
 const colors: Record<ModuleId, string> = {
   intro: '#ff9d2e',
   linalg: '#3fa9ff',
-  geometry: '#2fd3b0',
-  analysis: '#b67cff',
-  datasci: '#ff6f91',
+  calculus: '#b67cff',
+  probability: '#2fd3b0',
+  statistics: '#ff6f91',
+  optimization: '#f5c518',
+  programming: '#7c8cff',
 };
 
 export const moduleColor = (id: ModuleId) => colors[id];

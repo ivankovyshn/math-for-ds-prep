@@ -40,8 +40,8 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartBoss, onStart
       <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/95 px-4 py-3 backdrop-blur">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-2xl font-black text-white">∑</div>
         <div className="mr-auto min-w-0 leading-tight">
-          <div className="text-[15px] font-extrabold leading-[1.15] sm:text-lg">Advanced Math <span className="whitespace-nowrap">Trainer</span></div>
-          <div className="hidden text-[11px] font-bold uppercase tracking-wider text-muted sm:block">First-year university maths · Level {level}</div>
+          <div className="text-[15px] font-extrabold leading-[1.15] sm:text-lg">Math Foundations <span className="whitespace-nowrap">of Data Science</span></div>
+          <div className="hidden text-[11px] font-bold uppercase tracking-wider text-muted sm:block">Lectures + practice · Level {level}</div>
         </div>
         <span className={`flex items-center gap-1 rounded-xl px-2.5 py-2 font-extrabold tabular-nums ${streak > 0 ? 'text-warn' : 'text-muted'}`} title="Daily streak">
           <Flame size={20} fill={streak > 0 ? 'currentColor' : 'none'} /> {streak}
@@ -240,6 +240,17 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, pendi
             );
           })()}
         </ol>
+      )}
+
+      {hasContent && m.planned && (
+        <div className="px-4 pb-4">
+          <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-muted">Coming next</div>
+          <ul className="flex flex-wrap gap-2">
+            {m.planned.map((t) => (
+              <li key={t} className="rounded-lg border border-dashed border-line px-2.5 py-1 text-sm text-muted">{t}</li>
+            ))}
+          </ul>
+        </div>
       )}
     </>
   );
