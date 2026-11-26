@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './01-logic.extra.ts';
+import { practice } from './01-logic.practice.ts';
 
 export default defineLesson({
   id: 'ml-01',
@@ -147,24 +148,7 @@ $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is
   ],
   extra,
   questions: [
-    {
-      id: 'ml-01-1',
-      difficulty: 1,
-      promptText: r`Which statement means the same as "If it rains, the street is wet"?`,
-      options: [
-        { id: 'a', label: 'If the street is not wet, it does not rain' },
-        { id: 'b', label: 'If the street is wet, it rains', trapExplanation: r`This is the <i>converse</i>. The street can be wet for other reasons (a street cleaner), so it is not equivalent.` },
-        { id: 'c', label: 'If it does not rain, the street is not wet', trapExplanation: r`This is the <i>inverse</i> $\neg P \Rightarrow \neg Q$, equivalent to the converse — not to the original.` },
-        { id: 'd', label: 'It rains and the street is wet', trapExplanation: r`An implication does not claim that it rains. "If it rains…" is true on a dry sunny day too.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Let $P$ = "it rains", $Q$ = "the street is wet". The statement is $P \Rightarrow Q$.`,
-        r`The contrapositive $\neg Q \Rightarrow \neg P$ has the same truth table.`,
-        r`$\neg Q \Rightarrow \neg P$ reads: if the street is not wet, it does not rain.`,
-      ],
-      keyConceptTag: 'Contrapositive',
-    },
+    ...practice,
     {
       id: 'ml-01-2',
       difficulty: 1,
@@ -182,60 +166,6 @@ $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is
         r`In the other three rows of the truth table the implication is true.`,
       ],
       keyConceptTag: 'Truth table of implication',
-    },
-    {
-      id: 'ml-01-3',
-      difficulty: 2,
-      promptText: r`Which statement is the negation of $\forall x \in \mathbb{R}\ \exists y \in \mathbb{R}:\ y^2 = x$?`,
-      options: [
-        { id: 'a', label: r`$\exists x \in \mathbb{R}\ \forall y \in \mathbb{R}:\ y^2 \ne x$` },
-        { id: 'b', label: r`$\forall x \in \mathbb{R}\ \exists y \in \mathbb{R}:\ y^2 \ne x$`, trapExplanation: r`Only the final property was negated. The quantifiers must flip too: $\forall$ becomes $\exists$ and $\exists$ becomes $\forall$.` },
-        { id: 'c', label: r`$\exists x \in \mathbb{R}\ \exists y \in \mathbb{R}:\ y^2 \ne x$`, trapExplanation: r`Only the first quantifier was flipped. The $\exists y$ must become $\forall y$: no $y$ at all works for that $x$.` },
-        { id: 'd', label: r`$\forall x \in \mathbb{R}\ \forall y \in \mathbb{R}:\ y^2 \ne x$`, trapExplanation: r`This says no real number is a square, which is much stronger than the negation. The outer $\forall$ must become $\exists$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Push $\neg$ inside step by step: $\neg\forall x\,(\ldots) \equiv \exists x\,\neg(\ldots)$.`,
-        r`Then $\neg\exists y\,(y^2 = x) \equiv \forall y\,(y^2 \ne x)$.`,
-        r`Result: $\exists x\ \forall y:\ y^2 \ne x$ — "some real number is not a square". It is true ($x = -1$), so the original was false.`,
-      ],
-      keyConceptTag: 'Negating quantifiers',
-    },
-    {
-      id: 'ml-01-4',
-      difficulty: 2,
-      promptText: r`Which of these statements about real numbers is <i>true</i>?`,
-      options: [
-        { id: 'a', label: r`$\forall x\ \exists y:\ x + y = 0$` },
-        { id: 'b', label: r`$\exists y\ \forall x:\ x + y = 0$`, trapExplanation: r`This needs one $y$ that works for every $x$ at once. $y = -x$ depends on $x$, so no single $y$ works.` },
-        { id: 'c', label: r`$\forall x\ \forall y:\ x + y = 0$`, trapExplanation: r`$x = 1, y = 1$ gives $2 \ne 0$. One counterexample kills a "for all".` },
-        { id: 'd', label: r`$\exists x\ \forall y:\ xy = 1$`, trapExplanation: r`Whatever $x$ is, $y = 0$ gives $xy = 0 \ne 1$. No single $x$ works for all $y$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`For (a): given any $x$, choose $y = -x$. Then $x + y = 0$. True.`,
-        r`For (b) the order is swapped: one $y$ would have to equal $-x$ for every $x$ — impossible.`,
-        r`The difference between (a) and (b) is only the order of $\forall$ and $\exists$.`,
-      ],
-      keyConceptTag: 'Order of quantifiers',
-    },
-    {
-      id: 'ml-01-5',
-      difficulty: 3,
-      promptText: r`Which statement is equivalent to $\neg\big(P \Rightarrow (Q \lor R)\big)$?`,
-      options: [
-        { id: 'a', label: r`$P \land \neg Q \land \neg R$` },
-        { id: 'b', label: r`$\neg P \lor (\neg Q \land \neg R)$`, trapExplanation: r`This is $P \Rightarrow (\neg Q \land \neg R)$: the implication survived. Negating an implication gives an "and": $\neg(A \Rightarrow B) \equiv A \land \neg B$.` },
-        { id: 'c', label: r`$P \land (\neg Q \lor \neg R)$`, trapExplanation: r`De Morgan was applied wrongly: $\neg(Q \lor R)$ is $\neg Q \land \neg R$. Negation swaps "or" and "and".` },
-        { id: 'd', label: r`$\neg P \Rightarrow (\neg Q \lor \neg R)$`, trapExplanation: r`Negating each part of an implication does not negate the implication. Check $P$ false: the original negation is false, but this is true.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\neg(A \Rightarrow B) \equiv A \land \neg B$ with $A = P$, $B = Q \lor R$.`,
-        r`De Morgan: $\neg(Q \lor R) \equiv \neg Q \land \neg R$.`,
-        r`So the negation is $P \land \neg Q \land \neg R$: $P$ holds and neither $Q$ nor $R$ does.`,
-      ],
-      keyConceptTag: 'Negating an implication',
     },
     {
       id: 'ml-01-6',

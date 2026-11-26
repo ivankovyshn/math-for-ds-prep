@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './04-proofs.extra.ts';
+import { practice } from './04-proofs.practice.ts';
 
 export default defineLesson({
   id: 'ml-04',
@@ -139,78 +140,7 @@ Examples can be deceiving. $n^2 + n + 41$ is prime for $n = 0, 1, 2, \dots, 39$.
   ],
   extra,
   questions: [
-    {
-      id: 'ml-04-1',
-      difficulty: 1,
-      promptText: r`To prove $P \Rightarrow Q$ by <i>contrapositive</i>, what do you assume and what do you show?`,
-      options: [
-        { id: 'a', label: r`Assume $\neg Q$, show $\neg P$` },
-        { id: 'b', label: r`Assume $Q$, show $P$`, trapExplanation: r`That proves the converse $Q \Rightarrow P$, a different statement.` },
-        { id: 'c', label: r`Assume $\neg P$, show $\neg Q$`, trapExplanation: r`That proves $\neg P \Rightarrow \neg Q$, which is equivalent to the converse, not to $P \Rightarrow Q$.` },
-        { id: 'd', label: r`Assume $P$ and $\neg Q$, reach a contradiction`, trapExplanation: r`That is a valid method too, but it is proof by <i>contradiction</i>, not by contrapositive.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`The contrapositive of $P \Rightarrow Q$ is $\neg Q \Rightarrow \neg P$.`,
-        r`They have the same truth table, so proving one proves the other.`,
-        r`A direct proof of $\neg Q \Rightarrow \neg P$ assumes $\neg Q$ and derives $\neg P$.`,
-      ],
-      keyConceptTag: 'Proof by contrapositive',
-    },
-    {
-      id: 'ml-04-2',
-      difficulty: 1,
-      promptText: r`An integer has the form $n = 3k + 2$. What remainder does $n^2$ leave on division by $3$?`,
-      options: [
-        { id: 'a', label: '$1$', value: 1 },
-        { id: 'b', label: '$2$', value: 2, trapExplanation: r`Squaring changes the remainder: $(3k + 2)^2 = 9k^2 + 12k + 4$, and $4$ leaves remainder 1.` },
-        { id: 'c', label: '$4$', value: 4, trapExplanation: r`A remainder on division by 3 is $0$, $1$ or $2$. $4 = 3 + 1$, so the remainder is 1.` },
-        { id: 'd', label: '$0$', value: 0, trapExplanation: r`Only multiples of 3 have squares divisible by 3. Check $k = 0$: $n = 2$, $n^2 = 4$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$(3k + 2)^2 = 9k^2 + 12k + 4$.`,
-        r`$= 3(3k^2 + 4k + 1) + 1$.`,
-        r`Remainder $1$. (Check: $5^2 = 25 = 3\cdot8 + 1$.)`,
-      ],
-      keyConceptTag: 'Working with remainders',
-    },
-    {
-      id: 'ml-04-3',
-      difficulty: 2,
-      promptText: r`Which statement about integers is <i>false</i>?`,
-      options: [
-        { id: 'a', label: r`For every integer $n$, $n^2 + 1$ is odd` },
-        { id: 'b', label: r`For every integer $n$, $n^2 - n$ is even`, trapExplanation: r`$n^2 - n = n(n - 1)$ is a product of two consecutive integers, one of which is even. True.` },
-        { id: 'c', label: r`For every integer $n$, $n^3 - n$ is divisible by 6`, trapExplanation: r`$n^3 - n = (n - 1)n(n + 1)$: among three consecutive integers one is even and one is a multiple of 3. True.` },
-        { id: 'd', label: r`For every integer $n$, $2n + 1$ is odd`, trapExplanation: r`$2n + 1$ is the definition of an odd number. True.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`To show a "for all" statement is false, find one counterexample.`,
-        r`$n = 1$: $n^2 + 1 = 2$, which is even. So (a) is false.`,
-        r`In general $n^2 + 1$ is odd exactly when $n$ is even.`,
-      ],
-      keyConceptTag: 'Disproof by counterexample',
-    },
-    {
-      id: 'ml-04-4',
-      difficulty: 2,
-      promptText: r`Which $n$ is a counterexample to "for every integer $n \ge 1$, $n^2 + n + 41$ is prime"?`,
-      options: [
-        { id: 'a', label: '$40$', value: 40 },
-        { id: 'b', label: '$39$', value: 39, trapExplanation: r`$39^2 + 39 + 41 = 1601$, which is prime. The formula survives up to 39 — that is why it is famous.` },
-        { id: 'c', label: '$10$', value: 10, trapExplanation: r`$100 + 10 + 41 = 151$ is prime. Small values do not break this formula.` },
-        { id: 'd', label: '$1$', value: 1, trapExplanation: r`$1 + 1 + 41 = 43$, which is prime.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Look for an $n$ that makes every term share a factor. With $n = 40$: $40^2 + 40 = 40\cdot41$.`,
-        r`So $n^2 + n + 41 = 40\cdot 41 + 41 = 41\cdot41 = 1681$.`,
-        r`$1681 = 41^2$ is not prime: one counterexample disproves the claim.`,
-      ],
-      keyConceptTag: 'Examples are not proofs',
-    },
+    ...practice,
     {
       id: 'ml-04-5',
       difficulty: 3,
@@ -238,24 +168,6 @@ Examples can be deceiving. $n^2 + n + 41$ is prime for $n = 0, 1, 2, \dots, 39$.
         r`(3) is true ($0 = 0$); (4) does not follow from it.`,
       ],
       keyConceptTag: 'Hidden division by zero',
-    },
-    {
-      id: 'ml-04-6',
-      difficulty: 3,
-      promptText: r`Proving that $\sqrt3$ is irrational: assume $\sqrt3 = \frac{p}{q}$ in lowest terms, so $p^2 = 3q^2$. One shows $3 \mid p$ and writes $p = 3m$. What equation follows for $q$?`,
-      options: [
-        { id: 'a', label: r`$q^2 = 3m^2$` },
-        { id: 'b', label: r`$q^2 = 9m^2$`, trapExplanation: r`Substituting gives $9m^2 = 3q^2$; dividing by 3 leaves $3m^2$, not $9m^2$.` },
-        { id: 'c', label: r`$q^2 = m^2$`, trapExplanation: r`Both sides were divided by 9, but the right-hand side only has the factor 3.` },
-        { id: 'd', label: r`$q = 3m$`, trapExplanation: r`That would mean $p = q$, i.e. $\sqrt3 = 1$. Substitute into $p^2 = 3q^2$ and simplify carefully.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Substitute $p = 3m$: $9m^2 = 3q^2$.`,
-        r`Divide by 3: $q^2 = 3m^2$, so $3 \mid q^2$ and hence $3 \mid q$.`,
-        r`Now 3 divides both $p$ and $q$, contradicting lowest terms. So $\sqrt3$ is irrational.`,
-      ],
-      keyConceptTag: 'Proof by contradiction',
     },
   ],
 });

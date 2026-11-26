@@ -1,114 +1,153 @@
-import type { QuestionDraft } from '../../../types.ts';
+import type { QuestionTemplate } from '../../../types.ts';
 import { r } from '../define.ts';
+import { allDistinct, frac, paren, shuffle, signed } from '../gen.ts';
+import { NOT_SURJECTIVE, SURJECTIVE, classifyZ, perm, pickProperty } from './03-functions.practice.ts';
 
-/** Extra practice (Practice 2): gentler questions on the same ideas. */
-export const extra: QuestionDraft[] = [
+/** Extra practice (Practice 2): gentler questions on the same ideas, with new numbers every time. */
+export const extra: QuestionTemplate[] = [
   {
     id: 'ml-03-x1',
     difficulty: 1,
-    promptText: r`Let $f(x) = 3x - 1$ and $g(x) = x^2$. Compute $(f \circ g)(2)$.`,
-    options: [
-      { id: 'a', label: '11', value: 11 },
-      { id: 'b', label: '25', value: 25, trapExplanation: r`25 is $(g \circ f)(2) = g(5)$. In $f \circ g$ the function written on the right, $g$, acts first.` },
-      { id: 'c', label: '20', value: 20, trapExplanation: r`That is the product $f(2) \cdot g(2) = 5 \cdot 4$. Composition feeds one output into the other function.` },
-      { id: 'd', label: '9', value: 9, trapExplanation: r`That is the sum $f(2) + g(2)$, not a composition.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`$(f \circ g)(2) = f(g(2))$: apply $g$ first.`,
-      r`$g(2) = 2^2 = 4$.`,
-      r`$f(4) = 3 \cdot 4 - 1 = 11$.`,
-    ],
     keyConceptTag: 'Composition order',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const { a, b, x } = g.until(
+        () => ({ a: g.int(2, 5), b: g.int(-4, 4), x: g.nonzero(-3, 3) }),
+        ({ a, b, x }) => allDistinct([a * x * x + b, (a * x + b) ** 2, (a * x + b) * x * x, a * x + b + x * x]),
+      );
+      const fx = a * x + b;
+      return {
+        params: { a, b, x },
+        promptText: r`Let $f(x) = ${a}x ${b === 0 ? '' : signed(b)}$ and $g(x) = x^2$. Compute $(f \circ g)(${x})$.`,
+        options: [
+          { id: 'a', label: `$${a * x * x + b}$`, value: a * x * x + b },
+          { id: 'b', label: `$${fx ** 2}$`, value: fx ** 2, trapExplanation: r`$${fx ** 2}$ is $(g \circ f)(${x}) = g(${fx})$. In $f \circ g$ the function written on the right, $g$, acts first.` },
+          { id: 'c', label: `$${fx * x * x}$`, value: fx * x * x, trapExplanation: r`That is the product $f(${x}) \cdot g(${x})$. Composition feeds one output into the other function.` },
+          { id: 'd', label: `$${fx + x * x}$`, value: fx + x * x, trapExplanation: r`That is the sum $f(${x}) + g(${x})$, not a composition.` },
+        ],
+        stepByStepSolution: [
+          r`$(f \circ g)(${x}) = f(g(${x}))$: apply $g$ first.`,
+          r`$g(${x}) = ${paren(x)}^2 = ${x * x}$.`,
+          r`$f(${x * x}) = ${a} \cdot ${x * x} ${b === 0 ? '' : signed(b)} = ${a * x * x + b}$.`,
+        ],
+      };
+    },
   },
   {
     id: 'ml-03-x2',
     difficulty: 1,
-    promptText: r`Which function $\mathbb{R} \to \mathbb{R}$ is surjective (takes every real value)?`,
-    options: [
-      { id: 'a', label: r`$f(x) = x^3$` },
-      { id: 'b', label: r`$f(x) = x^2$`, trapExplanation: r`$x^2 \ge 0$, so negative values such as $-1$ are never taken.` },
-      { id: 'c', label: r`$f(x) = e^x$`, trapExplanation: r`$e^x > 0$ for every $x$: zero and the negative numbers are missed.` },
-      { id: 'd', label: r`$f(x) = \sin x$`, trapExplanation: r`$\sin x$ stays between $-1$ and $1$, so a value like 2 is never reached.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`Surjective means: every $y \in \mathbb{R}$ equals $f(x)$ for some $x$.`,
-      r`For $f(x) = x^3$ take $x = \sqrt[3]{y}$, which exists for every real $y$, including negative ones.`,
-      r`The other functions miss values: $x^2$ and $e^x$ miss negatives, $\sin x$ misses everything outside $[-1, 1]$.`,
-    ],
     keyConceptTag: 'Surjectivity',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const base = pickProperty(g, SURJECTIVE, NOT_SURJECTIVE, r`Which function $\mathbb{R} \to \mathbb{R}$ is surjective (takes every real value)?`);
+      const f = SURJECTIVE[base.params.good];
+      return {
+        ...base,
+        stepByStepSolution: [
+          r`Surjective means: every $y \in \mathbb{R}$ equals $f(x)$ for some $x$.`,
+          r`$f(x) = ${f}$ is continuous and runs from $-\infty$ to $+\infty$ (or back), so by the intermediate value theorem it passes every real value.`,
+          r`Each of the other three misses some values.`,
+        ],
+      };
+    },
   },
   {
     id: 'ml-03-x3',
     difficulty: 1,
-    promptText: r`What is the inverse of $f(x) = 2x + 3$?`,
-    options: [
-      { id: 'a', label: r`$f^{-1}(x) = \dfrac{x - 3}{2}$` },
-      { id: 'b', label: r`$f^{-1}(x) = \dfrac{x + 3}{2}$`, trapExplanation: r`To undo "add 3" you must subtract 3. Check: $f(0) = 3$, but this formula sends 3 to 3, not back to 0.` },
-      { id: 'c', label: r`$f^{-1}(x) = \dfrac{1}{2x + 3}$`, trapExplanation: r`$f^{-1}$ is the inverse <i>function</i> (undo $f$), not the reciprocal $1/f(x)$.` },
-      { id: 'd', label: r`$f^{-1}(x) = 2x - 3$`, trapExplanation: r`The operations must be undone in reverse order: first subtract 3, then divide by 2.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`Write $y = 2x + 3$ and solve for $x$.`,
-      r`$y - 3 = 2x$, so $x = \dfrac{y - 3}{2}$.`,
-      r`Rename the variable: $f^{-1}(x) = \dfrac{x - 3}{2}$. Check: $f^{-1}(f(0)) = f^{-1}(3) = 0$.`,
-    ],
     keyConceptTag: 'Finding an inverse',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const [a, b] = [g.pick([2, 3, 4, 5, -2, -3]), g.nonzero(-6, 6)];
+      const lin = `${a}x ${signed(b)}`;
+      const inv = (num: string) => r`$f^{-1}(x) = \dfrac{${num}}{${a}}$`;
+      const x0 = g.int(-3, 3);
+      return {
+        params: { a, b },
+        promptText: r`What is the inverse of $f(x) = ${lin}$?`,
+        options: [
+          { id: 'a', label: inv(`x ${signed(-b)}`) },
+          { id: 'b', label: inv(`x ${signed(b)}`), trapExplanation: r`To undo "${b < 0 ? 'subtract' : 'add'} ${Math.abs(b)}" you must ${b < 0 ? 'add' : 'subtract'} ${Math.abs(b)}. Check: $f(${x0}) = ${a * x0 + b}$, but this formula does not send ${a * x0 + b} back to ${x0}.` },
+          { id: 'c', label: r`$f^{-1}(x) = \dfrac{1}{${lin}}$`, trapExplanation: r`$f^{-1}$ is the inverse <i>function</i> (undo $f$), not the reciprocal $1/f(x)$.` },
+          { id: 'd', label: r`$f^{-1}(x) = ${a}x ${signed(-b)}$`, trapExplanation: r`The operations must be undone in reverse order: first undo the ${b < 0 ? 'subtraction' : 'addition'}, then divide by ${a}.` },
+        ],
+        stepByStepSolution: [
+          r`Write $y = ${a}x ${signed(b)}$ and solve for $x$.`,
+          r`$y ${signed(-b)} = ${a}x$, so $x = \dfrac{y ${signed(-b)}}{${a}}$.`,
+          r`Rename the variable: $f^{-1}(x) = \dfrac{x ${signed(-b)}}{${a}}$. Check: $f^{-1}(f(${x0})) = f^{-1}(${a * x0 + b}) = ${frac(a * x0 + b - b, a)}$.`,
+        ],
+      };
+    },
   },
   {
     id: 'ml-03-x4',
     difficulty: 2,
-    promptText: r`How many functions are there from $\{1, 2\}$ to $\{a, b, c\}$?`,
-    options: [
-      { id: 'a', label: '9', value: 9 },
-      { id: 'b', label: '8', value: 8, trapExplanation: r`$2^3$ swaps the roles: it counts functions from a 3-element set to a 2-element set.` },
-      { id: 'c', label: '6', value: 6, trapExplanation: r`$3 \cdot 2 = 6$ counts the <i>injective</i> functions. A function may send 1 and 2 to the same letter.` },
-      { id: 'd', label: '5', value: 5, trapExplanation: r`Adding the set sizes does not count anything useful here; choices multiply.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`A function picks one value in $\{a, b, c\}$ for each element of $\{1, 2\}$.`,
-      r`3 choices for $f(1)$ and, independently, 3 choices for $f(2)$.`,
-      r`$3 \cdot 3 = 3^2 = 9$. In general there are $|B|^{|A|}$ functions $A \to B$.`,
-    ],
     keyConceptTag: 'Counting functions',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const { m, n } = g.until(
+        () => ({ m: g.int(2, 3), n: g.int(2, 5) }),
+        ({ m, n }) => allDistinct([n ** m, m ** n, n >= m ? perm(n, m) : 0, m + n]),
+      );
+      const X = Array.from({ length: m }, (_, i) => i + 1).join(', ');
+      const Y = 'abcde'.slice(0, n).split('').join(', ');
+      const inj = n >= m ? perm(n, m) : 0;
+      return {
+        params: { n: m, m: n },
+        promptText: r`How many functions are there from $\{${X}\}$ to $\{${Y}\}$?`,
+        options: [
+          { id: 'a', label: `${n ** m}`, value: n ** m },
+          { id: 'b', label: `${m ** n}`, value: m ** n, trapExplanation: r`$${m}^${n}$ swaps the roles: it counts functions from a ${n}-element set to a ${m}-element set.` },
+          { id: 'c', label: `${inj}`, value: inj, trapExplanation: r`${inj} counts the <i>injective</i> functions. A function may send two inputs to the same letter.` },
+          { id: 'd', label: `${m + n}`, value: m + n, trapExplanation: r`Adding the set sizes does not count anything useful here; choices multiply.` },
+        ],
+        stepByStepSolution: [
+          r`A function picks one value in the second set for each element of the first.`,
+          r`${n} choices for each of the ${m} inputs, independently.`,
+          r`$${n}^${m} = ${n ** m}$. In general there are $|B|^{|A|}$ functions $A \to B$.`,
+        ],
+      };
+    },
   },
   {
     id: 'ml-03-x5',
     difficulty: 2,
-    promptText: r`A function $f: \{1, 2, 3\} \to \{1, 2, 3\}$ has $f(1) = 2$, $f(2) = 3$, $f(3) = 1$. What is $f^{-1}(1)$?`,
-    options: [
-      { id: 'a', label: '3', value: 3 },
-      { id: 'b', label: '2', value: 2, trapExplanation: r`2 is $f(1)$. The inverse asks the opposite question: which input is sent to 1?` },
-      { id: 'c', label: '1', value: 1, trapExplanation: r`$f(1) = 2$, not 1, so 1 is not the preimage of 1.` },
-      { id: 'd', label: 'It does not exist', value: -1, trapExplanation: r`$f$ is a bijection (each value is hit exactly once), so the inverse exists.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`$f^{-1}(1)$ is the input $x$ with $f(x) = 1$.`,
-      r`Scan the table: $f(3) = 1$.`,
-      r`So $f^{-1}(1) = 3$. The inverse simply reads the arrows backwards.`,
-    ],
     keyConceptTag: 'Inverse function',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const { f, t } = g.until(
+        () => {
+          const n = g.int(3, 4);
+          return { f: shuffle(g, Array.from({ length: n }, (_, i) => i + 1)), t: g.int(1, n) };
+        },
+        ({ f, t }) => {
+          const pre = f.indexOf(t) + 1;
+          return allDistinct([pre, f[t - 1], t, -1]);
+        },
+      );
+      const pre = f.indexOf(t) + 1;
+      const n = f.length;
+      return {
+        params: { f, t },
+        promptText: r`A function $f: \{1, \dots, ${n}\} \to \{1, \dots, ${n}\}$ has ${f.map((v, i) => `$f(${i + 1}) = ${v}$`).join(', ')}. What is $f^{-1}(${t})$?`,
+        options: [
+          { id: 'a', label: `${pre}`, value: pre },
+          { id: 'b', label: `${f[t - 1]}`, value: f[t - 1], trapExplanation: r`${f[t - 1]} is $f(${t})$. The inverse asks the opposite question: which input is sent to ${t}?` },
+          { id: 'c', label: `${t}`, value: t, trapExplanation: r`$f(${t}) = ${f[t - 1]}$, not ${t}, so ${t} is not the preimage of ${t}.` },
+          { id: 'd', label: 'It does not exist', value: -1, trapExplanation: r`$f$ is a bijection (each value is hit exactly once), so the inverse exists.` },
+        ],
+        stepByStepSolution: [
+          r`$f^{-1}(${t})$ is the input $x$ with $f(x) = ${t}$.`,
+          r`Scan the table: $f(${pre}) = ${t}$.`,
+          r`So $f^{-1}(${t}) = ${pre}$. The inverse simply reads the arrows backwards.`,
+        ],
+      };
+    },
   },
   {
     id: 'ml-03-x6',
     difficulty: 2,
-    promptText: r`Consider $f: \mathbb{Z} \to \mathbb{Z}$, $f(n) = n + 1$. Which statement is true?`,
-    options: [
-      { id: 'a', label: r`$f$ is bijective` },
-      { id: 'b', label: r`$f$ is injective but not surjective`, trapExplanation: r`Every integer $m$ is hit: $f(m - 1) = m$. On $\mathbb{N}$ this would fail at 0, but the domain here is $\mathbb{Z}$.` },
-      { id: 'c', label: r`$f$ is surjective but not injective`, trapExplanation: r`$n + 1 = m + 1$ forces $n = m$, so different inputs give different outputs.` },
-      { id: 'd', label: r`$f$ is neither`, trapExplanation: r`A shift by 1 can be undone by a shift by $-1$, so it is both injective and surjective.` },
-    ],
-    correctOptionId: 'a',
-    stepByStepSolution: [
-      r`Injective: $f(n) = f(m) \Rightarrow n + 1 = m + 1 \Rightarrow n = m$.`,
-      r`Surjective: for any $m \in \mathbb{Z}$, the input $n = m - 1$ gives $f(n) = m$.`,
-      r`Both hold, so $f$ is a bijection with inverse $f^{-1}(m) = m - 1$.`,
-    ],
     keyConceptTag: 'Injective vs surjective',
+    correctOptionId: 'a',
+    generate: (g) => classifyZ(g, [0, 1, 2, 3]),
   },
 ];

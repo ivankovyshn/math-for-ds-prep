@@ -139,7 +139,8 @@ The deployment runs the same check, so a broken question cannot be published.
 A numeric question can be written as a template: `generate` draws random values from a seeded source and
 returns the prompt, options, traps and solution built from them. Every practice session, module test and review
 draws new numbers; Mistakes first shows the exact numbers that were missed (the seed is stored), then
-fresh ones. Linear Algebra uses templates for all numeric questions (`NN-name.practice.ts`, `NN-name.extra.ts`).
+fresh ones. Linear Algebra and Mathematical Language use templates (`NN-name.practice.ts`, `NN-name.extra.ts`); in
+logic and proofs the variation comes from pools of statements, sets and functions rather than only from numbers.
 
 ```ts
 {

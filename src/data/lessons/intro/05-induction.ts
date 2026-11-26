@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './05-induction.extra.ts';
+import { practice } from './05-induction.practice.ts';
 
 export default defineLesson({
   id: 'ml-05',
@@ -136,96 +137,7 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
   ],
   extra,
   questions: [
-    {
-      id: 'ml-05-1',
-      difficulty: 1,
-      promptText: r`Compute $\displaystyle\sum_{k=1}^{100} k$.`,
-      options: [
-        { id: 'a', label: '$5050$', value: 5050 },
-        { id: 'b', label: '$10100$', value: 10100, trapExplanation: r`$100\cdot101$ forgets the division by 2. Pairing $1 + 100$, $2 + 99$, … gives 50 pairs of 101.` },
-        { id: 'c', label: '$4950$', value: 4950, trapExplanation: r`$4950 = \frac{99\cdot100}{2}$ is the sum up to 99. The last term 100 is missing.` },
-        { id: 'd', label: '$5000$', value: 5000, trapExplanation: r`$\frac{100^2}{2}$ approximates the sum but misses $\frac{n}{2} = 50$. The exact formula is $\frac{n(n+1)}{2}$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\sum_{k=1}^{n} k = \frac{n(n+1)}{2}$.`,
-        r`$n = 100$: $\frac{100\cdot101}{2}$.`,
-        r`$= 5050$.`,
-      ],
-      keyConceptTag: 'Sum of the first n integers',
-    },
-    {
-      id: 'ml-05-2',
-      difficulty: 1,
-      promptText: r`To prove $1 + 3 + 5 + \dots + (2n - 1) = n^2$ by induction, which term is added in the step from $n$ to $n + 1$?`,
-      options: [
-        { id: 'a', label: r`$2n + 1$` },
-        { id: 'b', label: r`$2n - 1$`, trapExplanation: r`$2n - 1$ is the last term of the $n$ case. The next odd number, the $(n+1)$-th, is $2(n+1) - 1 = 2n + 1$.` },
-        { id: 'c', label: r`$n + 1$`, trapExplanation: r`The terms are odd numbers $2k - 1$, not $k$. Substitute $k = n + 1$ into $2k - 1$.` },
-        { id: 'd', label: r`$(n + 1)^2$`, trapExplanation: r`$(n + 1)^2$ is the new <i>total</i> you are aiming for, not the new term.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`The $k$-th term is $2k - 1$; for $k = n + 1$ it is $2n + 1$.`,
-        r`Step: $n^2 + (2n + 1) = (n + 1)^2$.`,
-        r`So adding $2n + 1$ turns the $n$ case into the $n + 1$ case.`,
-      ],
-      keyConceptTag: 'The inductive step',
-    },
-    {
-      id: 'ml-05-3',
-      difficulty: 2,
-      promptText: r`Compute $\displaystyle\sum_{k=1}^{10} k^2$.`,
-      options: [
-        { id: 'a', label: '$385$', value: 385 },
-        { id: 'b', label: '$3025$', value: 3025, trapExplanation: r`$3025 = 55^2 = (\sum k)^2$. The sum of squares is not the square of the sum.` },
-        { id: 'c', label: '$55$', value: 55, trapExplanation: r`$55 = \sum k$, the sum without squaring.` },
-        { id: 'd', label: '$1155$', value: 1155, trapExplanation: r`$\frac{10\cdot11\cdot21}{2}$ divides by 2 instead of 6 in $\frac{n(n+1)(2n+1)}{6}$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}$.`,
-        r`$n = 10$: $\frac{10\cdot11\cdot21}{6} = \frac{2310}{6}$.`,
-        r`$= 385$.`,
-      ],
-      keyConceptTag: 'Sum of squares',
-    },
-    {
-      id: 'ml-05-4',
-      difficulty: 2,
-      promptText: r`Compute $1 + 2 + 4 + 8 + \dots + 2^{9}$.`,
-      options: [
-        { id: 'a', label: '$1023$', value: 1023 },
-        { id: 'b', label: '$1024$', value: 1024, trapExplanation: r`$2^{10}$ is one more than the sum: the geometric formula gives $2^{10} - 1$.` },
-        { id: 'c', label: '$512$', value: 512, trapExplanation: r`$512 = 2^9$ is only the last term.` },
-        { id: 'd', label: '$2047$', value: 2047, trapExplanation: r`$2^{11} - 1$ would be the sum up to $2^{10}$. The last term here is $2^9$, so there are 10 terms.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Geometric sum with $q = 2$ and terms $2^0, \dots, 2^9$: $\frac{2^{10} - 1}{2 - 1}$.`,
-        r`$= 1024 - 1 = 1023$.`,
-        r`Binary intuition: $1111111111_2 = 2^{10} - 1$.`,
-      ],
-      keyConceptTag: 'Geometric sum',
-    },
-    {
-      id: 'ml-05-5',
-      difficulty: 3,
-      promptText: r`What is the smallest $n_0$ such that $2^n > n^2$ holds for <i>every</i> integer $n \ge n_0$?`,
-      options: [
-        { id: 'a', label: '$5$', value: 5 },
-        { id: 'b', label: '$1$', value: 1, trapExplanation: r`It holds at $n = 1$ ($2 > 1$), but fails at $n = 2, 3, 4$ ($4 = 4$, $8 < 9$, $16 = 16$). It must hold for <i>all</i> $n \ge n_0$.` },
-        { id: 'c', label: '$4$', value: 4, trapExplanation: r`At $n = 4$: $2^4 = 16 = 4^2$. The inequality is strict, so $n = 4$ fails.` },
-        { id: 'd', label: '$3$', value: 3, trapExplanation: r`At $n = 3$: $8 < 9$. The inequality fails.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Check small cases: $n = 2$: $4 = 4$; $n = 3$: $8 < 9$; $n = 4$: $16 = 16$; $n = 5$: $32 > 25$.`,
-        r`Inductive step for $n \ge 5$: $2^{n+1} = 2\cdot2^n > 2n^2 \ge (n+1)^2$, since $n^2 \ge 2n + 1$ for $n \ge 3$.`,
-        r`So base case $n_0 = 5$ works and nothing smaller does.`,
-      ],
-      keyConceptTag: 'Choosing the base case',
-    },
+    ...practice,
     {
       id: 'ml-05-6',
       difficulty: 3,

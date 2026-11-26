@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './03-functions.extra.ts';
+import { practice } from './03-functions.practice.ts';
 
 export default defineLesson({
   id: 'ml-03',
@@ -137,114 +138,5 @@ For an injective function each new input must avoid the outputs already used: $n
     },
   ],
   extra,
-  questions: [
-    {
-      id: 'ml-03-1',
-      difficulty: 1,
-      promptText: r`Let $f(x) = x^2 + 1$ and $g(x) = 2x$. Compute $(g \circ f)(3)$.`,
-      options: [
-        { id: 'a', label: '$20$', value: 20 },
-        { id: 'b', label: '$37$', value: 37, trapExplanation: r`$37 = f(g(3)) = 6^2 + 1$: the order is reversed. $g \circ f$ applies $f$ first.` },
-        { id: 'c', label: '$10$', value: 10, trapExplanation: r`$10 = f(3)$ is only the first step. Then $g$ doubles it.` },
-        { id: 'd', label: '$19$', value: 19, trapExplanation: r`$2\cdot 9 + 1$ doubles $x^2$ before adding 1. $g$ acts on the whole output $f(3) = 10$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$(g \circ f)(3) = g(f(3))$ — first $f$.`,
-        r`$f(3) = 9 + 1 = 10$.`,
-        r`$g(10) = 20$.`,
-      ],
-      keyConceptTag: 'Composition order',
-    },
-    {
-      id: 'ml-03-2',
-      difficulty: 1,
-      promptText: r`Which function $\mathbb{R} \to \mathbb{R}$ is injective?`,
-      options: [
-        { id: 'a', label: r`$f(x) = x^3$` },
-        { id: 'b', label: r`$f(x) = x^2$`, trapExplanation: r`$f(-2) = f(2) = 4$: two inputs share an output.` },
-        { id: 'c', label: r`$f(x) = |x|$`, trapExplanation: r`$|-1| = |1|$. Any even function fails injectivity.` },
-        { id: 'd', label: r`$f(x) = \sin x$`, trapExplanation: r`$\sin 0 = \sin\pi = 0$. A periodic function repeats every value infinitely often.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Injective: $f(x_1) = f(x_2)$ forces $x_1 = x_2$.`,
-        r`$x^3$ is strictly increasing, so different inputs give different outputs; every horizontal line meets its graph once.`,
-        r`The other three each have a pair like $f(-a) = f(a)$ or $f(0) = f(\pi)$.`,
-      ],
-      keyConceptTag: 'Injectivity',
-    },
-    {
-      id: 'ml-03-3',
-      difficulty: 2,
-      promptText: r`Find the inverse of $f(x) = \dfrac{2x + 1}{x - 3}$ (for $x \ne 3$, values $\ne 2$).`,
-      options: [
-        { id: 'a', label: r`$f^{-1}(x) = \dfrac{3x + 1}{x - 2}$` },
-        { id: 'b', label: r`$f^{-1}(x) = \dfrac{x - 3}{2x + 1}$`, trapExplanation: r`This is $1/f(x)$, the reciprocal. The inverse undoes $f$ — check: it does not return $x$ when applied to $f(x)$.` },
-        { id: 'c', label: r`$f^{-1}(x) = \dfrac{3x - 1}{x + 2}$`, trapExplanation: r`Signs slipped when collecting the $x$ terms. Test $x = 4$: $f(4) = 9$, and this gives $26/11$, not $4$.` },
-        { id: 'd', label: r`$f^{-1}(x) = \dfrac{x + 3}{2x - 1}$`, trapExplanation: r`Swapping signs and positions does not invert. Solve $y = f(x)$ for $x$ instead; test $f(4) = 9$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$y = \dfrac{2x + 1}{x - 3}$ gives $y(x - 3) = 2x + 1$, i.e. $xy - 3y = 2x + 1$.`,
-        r`Collect $x$: $x(y - 2) = 3y + 1$, so $x = \dfrac{3y + 1}{y - 2}$.`,
-        r`Check with $x = 4$: $f(4) = 9$ and $\dfrac{27 + 1}{9 - 2} = 4$. ✓`,
-      ],
-      keyConceptTag: 'Finding an inverse',
-    },
-    {
-      id: 'ml-03-4',
-      difficulty: 2,
-      promptText: r`How many functions are there from $\{1, 2, 3\}$ to $\{a, b\}$?`,
-      options: [
-        { id: 'a', label: '$8$', value: 8 },
-        { id: 'b', label: '$9$', value: 9, trapExplanation: r`$3^2$ would count functions from a 2-element set to a 3-element set. Here each of 3 inputs picks one of 2 outputs: $2^3$.` },
-        { id: 'c', label: '$6$', value: 6, trapExplanation: r`$3 \cdot 2$ counts pairs (input, output), i.e. $|X \times Y|$. A function makes a choice for <i>every</i> input at once.` },
-        { id: 'd', label: '$0$', value: 0, trapExplanation: r`That is the number of <i>injective</i> functions: 3 inputs cannot get different outputs from only 2. Ordinary functions may repeat outputs.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$f(1)$ has 2 choices, $f(2)$ has 2, $f(3)$ has 2.`,
-        r`The choices are independent: $2\cdot2\cdot2$.`,
-        r`$2^3 = 8$ functions.`,
-      ],
-      keyConceptTag: 'Counting functions',
-    },
-    {
-      id: 'ml-03-5',
-      difficulty: 3,
-      promptText: r`How many <i>injective</i> functions are there from a 3-element set to a 5-element set?`,
-      options: [
-        { id: 'a', label: '$60$', value: 60 },
-        { id: 'b', label: '$125$', value: 125, trapExplanation: r`$5^3$ counts all functions, including those that repeat an output.` },
-        { id: 'c', label: '$10$', value: 10, trapExplanation: r`$\binom{5}{3} = 10$ counts which 3 outputs are used, but not which input goes to which. Multiply by $3! = 6$.` },
-        { id: 'd', label: '$243$', value: 243, trapExplanation: r`$3^5$ has base and exponent swapped: it counts functions from the 5-element set to the 3-element set.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`The first input has 5 possible outputs.`,
-        r`The second must avoid the first output: 4 choices. The third avoids both: 3 choices.`,
-        r`$5\cdot4\cdot3 = 60$.`,
-      ],
-      keyConceptTag: 'Counting injections',
-    },
-    {
-      id: 'ml-03-6',
-      difficulty: 3,
-      promptText: r`Consider $f: \mathbb{Z} \to \mathbb{Z}$, $f(n) = 2n$. Which statement is true?`,
-      options: [
-        { id: 'a', label: 'Injective but not surjective' },
-        { id: 'b', label: 'Bijective', trapExplanation: r`Odd numbers are never hit: $2n = 3$ has no integer solution. So it is not surjective.` },
-        { id: 'c', label: 'Surjective but not injective', trapExplanation: r`It is the other way round: $2n_1 = 2n_2$ forces $n_1 = n_2$ (injective), while odd numbers are missed.` },
-        { id: 'd', label: 'Neither injective nor surjective', trapExplanation: r`$2n_1 = 2n_2$ gives $n_1 = n_2$, so it is injective.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Injective: $2n_1 = 2n_2 \Rightarrow n_1 = n_2$.`,
-        r`Not surjective: the image is the even integers; $1$ has no preimage in $\mathbb{Z}$.`,
-        r`Note the codomain matters: as a map $\mathbb{R} \to \mathbb{R}$, $x \mapsto 2x$ <i>is</i> bijective.`,
-      ],
-      keyConceptTag: 'Injective vs surjective',
-    },
-  ],
+  questions: practice,
 });
