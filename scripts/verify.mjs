@@ -1425,6 +1425,259 @@ Object.assign(checks, {
   'ca-07-x6': ({ M }) => Math.abs(det(jac((x, y) => mulVec(M, [x, y]), [0.1, 0.2]))),
 });
 
+// ---------- probability: by enumerating sample spaces, or by integrating densities ----------
+/** All tuples of length n over the given values (cartesian power). */
+const tuples = (values, n) => (n === 0 ? [[]] : tuples(values, n - 1).flatMap((t) => values.map((v) => [...t, v])));
+const DIE = [1, 2, 3, 4, 5, 6];
+/** Probability of an event over equally likely outcomes. */
+const prob = (outcomes, event) => outcomes.filter(event).length / outcomes.length;
+const popcount = (m) => m.toString(2).split('1').length - 1;
+const permutationsCount = (n) => {
+  let count = 0;
+  const go = (used, depth) => {
+    if (depth === n) return void count++;
+    for (let i = 0; i < n; i++) if (!(used & (1 << i))) go(used | (1 << i), depth + 1);
+  };
+  go(0, 0);
+  return count;
+};
+const FACE_SETS = [[6], [1, 2], [1, 3, 5], [3, 4, 5, 6]];
+
+// pr-01 · probability spaces
+Object.assign(checks, {
+  'pr-01-q1': () => prob(tuples(DIE, 2), ([a, b]) => a + b === 8),
+  'pr-01-q2': () => {
+    // 10 equally likely outcomes: A = {0..4}, B = {3..6}, so P(A) = 0.5, P(B) = 0.4, P(A ∩ B) = 0.2.
+    const out = range(0, 9);
+    return prob(out, (o) => o <= 4 || (o >= 3 && o <= 6));
+  },
+  'pr-01-q3': () => range(0, 31).filter((m) => popcount(m) === 2).length,
+  'pr-01-1': ({ s }) => prob(tuples(DIE, 2), ([a, b]) => a + b === s),
+  'pr-01-2': ({ a, b, c }) => prob(range(0, 19), (o) => o < a || (o >= a - c && o < a - c + b)),
+  'pr-01-3': ({ n, k }) => prob(range(0, 2 ** n - 1), (m) => popcount(m) === k),
+  'pr-01-4': ({ j, n }) => prob(tuples(DIE, n), (t) => t.some((x) => FACE_SETS[j].includes(x))),
+  'pr-01-5': ({ rd, bl }) => {
+    const balls = range(0, rd + bl - 1);
+    const pairs = balls.flatMap((x) => balls.filter((y) => y !== x).map((y) => [x, y]));
+    return prob(pairs, ([x, y]) => x < rd && y < rd);
+  },
+  'pr-01-6': ({ d, n }) => prob(tuples(range(1, d), n), (t) => new Set(t).size < n),
+  'pr-01-x1': ({ k }) => prob(DIE, (x) => x >= k),
+  'pr-01-x2': ({ rd, bl }) => prob(range(0, rd + bl - 1), (x) => x >= rd),
+  'pr-01-x3': ({ n }) => permutationsCount(n),
+  'pr-01-x4': ({ n, k }) => range(0, 2 ** n - 1).filter((m) => popcount(m) === k).length,
+  'pr-01-x5': ({ q }) => prob(tuples(DIE, 2), (t) => t.some((x) => x <= q)),
+  'pr-01-x6': ({ N, m }) => prob(range(1, N), (x) => x % m === 0),
+});
+
+// pr-02 · conditional probability and Bayes
+/** P(A | B) over equally likely outcomes. */
+const cond = (outcomes, A, B) => prob(outcomes.filter(B), A);
+/** A population of individuals from a 2×2 table of counts [both, A only, B only, neither]: each is [inA, inB]. */
+const people = ([n11, n10, n01, n00]) => [
+  ...Array(n11).fill([1, 1]), ...Array(n10).fill([1, 0]), ...Array(n01).fill([0, 1]), ...Array(n00).fill([0, 0]),
+];
+/** Weighted outcomes [weight, ...data]: total probability of those satisfying the predicate. */
+const wprob = (outcomes, pred) => outcomes.filter((o) => pred(o)).reduce((s, o) => s + o[0], 0) / outcomes.reduce((s, o) => s + o[0], 0);
+/** Urn experiment: urn i chosen with probability prior[i], then a uniformly random ball; outcomes [w, urn, isRed]. */
+const urnBalls = (rs, ns, prior) => rs.flatMap((r, i) => range(0, ns[i] - 1).map((b) => [prior[i] / ns[i], i, b < r]));
+Object.assign(checks, {
+  'pr-02-q1': () => cond(tuples(['H', 'T'], 2), (t) => t[0] === 'H' && t[1] === 'H', (t) => t.includes('H')),
+  'pr-02-q2': () => {
+    const items = [...range(1, 6000).map((i) => [1, i <= 120]), ...range(1, 4000).map((i) => [2, i <= 200])];
+    return 100 * prob(items, (x) => x[1]);
+  },
+  'pr-02-q3': () => {
+    const pop = [...range(1, 10).map((i) => ['D', i <= 9]), ...range(1, 990).map((i) => ['H', i <= 50])];
+    return cond(pop, (x) => x[1], (x) => x[0] === 'D');
+  },
+  'pr-02-1': ({ n }) => cond(people(n), ([, passed]) => passed, ([studied]) => studied),
+  'pr-02-2': ({ p, q }) => prob(range(1, 100), (i) => i <= 10 * p && i <= p * q),
+  'pr-02-3': ({ w, d1, d2 }) => {
+    const items = [...range(1, 100 * w).map((i) => i <= w * d1), ...range(1, 100 * (100 - w)).map((i) => i <= (100 - w) * d2)];
+    return 100 * prob(items, (x) => x);
+  },
+  'pr-02-4': ({ p, s, f }) => {
+    const pop = [...range(1, 100 * p).map((i) => [true, i <= p * s]), ...range(1, 10000 - 100 * p).map((i) => [false, i <= (100 - p) * f])];
+    return cond(pop, ([sick]) => sick, ([, pos]) => pos);
+  },
+  'pr-02-5': ({ rs, ns }) => {
+    const balls = urnBalls(rs, ns, [1 / 3, 1 / 3, 1 / 3]);
+    return wprob(balls, (o) => o[1] === 0 && o[2]) / wprob(balls, (o) => o[2]);
+  },
+  'pr-02-6': ({ n, order }) => {
+    const pop = people(n);
+    const indep = Math.abs(prob(pop, ([a, b]) => a && b) - prob(pop, ([a]) => a) * prob(pop, ([, b]) => b)) < 1e-12;
+    // Statements 0 and 1 are the two correct conclusions; 2 and 3 give wrong reasons and are never right.
+    const truth = [indep, !indep, false, false];
+    return pickId(Object.fromEntries(order.map((k, i) => ['abcd'[i], () => truth[k]])));
+  },
+  'pr-02-x1': ({ k }) => cond(DIE, (x) => x >= k, (x) => x % 2 === 0),
+  'pr-02-x2': ({ p, q }) => {
+    const N = 400;
+    const isNew = (i) => i <= (N * p * 10) / 100;
+    const buys = (i) => i <= (N * p * 10 * q * 10) / 10000;
+    return 100 * prob(range(1, N), (i) => isNew(i) && buys(i));
+  },
+  'pr-02-x3': ({ q, c }) => cond(range(1, 100), (i) => i > c * q, (i) => i <= 10 * c),
+  'pr-02-x4': ({ rs, ns }) => wprob(urnBalls(rs, ns, [0.5, 0.5]), (o) => o[2]),
+  'pr-02-x5': ({ a, b }) => prob(tuples(range(0, 9), 2), ([x, y]) => x < a && y < b),
+  'pr-02-x6': ({ m, n }) => {
+    // Outcomes [weight, coin, side]: coins 0..m-1 are two-headed.
+    const out = range(0, n - 1).flatMap((c) => [[1, c, c < m ? 'H' : 'H'], [1, c, c < m ? 'H' : 'T']]);
+    return wprob(out, (o) => o[1] < m && o[2] === 'H') / wprob(out, (o) => o[2] === 'H');
+  },
+});
+
+// pr-03 · random variables and distributions
+const normalPdf = (m, s) => (x) => Math.exp(-((x - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI));
+/** P(lo < X < hi) for X ~ N(m, s²), by Simpson's rule over the (clipped) interval. */
+const normalProb = (m, s, lo, hi) => integral(normalPdf(m, s), Math.max(lo, m - 12 * s), Math.min(hi, m + 12 * s), 4000);
+/** Poisson(λ) as the limit of Binomial(n, λ/n) with a large n. */
+const poissonLimit = (lam, k, n = 1e6) => {
+  let v = (1 - lam / n) ** (n - k);
+  for (let i = 0; i < k; i++) v *= ((n - i) * (lam / n)) / (i + 1);
+  return v;
+};
+/** Number of successes in n independent trials with success probability pn/pd, by enumeration. */
+const trialsProb = (n, pn, pd, k) => prob(tuples(range(0, pd - 1), n), (t) => t.filter((x) => x < pn).length === k);
+/** Uniform(a, b) by a fine grid of equally likely points. */
+const uniformProb = (a, b, c, d) => prob(range(0, 99999).map((i) => a + ((i + 0.5) * (b - a)) / 1e5), (x) => x >= c && x <= d);
+const pctNear = (v) => ({ v: 100 * v, tol: 1.2 });
+Object.assign(checks, {
+  'pr-03-q1': () => prob(tuples(['H', 'T'], 3), (t) => t.filter((x) => x === 'H').length >= 2),
+  'pr-03-q2': () => trialsProb(4, 1, 2, 2),
+  'pr-03-q3': () => pctNear(normalProb(100, 15, 85, 115)),
+  'pr-03-1': ({ ps, k }) => prob(ps.flatMap((p, x) => Array(p).fill(x)), (x) => x <= k),
+  'pr-03-2': ({ n, pn, pd, k }) => trialsProb(n, pn, pd, k),
+  'pr-03-3': ({ lam, k }) => rel(poissonLimit(lam, k), 1e-4),
+  'pr-03-4': ({ lam, t }) => integral((x) => lam * Math.exp(-lam * x), t, t + 60 / lam, 4000),
+  'pr-03-5': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+  'pr-03-6': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
+  'pr-03-x1': ({ ps }) => prob(ps.flatMap((p, x) => Array(p).fill(x)), (x) => x === 3),
+  'pr-03-x2': ({ n, pn, pd, k }) => trialsProb(n, pn, pd, k),
+  'pr-03-x3': ({ k, n }) => prob(range(1, n), (x) => x <= k),
+  'pr-03-x4': ({ lam, k }) => rel(poissonLimit(lam, k), 1e-4),
+  'pr-03-x5': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
+  'pr-03-x6': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+});
+
+// pr-04 · expectation and variance, from explicit distributions [value, probability]
+const E = (dist, g = (x) => x) => dist.reduce((s, [x, p]) => s + g(x) * p, 0);
+const Var = (dist) => E(dist, (x) => x * x) - E(dist) ** 2;
+const mapDist = (dist, g) => dist.map(([x, p]) => [g(x), p]);
+const pmfDist = (xs, ps) => xs.map((x, i) => [x, ps[i] / 10]);
+const twoPoint = (m, d) => [[m - d, 0.5], [m + d, 0.5]];
+/** Binomial(n, p) as [k, P(X = k)], computed in log space so that large n neither overflows nor underflows. */
+const binomDist = (n, p) => {
+  const logs = [0];
+  for (let k = 1; k <= n; k++) logs.push(logs[k - 1] + Math.log((n - k + 1) / k) + Math.log(p / (1 - p)));
+  const top = Math.max(...logs);
+  const w = logs.map((l) => Math.exp(l - top));
+  const total = w.reduce((s, x) => s + x, 0);
+  return w.map((x, k) => [k, x / total]);
+};
+Object.assign(checks, {
+  'pr-04-q1': () => E([[0, 0.5], [1, 0.3], [2, 0.2]]),
+  'pr-04-q2': () => E(mapDist(twoPoint(4, 1), (x) => 3 * x - 2)),
+  'pr-04-q3': () => Var(mapDist(twoPoint(0, 2), (x) => 3 * x + 2)),
+  'pr-04-1': ({ xs, ps }) => E(pmfDist(xs, ps)),
+  'pr-04-2': ({ m, a, b }) => E(mapDist(twoPoint(m, 1), (x) => a * x + b)),
+  'pr-04-3': ({ xs, ps }) => Var(pmfDist(xs, ps)),
+  'pr-04-4': ({ v, a, b }) => Var(mapDist(twoPoint(0, Math.sqrt(v)), (x) => a * x + b)),
+  'pr-04-5': ({ n, p }) => Var(binomDist(n, p)),
+  'pr-04-6': ({ a, b, sx, sy }) => {
+    const joint = tuples([-1, 1], 2).map(([u, w]) => [a * u * sx - b * w * sy, 0.25]);
+    return Var(joint);
+  },
+  'pr-04-x1': ({ n }) => E(range(1, n).map((x) => [x, 1 / n])),
+  'pr-04-x2': ({ mx, my }) => E([[mx - 1 + my - 1, 0.5], [mx + 1 + my + 1, 0.5]]),
+  'pr-04-x3': ({ p }) => Var([[0, 1 - p / 10], [1, p / 10]]),
+  'pr-04-x4': ({ n, p }) => E(binomDist(n, p / 100)),
+  'pr-04-x5': ({ m, s }) => Var(twoPoint(m, Math.sqrt(s - m * m))),
+  'pr-04-x6': ({ a }) => E(twoPoint(0, a), (x) => x * x),
+});
+
+// pr-05 · joint distributions: explicit joint outcomes [x, y, probability]
+const jointOf = (P, xs = [0, 1], ys = range(0, P[0].length - 1)) => P.flatMap((row, i) => row.map((p, j) => [xs[i], ys[j], p]));
+const EJ = (J, g) => J.reduce((s, [x, y, p]) => s + g(x, y) * p, 0);
+const CovJ = (J) => EJ(J, (x, y) => x * y) - EJ(J, (x) => x) * EJ(J, (_, y) => y);
+const VarJ = (J, g) => EJ(J, (x, y) => g(x, y) ** 2) - EJ(J, g) ** 2;
+const corrJ = (J) => CovJ(J) / Math.sqrt(VarJ(J, (x) => x) * VarJ(J, (_, y) => y));
+/** A concrete pair with SDs sx, sy and correlation rho: X = sx·u, Y = sy(rho·u + √(1−rho²)·w), u, w = ±1 independent. */
+const corrPair = (sx, sy, rho) =>
+  tuples([-1, 1], 2).map(([u, w]) => [sx * u, sy * (rho * u + Math.sqrt(1 - rho * rho) * w), 0.25]);
+/** Independent pair with given marginal distributions [value, probability]. */
+const indepPair = (dx, dy) => dx.flatMap(([x, p]) => dy.map(([y, q]) => [x, y, p * q]));
+Object.assign(checks, {
+  'pr-05-q1': () => EJ(jointOf([[0.3, 0.2], [0.1, 0.4]]), (_, y) => (y === 1 ? 1 : 0)),
+  'pr-05-q2': () => CovJ(jointOf([[0.3, 0.2], [0.1, 0.4]])),
+  'pr-05-q3': () => VarJ(corrPair(2, 3, -3 / 6), (x, y) => x + y),
+  'pr-05-1': ({ P, y }) => EJ(jointOf(P), (_, v) => (v === y ? 1 : 0)),
+  'pr-05-2': ({ P }) => {
+    const J = jointOf(P);
+    return EJ(J, (x, y) => (x === 1 && y === 1 ? 1 : 0)) / EJ(J, (x) => (x === 1 ? 1 : 0));
+  },
+  'pr-05-3': ({ P }) => CovJ(jointOf(P)),
+  'pr-05-4': ({ vx, vy, c }) => VarJ(corrPair(Math.sqrt(vx), Math.sqrt(vy), c / Math.sqrt(vx * vy)), (x, y) => x + y),
+  'pr-05-5': ({ sx, sy, rho }) => corrJ(corrPair(sx, sy, rho)),
+  'pr-05-6': ({ S, a }) => {
+    const J = corrPair(Math.sqrt(S[0][0]), Math.sqrt(S[1][1]), S[0][1] / Math.sqrt(S[0][0] * S[1][1]));
+    return VarJ(J, (x, y) => a[0] * x + a[1] * y);
+  },
+  'pr-05-x1': ({ P }) => EJ(jointOf(P), (x) => (x === 0 ? 1 : 0)),
+  'pr-05-x2': ({ a, b }) => EJ(indepPair([[0, 1 - a / 10], [1, a / 10]], [[0, 1 - b / 10], [1, b / 10]]), (x, y) => x * y),
+  'pr-05-x3': ({ a, b, c }) => CovJ(corrPair(2, 3, c / 6).map(([x, y, p]) => [a * x, b * y, p])),
+  'pr-05-x4': ({ mx, my }) => EJ(indepPair(twoPoint(mx, 1), twoPoint(my, 2)), (x, y) => x * y),
+  'pr-05-x5': ({ vx, vy }) => VarJ(indepPair(twoPoint(0, Math.sqrt(vx)), twoPoint(0, Math.sqrt(vy))), (x, y) => x - y),
+  'pr-05-x6': ({ sx, sy, rho }) => corrJ(corrPair(sx, sy, rho)),
+});
+
+// pr-06 · LLN and CLT: exact distributions of sums of n i.i.d. two-point variables X = μ ± σ
+/** Sum of n i.i.d. copies of μ ± σ: μn + σ(2K − n) with K ~ Binomial(n, ½). */
+const sumIid = (mu, s, n) => mapDist(binomDist(n, 0.5), (k) => mu * n + s * (2 * k - n));
+const meanIid = (mu, s, n) => mapDist(sumIid(mu, s, n), (x) => x / n);
+const SD = (dist) => Math.sqrt(Var(dist));
+Object.assign(checks, {
+  'pr-06-q1': () => SD(meanIid(0, 10, 25)),
+  'pr-06-q2': () => {
+    const d = sumIid(2, 3, 100);
+    return [E(d), SD(d)];
+  },
+  'pr-06-q3': () => {
+    // σ from the first experiment, then the smallest n reaching the target error.
+    const s = 0.4 * Math.sqrt(1000);
+    let n = 1000;
+    while (SD(meanIid(0, s, n)) > 0.2 + 1e-12) n += 1000;
+    return n;
+  },
+  'pr-06-1': ({ s, n }) => SD(meanIid(0, s, n)),
+  'pr-06-2': ({ s, n }) => SD(sumIid(0, s, n)),
+  'pr-06-3': ({ s, e }) => {
+    let n = 1;
+    while (SD(meanIid(0, s, n)) > e + 1e-12) n++;
+    return n;
+  },
+  'pr-06-4': ({ p, n }) => SD(mapDist(binomDist(n, p), (k) => k / n)),
+  'pr-06-5': ({ m, s, n, lo, hi }) => {
+    const se = SD(meanIid(0, s, n));
+    return pctNear(normalProb(m, se, m + lo * se, m + hi * se));
+  },
+  'pr-06-6': ({ xb, s, n }) => {
+    const se = SD(meanIid(0, s, n));
+    return [xb - 2 * se, xb + 2 * se];
+  },
+  'pr-06-x1': ({ m, n }) => E(meanIid(m, 1, n)),
+  'pr-06-x2': ({ s, n }) => Var(meanIid(0, s, n)),
+  'pr-06-x3': ({ n }) => E(binomDist(n, 1 / 6)),
+  'pr-06-x4': ({ k, se }) => SD(meanIid(0, 2 * se, 4 * k)),
+  'pr-06-x5': ({ m, s, n, lo, hi }) => {
+    const se = SD(meanIid(0, s, n));
+    return pctNear(normalProb(m, se, m + lo * se, m + hi * se));
+  },
+  'pr-06-x6': ({ s, n }) => SD(sumIid(0, s, n)),
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */

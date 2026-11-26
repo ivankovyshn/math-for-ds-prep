@@ -12,6 +12,7 @@ const BLUE = 'var(--c-accent)';
 const GREEN = 'var(--c-primary)';
 const YELLOW = 'var(--c-warn)';
 const RED = 'var(--c-danger)';
+const DIE6 = [1, 2, 3, 4, 5, 6];
 
 const thin = { stroke: 'currentColor', strokeWidth: 1.3, fill: 'none' };
 const faint = { ...thin, opacity: 0.18 };
@@ -604,6 +605,159 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
           <Text at={[106, 50]} dx={4} dy={-8} color={RED} style={caption}>· x</Text>
           <Arrow from={[150, 110]} to={[62, 146]} color={RED} width={1.8} dash="5 4" />
           <Text at={[106, 136]} dx={6} dy={14} color={RED} style={caption}>· 1</Text>
+        </>
+      );
+    },
+  },
+
+  diceGrid: {
+    title: 'A 6 by 6 grid of the outcomes of two dice; the six cells whose sum is 7 lie on the anti-diagonal and are highlighted',
+    viewBox: '0 0 250 235',
+    body: () => {
+      const [x0, y0, s] = [46, 30, 30];
+      return (
+        <>
+          <Text at={[x0 + 3 * s, 14]} style={caption}>second die</Text>
+          <text x={14} y={y0 + 3 * s} {...caption} transform={`rotate(-90 14 ${y0 + 3 * s})`}>first die</text>
+          {DIE6.map((j) => <Text key={`c${j}`} at={[x0 + (j - 0.5) * s, y0 - 4]} style={caption}>{j}</Text>)}
+          {DIE6.map((i) => <Text key={`r${i}`} at={[x0 - 10, y0 + (i - 0.5) * s + 4]} style={caption}>{i}</Text>)}
+          {DIE6.flatMap((i) =>
+            DIE6.map((j) => (
+              <g key={`${i}${j}`}>
+                <rect x={x0 + (j - 1) * s} y={y0 + (i - 1) * s} width={s} height={s} fill={i + j === 7 ? BLUE : 'none'} fillOpacity={0.3} stroke="currentColor" strokeOpacity={0.35} />
+                <text x={x0 + (j - 0.5) * s} y={y0 + (i - 0.5) * s + 4} {...caption} fontSize={11} opacity={i + j === 7 ? 1 : 0.45} fill={i + j === 7 ? BLUE : 'currentColor'}>{i + j}</text>
+              </g>
+            )),
+          )}
+        </>
+      );
+    },
+  },
+
+  bayesTree: {
+    title: 'A probability tree: 1% sick and 99% healthy; sick people test positive with probability 0.9, healthy people with probability 0.05. Per 1000 people: 9 true positives, 1 false negative, about 50 false positives and 940 true negatives',
+    viewBox: '0 0 330 220',
+    body: () => {
+      const root: Pt = [18, 110];
+      const mid: Pt[] = [[118, 52], [118, 168]];
+      const leaves: Pt[][] = [[[212, 24], [212, 80]], [[212, 140], [212, 196]]];
+      const branch = (a: Pt, b: Pt, p: string, color = 'currentColor') => (
+        <g key={`${a}${b}`}>
+          <line x1={a[0]} y1={a[1]} x2={b[0] - 6} y2={b[1]} stroke={color} strokeWidth={1.6} opacity={0.75} />
+          <Text at={[(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]} dy={b[1] < a[1] ? -6 : 14} style={caption}>{p}</Text>
+        </g>
+      );
+      const names = [['+', '−'], ['+', '−']];
+      const counts = [['9 people', '1 person'], ['≈ 50 people', '≈ 940 people']];
+      const probs = [['0.9', '0.1'], ['0.05', '0.95']];
+      return (
+        <>
+          <Dot at={root} />
+          {branch(root, mid[0], '0.01', RED)}
+          {branch(root, mid[1], '0.99', GREEN)}
+          <Text at={mid[0]} dx={-2} dy={-10} color={RED} style={caption}>sick</Text>
+          <Text at={mid[1]} dx={-2} dy={20} color={GREEN} style={caption}>healthy</Text>
+          {mid.flatMap((m, i) => leaves[i].map((l, j) => branch(m, l, probs[i][j], j === 0 ? YELLOW : 'currentColor')))}
+          {leaves.flatMap((ls, i) =>
+            ls.map((l, j) => (
+              <g key={`l${i}${j}`}>
+                <Text at={l} dx={2} dy={5} color={j === 0 ? YELLOW : undefined}>{names[i][j]}</Text>
+                <text x={l[0] + 14} y={l[1] + 4} {...caption} textAnchor="start" fill={j === 0 ? YELLOW : 'currentColor'}>{counts[i][j]}</text>
+              </g>
+            )),
+          )}
+        </>
+      );
+    },
+  },
+
+  normal: {
+    title: 'A normal bell curve with the band within one standard deviation of the mean shaded darker (about 68%) and the band within two standard deviations shaded lighter (about 95%)',
+    viewBox: '0 0 320 190',
+    body: () => {
+      const [cx, base, ux, uy] = [160, 160, 40, 300];
+      const f = (z: number) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+      const pt = (z: number): Pt => [cx + ux * z, base - uy * f(z)];
+      const area = (a: number, b: number) => {
+        const zs = Array.from({ length: 41 }, (_, i) => a + ((b - a) * i) / 40);
+        return `M${cx + ux * a},${base} ${zs.map((z) => `L${pt(z).join(',')}`).join(' ')} L${cx + ux * b},${base} Z`;
+      };
+      const curve = Array.from({ length: 141 }, (_, i) => pt(-3.5 + i * 0.05).join(',')).join(' ');
+      return (
+        <>
+          <path d={area(-2, 2)} fill={BLUE} fillOpacity={0.15} />
+          <path d={area(-1, 1)} fill={BLUE} fillOpacity={0.3} />
+          <line x1={10} y1={base} x2={310} y2={base} {...thin} opacity={0.5} />
+          <polyline points={curve} {...thin} strokeWidth={2.2} />
+          {[-2, -1, 0, 1, 2].map((z) => (
+            <g key={z}>
+              <line x1={cx + ux * z} y1={base} x2={cx + ux * z} y2={base + 5} {...thin} />
+              <Text at={[cx + ux * z, base]} dy={18} style={caption}>{z === 0 ? 'μ' : `μ${z > 0 ? '+' : '−'}${Math.abs(z) === 1 ? '' : Math.abs(z)}σ`}</Text>
+            </g>
+          ))}
+          <Text at={[cx, base - 40]} color={BLUE} style={caption}>68%</Text>
+          <Text at={[cx + ux * 1.5, base - 10]} color={BLUE} style={caption}>95%</Text>
+        </>
+      );
+    },
+  },
+
+  scatterCorr: {
+    title: 'Three scatter plots: points rising along a line (correlation about +0.9), a round cloud with no trend (about 0), and points falling along a line (about −0.9)',
+    viewBox: '0 0 330 140',
+    body: () => {
+      const base = Array.from({ length: 40 }, (_, i) => {
+        const rad = 1.6 * Math.sqrt((i + 0.5) / 40);
+        return [rad * Math.cos(i * 2.39996), rad * Math.sin(i * 2.39996)] as Pt;
+      });
+      const panels: [number, number, string][] = [[0.9, 8, 'ρ ≈ +0.9'], [0, 118, 'ρ ≈ 0'], [-0.9, 228, 'ρ ≈ −0.9']];
+      return (
+        <>
+          {panels.map(([rho, x0, lab]) => (
+            <g key={x0}>
+              <rect x={x0} y={8} width={96} height={96} {...thin} opacity={0.35} rx={6} />
+              {base.map(([u, w], i) => {
+                const y = rho * u + Math.sqrt(1 - rho * rho) * w;
+                return <circle key={i} cx={x0 + 48 + 24 * u} cy={56 - 24 * y} r={2.4} fill={rho > 0 ? BLUE : rho < 0 ? RED : 'currentColor'} opacity={0.75} />;
+              })}
+              <Text at={[x0 + 48, 126]} style={caption}>{lab}</Text>
+            </g>
+          ))}
+        </>
+      );
+    },
+  },
+
+  lln: {
+    title: 'The running share of heads over 300 coin tosses: it swings widely at first and then stays close to 0.5, inside a funnel that narrows like one over the square root of n',
+    viewBox: '0 0 320 185',
+    body: () => {
+      const N = 300;
+      const [x0, x1, yTop, yBot] = [30, 310, 15, 160];
+      const X = (n: number) => x0 + ((x1 - x0) * n) / N;
+      const Y = (p: number) => yBot - (yBot - yTop) * p;
+      let seed = 7;
+      let heads = 0;
+      const pts: string[] = [];
+      for (let n = 1; n <= N; n++) {
+        seed = (seed * 1103515245 + 12345) % 2147483648;
+        heads += seed / 2147483648 < 0.5 ? 1 : 0;
+        pts.push(`${X(n)},${Y(heads / n)}`);
+      }
+      const band = (sgn: number) => Array.from({ length: N }, (_, i) => `${X(i + 1)},${Y(Math.min(1, Math.max(0, 0.5 + sgn / Math.sqrt(i + 1))))}`).join(' ');
+      return (
+        <>
+          <line x1={x0} y1={yBot} x2={x1} y2={yBot} {...thin} opacity={0.5} />
+          <line x1={x0} y1={yTop} x2={x0} y2={yBot} {...thin} opacity={0.5} />
+          <polyline points={band(1)} fill="none" stroke={YELLOW} strokeWidth={1.4} strokeDasharray="4 4" opacity={0.8} />
+          <polyline points={band(-1)} fill="none" stroke={YELLOW} strokeWidth={1.4} strokeDasharray="4 4" opacity={0.8} />
+          <line x1={x0} y1={Y(0.5)} x2={x1} y2={Y(0.5)} stroke={GREEN} strokeWidth={1.4} opacity={0.8} />
+          <polyline points={pts.join(' ')} fill="none" stroke={BLUE} strokeWidth={2} />
+          <Text at={[x0, Y(0.5)]} dx={-14} dy={4} style={caption}>0.5</Text>
+          <Text at={[x0, Y(1)]} dx={-12} dy={4} style={caption}>1</Text>
+          <Text at={[x0, Y(0)]} dx={-12} dy={4} style={caption}>0</Text>
+          <Text at={[x1, yBot]} dx={-26} dy={18} style={caption}>n = 300</Text>
+          <Text at={[X(200), Y(0.5 + 1 / Math.sqrt(200))]} dy={-8} color={YELLOW} style={caption}>0.5 ± 1/√n</Text>
         </>
       );
     },

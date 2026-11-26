@@ -28,7 +28,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'probability',
     title: 'Probability',
     blurb: 'Random events, distributions and limit theorems',
-    planned: ['Probability spaces', 'Conditional probability and Bayes', 'Random variables and distributions', 'Expectation and variance', 'Joint distributions and covariance', 'Law of large numbers and CLT'],
   },
   {
     id: 'statistics',
