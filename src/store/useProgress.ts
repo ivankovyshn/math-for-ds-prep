@@ -33,7 +33,7 @@ export interface ProgressData {
 interface ProgressActions {
   addXp: (amount: number) => void;
   /** Logs an answer. `inReview` answers can clear a mistake; others can only add one. */
-  recordAnswer: (questionId: string, correct: boolean, inReview: boolean) => void;
+  recordAnswer: (questionId: string, correct: boolean, inReview: boolean, seed?: number) => void;
   completeNode: (key: string, correct: number, total: number) => void;
   markLectureRead: (lessonId: string) => void;
   unlockExtra: (lessonId: string) => void;
@@ -75,7 +75,7 @@ export const useProgress = create<ProgressData & ProgressActions>()(
 
       addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
 
-      recordAnswer: (questionId, correct, inReview) =>
+      recordAnswer: (questionId, correct, inReview, seed) =>
         set((s) => {
           const mistakes = { ...s.mistakes };
           const entry = mistakes[questionId];
@@ -84,6 +84,7 @@ export const useProgress = create<ProgressData & ProgressActions>()(
               misses: (entry?.misses ?? 0) + 1,
               correctStreak: 0,
               lastMissedAt: new Date().toISOString(),
+              ...(seed !== undefined && { seed }),
             };
           } else if (entry && inReview) {
             if (entry.correctStreak + 1 >= REVIEW_CLEAR_STREAK) delete mistakes[questionId];

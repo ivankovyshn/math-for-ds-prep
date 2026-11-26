@@ -43,7 +43,7 @@ export function Exam({ questions, onExit, onFinished }: ExamProps) {
       const ok = answers[x.id] === x.correctOptionId;
       if (ok) correct++;
       // Wrong and unanswered questions go to the review queue.
-      recordAnswer(x.id, ok, false);
+      recordAnswer(x.id, ok, false, x.seed);
     }
     addXp(correct * 10);
     touchStreak();
@@ -54,6 +54,7 @@ export function Exam({ questions, onExit, onFinished }: ExamProps) {
       timeLimitSec: EXAM_SECONDS,
       questionIds: questions.map((x) => x.id),
       answers,
+      seeds: Object.fromEntries(questions.filter((x) => x.seed !== undefined).map((x) => [x.id, x.seed!])),
     };
     saveExam(result);
     onFinished(result);

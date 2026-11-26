@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './06-basis-rank.extra.ts';
+import { practice } from './06-basis-rank.practice.ts';
 
 export default defineLesson({
   id: 'la-06',
@@ -153,24 +154,7 @@ $\operatorname{rank}A + \dim(\text{null space}) = n$ (the number of columns).`,
   ],
   extra,
   questions: [
-    {
-      id: 'la-06-1',
-      difficulty: 1,
-      promptText: r`What is the dimension of the span of $(1, 2, 3)$, $(2, 4, 6)$ and $(0, 1, 1)$?`,
-      options: [
-        { id: 'a', label: '$2$', value: 2 },
-        { id: 'b', label: '$3$', value: 3, trapExplanation: r`Three vectors span a 3-dimensional space only if they are independent. $(2, 4, 6) = 2(1, 2, 3)$ adds no new direction.` },
-        { id: 'c', label: '$1$', value: 1, trapExplanation: r`The first two are parallel, but $(0, 1, 1)$ is not a multiple of $(1, 2, 3)$, so it adds a second direction.` },
-        { id: 'd', label: '$0$', value: 0, trapExplanation: r`Dimension 0 would mean the span is only the origin, which happens only if all vectors are zero. Dependent vectors still span something.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$(2, 4, 6) = 2(1, 2, 3)$, so it can be dropped without changing the span.`,
-        r`$(1, 2, 3)$ and $(0, 1, 1)$ are not multiples of each other, so they are independent.`,
-        r`Two independent vectors span a plane: dimension 2.`,
-      ],
-      keyConceptTag: 'Dimension of a span',
-    },
+    ...practice,
     {
       id: 'la-06-2',
       difficulty: 1,
@@ -188,79 +172,6 @@ $\operatorname{rank}A + \dim(\text{null space}) = n$ (the number of columns).`,
         r`That $\mathbf{c}$ is a non-trivial combination giving $\mathbf{0}$: the vectors are dependent.`,
       ],
       keyConceptTag: 'More than n vectors in ℝⁿ are dependent',
-    },
-    {
-      id: 'la-06-3',
-      difficulty: 2,
-      promptText: r`What is the rank of this matrix?`,
-      mathFormula: r`\begin{pmatrix} 1 & 2 & 0 & 1 \\ 2 & 4 & 1 & 3 \\ 3 & 6 & 1 & 4 \end{pmatrix}`,
-      options: [
-        { id: 'a', label: '$2$', value: 2 },
-        { id: 'b', label: '$3$', value: 3, trapExplanation: r`3 is the number of rows, only an upper bound. Row 3 = row 1 + row 2, so elimination produces a zero row.` },
-        { id: 'c', label: '$4$', value: 4, trapExplanation: r`The rank can never exceed the number of rows (3), because each pivot needs its own row.` },
-        { id: 'd', label: '$1$', value: 1, trapExplanation: r`Columns 1 and 2 are proportional, but column 3 is not a multiple of column 1, so there are at least two independent columns.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$R_2 - 2R_1 = (0, 0, 1, 1)$ and $R_3 - 3R_1 = (0, 0, 1, 1)$.`,
-        r`$R_3 - R_2 = (0, 0, 0, 0)$.`,
-        r`Two non-zero rows remain in echelon form: rank $= 2$.`,
-      ],
-      keyConceptTag: 'Rank by elimination',
-    },
-    {
-      id: 'la-06-4',
-      difficulty: 2,
-      promptText: r`For which $k$ are the vectors $(1, 1, 0)$, $(0, 1, 1)$ and $(1, k, 1)$ linearly dependent?`,
-      options: [
-        { id: 'a', label: '$k = 2$', value: 2 },
-        { id: 'b', label: '$k = -2$', value: -2, trapExplanation: r`The determinant is $2 - k$, which vanishes at $k = +2$. A sign slip in a cofactor turns it into $2 + k$.` },
-        { id: 'c', label: '$k = 0$', value: 0, trapExplanation: r`With $k = 0$ the determinant is $2 \ne 0$. A zero entry does not make vectors dependent.` },
-        { id: 'd', label: '$k = 1$', value: 1, trapExplanation: r`With $k = 1$: $(1, 1, 1)$ is not $(1, 1, 0) + (0, 1, 1) = (1, 2, 1)$. The sum of the first two vectors has a 2 in the middle.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Three vectors in $\mathbb{R}^3$ are dependent exactly when the matrix with these columns has determinant 0.`,
-        r`$\det\begin{pmatrix} 1 & 0 & 1 \\ 1 & 1 & k \\ 0 & 1 & 1 \end{pmatrix} = 1(1 - k) - 0 + 1(1 - 0) = 2 - k$.`,
-        r`$2 - k = 0$ gives $k = 2$. Indeed $(1, 2, 1) = (1, 1, 0) + (0, 1, 1)$.`,
-      ],
-      keyConceptTag: 'Dependence via determinant',
-    },
-    {
-      id: 'la-06-5',
-      difficulty: 3,
-      promptText: r`$A$ is a $5 \times 7$ matrix of rank 4. What is the dimension of the solution space of $A\mathbf{x} = \mathbf{0}$?`,
-      options: [
-        { id: 'a', label: '$3$', value: 3 },
-        { id: 'b', label: '$1$', value: 1, trapExplanation: r`$5 - 4$ uses the number of rows. Free variables are unknowns without a pivot, and there are 7 unknowns (columns).` },
-        { id: 'c', label: '$4$', value: 4, trapExplanation: r`4 is the rank: the number of pivot variables. The solution space is measured by the <i>free</i> ones.` },
-        { id: 'd', label: '$2$', value: 2, trapExplanation: r`$7 - 5$ assumes every row has a pivot. Here only 4 rows do.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\mathbf{x}$ has 7 entries, one per column.`,
-        r`Rank 4 means 4 pivot variables; the other $7 - 4 = 3$ are free.`,
-        r`Rank–nullity: $\dim(\text{null space}) = n - \operatorname{rank} = 7 - 4 = 3$.`,
-      ],
-      keyConceptTag: 'Rank–nullity theorem',
-    },
-    {
-      id: 'la-06-6',
-      difficulty: 3,
-      promptText: r`What are the coordinates of $\mathbf{v} = (4, 7)$ in the basis $\mathbf{b}_1 = (1, 1)$, $\mathbf{b}_2 = (1, 2)$?`,
-      options: [
-        { id: 'a', label: '$(1, 3)$', value: [1, 3] },
-        { id: 'b', label: '$(4, 7)$', value: [4, 7], trapExplanation: r`These are the coordinates in the <i>standard</i> basis. In the new basis you need $a, b$ with $a\mathbf{b}_1 + b\mathbf{b}_2 = \mathbf{v}$.` },
-        { id: 'c', label: '$(3, 1)$', value: [3, 1], trapExplanation: r`$3\mathbf{b}_1 + \mathbf{b}_2 = (4, 5) \ne (4, 7)$. The coefficients are in the wrong order.` },
-        { id: 'd', label: '$(-1, 5)$', value: [-1, 5], trapExplanation: r`$-\mathbf{b}_1 + 5\mathbf{b}_2 = (4, 9)$. Substitute back: the second component does not match.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Solve $a(1, 1) + b(1, 2) = (4, 7)$: $a + b = 4$ and $a + 2b = 7$.`,
-        r`Subtract: $b = 3$, then $a = 1$.`,
-        r`Check: $(1, 1) + 3(1, 2) = (4, 7)$. ✓ Coordinates $(1, 3)$.`,
-      ],
-      keyConceptTag: 'Coordinates in a basis',
     },
   ],
 });

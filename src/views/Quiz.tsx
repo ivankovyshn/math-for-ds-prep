@@ -62,7 +62,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
     if (phase !== 'answering' || outcome) return;
     if (!timeout && !selected) return;
     const correct = !timeout && selected === q.correctOptionId;
-    recordAnswer(q.id, correct, mode === 'review');
+    recordAnswer(q.id, correct, mode === 'review', q.seed);
     if (correct) {
       const xp = mode === 'review' ? 5 : xpForQuestion(q);
       addXp(xp);

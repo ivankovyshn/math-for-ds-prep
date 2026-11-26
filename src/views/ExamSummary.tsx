@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronDown, Clock, MinusCircle, RotateCcw, Target, XCirc
 import type { ExamResult, ModuleId } from '../types.ts';
 import { MODULES } from '../data/modules.ts';
 import { QUESTION_BY_ID } from '../data/questions.ts';
+import { variantOf } from '../lib/variants.ts';
 import { formatClock } from '../lib/session.ts';
 import { ModuleIcon } from '../components/ModuleIcon.tsx';
 import { QuestionBody } from '../components/QuestionCard.tsx';
@@ -27,7 +28,11 @@ function verdict(pct: number) {
 /** Diagnostic report after an exam: overall score, per-topic breakdown, full review. */
 export function ExamSummary({ result, onExit, onReview, onRetake }: Props) {
   const [open, setOpen] = useState<string | null>(null);
-  const questions = result.questionIds.map((id) => QUESTION_BY_ID[id]).filter(Boolean);
+  // Show each parametric question with the numbers that were on the paper.
+  const questions = result.questionIds.filter((id) => QUESTION_BY_ID[id]).map((id) => {
+    const seed = result.seeds?.[id];
+    return seed === undefined ? QUESTION_BY_ID[id] : variantOf(QUESTION_BY_ID[id], seed);
+  });
   const isCorrect = (id: string) => result.answers[id] === QUESTION_BY_ID[id].correctOptionId;
   const correct = questions.filter((q) => isCorrect(q.id)).length;
   const unanswered = questions.filter((q) => !result.answers[q.id]).length;

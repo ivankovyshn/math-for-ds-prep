@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { MODULES } from '../data/modules.ts';
+import { variantOf } from '../lib/variants.ts';
 import { ALL_QUESTIONS, LESSONS, lessonsOf } from '../data/questions.ts';
 import { QuestionBody } from '../components/QuestionCard.tsx';
 import { Inline } from '../components/RichText.tsx';
@@ -9,11 +11,19 @@ import { LectureBlockView } from './Lecture.tsx';
  * Open it by adding #all to the address. Useful for proofreading new lessons.
  */
 export function QuestionBrowser() {
+  // 0 = the stored variant; every click on "New numbers" draws fresh values for parametric questions.
+  const [round, setRound] = useState(0);
+  const parametric = ALL_QUESTIONS.filter((q) => q.generate).length;
   return (
     <div className="mx-auto w-full max-w-2xl space-y-10 px-4 py-6">
       <header>
         <h1 className="text-2xl font-extrabold">Content · {LESSONS.length} lessons · {ALL_QUESTIONS.length} questions</h1>
-        <a href="#" className="text-sm font-bold text-accent">← Back to the app</a>
+        <div className="flex items-center gap-4">
+          <a href="#" className="text-sm font-bold text-accent">← Back to the app</a>
+          <button type="button" onClick={() => setRound(round + 1)} className="rounded-lg bg-accent-soft px-2.5 py-1 text-sm font-extrabold text-accent">
+            New numbers ({parametric} parametric questions)
+          </button>
+        </div>
       </header>
       {MODULES.filter((m) => lessonsOf(m.id).length).map((m) => (
         <section key={m.id} className="space-y-8">
@@ -32,10 +42,10 @@ export function QuestionBrowser() {
                   ))}
                 </div>
               </details>
-              {[...l.questions, ...l.extra].map((q) => (
+              {[...l.questions, ...l.extra].map((base, i) => round && base.generate ? variantOf(base, round * 1000 + i) : base).map((q) => (
                 <article key={q.id} className="space-y-4 rounded-3xl border-2 border-line bg-surface p-4">
                   <div className="text-xs font-extrabold uppercase tracking-wider text-muted">
-                    {q.id} · {q.extra ? 'extra practice' : 'practice'} · level {q.difficulty} · {q.keyConceptTag}
+                    {q.id} · {q.extra ? 'extra practice' : 'practice'}{q.generate ? ' · random values' : ''} · level {q.difficulty} · {q.keyConceptTag}
                   </div>
                   <QuestionBody question={q} />
                   <ul className="space-y-2">

@@ -25,7 +25,8 @@ Runs entirely in the browser. No account, no server, no API keys.
 - **Review Mistakes** — every missed question is queued. It leaves the queue after two correct answers in a row.
   A module shows 100 % only when its path is finished *and* its queue is empty.
 - **Exam Simulator** — 10 mixed questions in 15 minutes, no feedback until the end, then a diagnostic by topic.
-- Every answer key is re-computed by `npm run verify`.
+- Numeric questions are parametric: every attempt brings new numbers (same idea, same traps).
+- Every answer key is re-computed by `npm run verify` — for parametric questions, on 300 generated variants each.
 - Dark mode by default, light mode toggle. Keyboard: `1`–`5` select, `Enter` check / continue, `←` `→` in lectures.
 - Add `#all` to the address to proofread every lecture and question on one page.
 
@@ -129,5 +130,47 @@ in `scripts/verify.mjs`
 
 It may also return `{ id: 'b' }` when it decides which option is right without numeric values.
 Run `npm run verify`. It fails if a key is wrong, if a distractor equals the answer, if a wrong option has no
-trap explanation, if a lecture uses an unknown diagram or if a `$` is unbalanced. The deployment runs the same
-check, so a broken question cannot be published.
+trap explanation, if a lecture uses an unknown diagram, if a `$` is unbalanced or if a formula does not render.
+The deployment runs the same check, so a broken question cannot be published.
+
+### Parametric questions (fresh numbers on every attempt)
+
+A numeric question can be written as a template: `generate` draws random values from a seeded source and
+returns the prompt, options, traps and solution built from them. Every practice session, boss quiz and exam
+draws new numbers; Review Mistakes first shows the exact numbers that were missed (the seed is stored), then
+fresh ones. Linear Algebra uses templates for all numeric questions (`NN-name.practice.ts`, `NN-name.extra.ts`).
+
+```ts
+{
+  id: 'la-04-1',
+  difficulty: 1,
+  keyConceptTag: '2×2 determinant',
+  correctOptionId: 'a',                     // fixed across variants
+  generate: (g) => {
+    // g.int, g.nonzero, g.pick; g.until(draw, ok) redraws until the constraints hold
+    const A = g.until(() => mat(g, 2, 2, -3, 6), ([[a, b], [c, d]]) => allDistinct([a * d - b * c, a * d + b * c, a + d]));
+    return {
+      params: { A },                        // handed to the independent check in verify.mjs
+      promptText: r`Compute $\det${pm(A)}$.`,
+      options: [
+        { id: 'a', label: r`$${det2(A)}$`, value: det2(A) },
+        { id: 'b', label: r`$${A[0][0] * A[1][1] + A[0][1] * A[1][0]}$`, value: …, trapExplanation: r`…adds the two products…` },
+        // …
+      ],
+      stepByStepSolution: [r`…with the drawn numbers…`, …],
+    };
+  },
+}
+```
+
+Formatting and exact integer helpers (`pm`, `vec`, `lin`, `system`, `frac`, `paren`, `det2`, `mm`, …) are in
+`src/data/lessons/gen.ts`. Inside `${…}` use the `r` tag for nested template strings too, otherwise `\cdot`
+loses its backslash (the checker reports such text). The check in `scripts/verify.mjs` receives the params:
+
+```js
+'la-04-1': ({ A }) => det(A),
+```
+
+`npm run verify` generates every template with 300 seeds and checks each variant: structure, unique options,
+renderable formulas and the recomputed key. On the `#all` page, "New numbers" draws another set of variants.
+Conceptual questions (which proof technique, which statement is true) stay fixed.

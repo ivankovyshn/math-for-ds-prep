@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './03-matrices.extra.ts';
+import { practice } from './03-matrices.practice.ts';
 
 export default defineLesson({
   id: 'la-03',
@@ -153,114 +154,5 @@ This also explains the transpose rule: reversing a composition reverses the orde
     },
   ],
   extra,
-  questions: [
-    {
-      id: 'la-03-1',
-      difficulty: 1,
-      promptText: r`$A$ is a $2 \times 3$ matrix and $B$ is a $3 \times 4$ matrix. What is the size of $AB$?`,
-      options: [
-        { id: 'a', label: r`$2 \times 4$`, value: [2, 4] },
-        { id: 'b', label: r`$3 \times 3$`, value: [3, 3], trapExplanation: r`The matching inner size 3 is "used up" by the dot products; it does not survive in the result. The result takes the outer sizes.` },
-        { id: 'c', label: r`$4 \times 2$`, value: [4, 2], trapExplanation: r`That would be the size of $BA$ or of $(AB)^T$. Rows come from the left factor, columns from the right one.` },
-        { id: 'd', label: 'The product is not defined', value: [0, 0], trapExplanation: r`Matrices do not need the same size to be multiplied. The product is defined because columns of $A$ (3) = rows of $B$ (3).` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Write the sizes side by side: $(2 \times 3)(3 \times 4)$.`,
-        r`The inner numbers match (3 and 3), so the product exists.`,
-        r`The outer numbers give the size: $2 \times 4$.`,
-      ],
-      keyConceptTag: 'Size rule for products',
-    },
-    {
-      id: 'la-03-2',
-      difficulty: 1,
-      promptText: r`Let $A = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$ and $B = \begin{pmatrix} 0 & 1 \\ 5 & -2 \end{pmatrix}$. What is the entry $(AB)_{21}$?`,
-      options: [
-        { id: 'a', label: '$20$', value: 20 },
-        { id: 'b', label: '$15$', value: 15, trapExplanation: r`$a_{21}b_{21} = 3\cdot 5$ multiplies single entries. A product entry is a whole row of $A$ dotted with a whole column of $B$.` },
-        { id: 'c', label: '$-3$', value: -3, trapExplanation: r`This is $(AB)_{12}$: row 1 of $A$ with column 2 of $B$. In $(AB)_{21}$ the first index picks the row (2), the second the column (1).` },
-        { id: 'd', label: '$-1$', value: -1, trapExplanation: r`This is $(BA)_{21}$: row 2 of $B$ with column 1 of $A$. The order of the factors matters.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$(AB)_{21}$ = row 2 of $A$ · column 1 of $B$.`,
-        r`Row 2 of $A$ is $(3, 4)$; column 1 of $B$ is $(0, 5)$.`,
-        r`$3\cdot 0 + 4\cdot 5 = 20$.`,
-      ],
-      keyConceptTag: 'Row times column',
-    },
-    {
-      id: 'la-03-3',
-      difficulty: 2,
-      promptText: r`Compute $A^3$ for $A = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$.`,
-      options: [
-        { id: 'a', label: r`$\begin{pmatrix} 1 & 3 \\ 0 & 1 \end{pmatrix}$`, value: [1, 3, 0, 1] },
-        { id: 'b', label: r`$\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$`, value: [1, 1, 0, 1], trapExplanation: r`Cubing every entry gives $A$ back, because $0^3 = 0$ and $1^3 = 1$. But a matrix power is repeated matrix multiplication, not entrywise powers.` },
-        { id: 'c', label: r`$\begin{pmatrix} 3 & 3 \\ 0 & 3 \end{pmatrix}$`, value: [3, 3, 0, 3], trapExplanation: r`This is $3A = A + A + A$. A power multiplies: $A\cdot A\cdot A$.` },
-        { id: 'd', label: r`$\begin{pmatrix} 1 & 2 \\ 0 & 1 \end{pmatrix}$`, value: [1, 2, 0, 1], trapExplanation: r`This is $A^2$. One more multiplication by $A$ adds another 1 to the top-right entry.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$A^2 = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} 1 & 2 \\ 0 & 1 \end{pmatrix}$.`,
-        r`$A^3 = A^2 A = \begin{pmatrix} 1 & 2 \\ 0 & 1 \end{pmatrix}\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} 1 & 3 \\ 0 & 1 \end{pmatrix}$.`,
-        r`Pattern: $A$ is a horizontal shear by 1; doing it $n$ times is a shear by $n$, so $A^n$ has $n$ in the corner.`,
-      ],
-      keyConceptTag: 'Matrix powers',
-    },
-    {
-      id: 'la-03-4',
-      difficulty: 2,
-      promptText: r`Let $A = \begin{pmatrix} 1 & 2 \\ 0 & 1 \end{pmatrix}$ and $B = \begin{pmatrix} 3 & 0 \\ 1 & 1 \end{pmatrix}$. Compute $(AB)^T$.`,
-      options: [
-        { id: 'a', label: r`$\begin{pmatrix} 5 & 1 \\ 2 & 1 \end{pmatrix}$`, value: [5, 1, 2, 1] },
-        { id: 'b', label: r`$\begin{pmatrix} 5 & 2 \\ 1 & 1 \end{pmatrix}$`, value: [5, 2, 1, 1], trapExplanation: r`This is $AB$ itself — the transpose was forgotten at the end.` },
-        { id: 'c', label: r`$\begin{pmatrix} 3 & 1 \\ 6 & 3 \end{pmatrix}$`, value: [3, 1, 6, 3], trapExplanation: r`This is $A^TB^T$, with the factors in the original order. The rule reverses the order: $(AB)^T = B^TA^T$.` },
-        { id: 'd', label: r`$\begin{pmatrix} 3 & 6 \\ 1 & 3 \end{pmatrix}$`, value: [3, 6, 1, 3], trapExplanation: r`This is $BA$. Transposing is not the same as swapping the factors.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$AB = \begin{pmatrix} 1\cdot3 + 2\cdot1 & 0 + 2 \\ 0 + 1 & 0 + 1 \end{pmatrix} = \begin{pmatrix} 5 & 2 \\ 1 & 1 \end{pmatrix}$.`,
-        r`Transpose: rows become columns, $(AB)^T = \begin{pmatrix} 5 & 1 \\ 2 & 1 \end{pmatrix}$.`,
-        r`Check with the rule: $B^TA^T = \begin{pmatrix} 3 & 1 \\ 0 & 1 \end{pmatrix}\begin{pmatrix} 1 & 0 \\ 2 & 1 \end{pmatrix} = \begin{pmatrix} 5 & 1 \\ 2 & 1 \end{pmatrix}$. ✓`,
-      ],
-      keyConceptTag: 'Transpose of a product',
-    },
-    {
-      id: 'la-03-5',
-      difficulty: 3,
-      promptText: r`Which matrix rotates every vector in the plane by $90^\circ$ <i>counter-clockwise</i>?`,
-      options: [
-        { id: 'a', label: r`$\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$`, value: [0, -1, 1, 0] },
-        { id: 'b', label: r`$\begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix}$`, value: [0, 1, -1, 0], trapExplanation: r`This sends $\mathbf{e}_1 = (1, 0)$ to $(0, -1)$, i.e. downwards: a <i>clockwise</i> rotation. The images must be written as columns.` },
-        { id: 'c', label: r`$\begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$`, value: [0, 1, 1, 0], trapExplanation: r`This swaps $x$ and $y$: a reflection in the line $y = x$. It sends $\mathbf{e}_2$ to $(1, 0)$, not to $(-1, 0)$.` },
-        { id: 'd', label: r`$\begin{pmatrix} -1 & 0 \\ 0 & -1 \end{pmatrix}$`, value: [-1, 0, 0, -1], trapExplanation: r`This is $-I$, which flips every vector: a rotation by $180^\circ$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Rotating $\mathbf{e}_1 = (1, 0)$ by $90^\circ$ counter-clockwise gives $(0, 1)$.`,
-        r`Rotating $\mathbf{e}_2 = (0, 1)$ gives $(-1, 0)$.`,
-        r`The images are the columns: $\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$.`,
-      ],
-      keyConceptTag: 'Build a matrix from images of basis vectors',
-    },
-    {
-      id: 'la-03-6',
-      difficulty: 3,
-      promptText: r`Let $R = \begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$ (rotation by $90^\circ$) and $F = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$ (reflection in the $x$-axis). Which matrix means "first rotate, then reflect"?`,
-      options: [
-        { id: 'a', label: r`$FR = \begin{pmatrix} 0 & -1 \\ -1 & 0 \end{pmatrix}$`, value: [0, -1, -1, 0] },
-        { id: 'b', label: r`$RF = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$`, value: [0, 1, 1, 0], trapExplanation: r`$RF\mathbf{x} = R(F\mathbf{x})$ reflects first and rotates second. The map applied first stands on the <i>right</i>.` },
-        { id: 'c', label: r`$R + F = \begin{pmatrix} 1 & -1 \\ 1 & -1 \end{pmatrix}$`, value: [1, -1, 1, -1], trapExplanation: r`Adding matrices adds the outputs, $R\mathbf{x} + F\mathbf{x}$. Doing one map after another is multiplication.` },
-        { id: 'd', label: r`$R = \begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$`, value: [0, -1, 1, 0], trapExplanation: r`A reflection after a rotation changes the result: $\mathbf{e}_1$ goes to $(0, 1)$ and then to $(0, -1)$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`"First $R$, then $F$" sends $\mathbf{x}$ to $F(R\mathbf{x}) = (FR)\mathbf{x}$.`,
-        r`Track the basis: $\mathbf{e}_1 \to (0, 1) \to (0, -1)$ and $\mathbf{e}_2 \to (-1, 0) \to (-1, 0)$.`,
-        r`Columns $(0, -1)$ and $(-1, 0)$: $FR = \begin{pmatrix} 0 & -1 \\ -1 & 0 \end{pmatrix}$, a reflection in the line $y = -x$.`,
-      ],
-      keyConceptTag: 'Product = composition, right to left',
-    },
-  ],
+  questions: practice,
 });

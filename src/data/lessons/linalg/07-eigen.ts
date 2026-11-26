@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './07-eigen.extra.ts';
+import { practice } from './07-eigen.practice.ts';
 
 export default defineLesson({
   id: 'la-07',
@@ -165,114 +166,5 @@ $\lambda_1 + \dots + \lambda_n = \operatorname{tr}A$ and $\lambda_1\cdots\lambda
     },
   ],
   extra,
-  questions: [
-    {
-      id: 'la-07-1',
-      difficulty: 1,
-      promptText: r`What are the eigenvalues of $A = \begin{pmatrix} 2 & 5 \\ 0 & 3 \end{pmatrix}$?`,
-      options: [
-        { id: 'a', label: '$2$ and $3$', value: [2, 3] },
-        { id: 'b', label: '$2$ and $5$', value: [2, 5], trapExplanation: r`These are the entries of the first row. For a triangular matrix the eigenvalues sit on the <i>diagonal</i>.` },
-        { id: 'c', label: '$-3$ and $-2$', value: [-3, -2], trapExplanation: r`$\det(A - \lambda I) = (2 - \lambda)(3 - \lambda)$ vanishes at $\lambda = 2$ and $3$, not at their negatives.` },
-        { id: 'd', label: '$3$ and $5$', value: [3, 5], trapExplanation: r`These are the entries of the second column. The off-diagonal 5 does not affect the eigenvalues of a triangular matrix.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$A - \lambda I = \begin{pmatrix} 2 - \lambda & 5 \\ 0 & 3 - \lambda \end{pmatrix}$ is triangular.`,
-        r`Its determinant is the product of the diagonal: $(2 - \lambda)(3 - \lambda)$.`,
-        r`Zero at $\lambda = 2$ and $\lambda = 3$.`,
-      ],
-      keyConceptTag: 'Eigenvalues of a triangular matrix',
-    },
-    {
-      id: 'la-07-2',
-      difficulty: 1,
-      promptText: r`$\mathbf{v} = (1, 1)$ is an eigenvector of $A = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$. What is its eigenvalue?`,
-      options: [
-        { id: 'a', label: '$3$', value: 3 },
-        { id: 'b', label: '$2$', value: 2, trapExplanation: r`2 is a diagonal entry. This matrix is not triangular, so the diagonal entries are not its eigenvalues. Compute $A\mathbf{v}$.` },
-        { id: 'c', label: '$1$', value: 1, trapExplanation: r`$1$ is the other eigenvalue of $A$, belonging to the direction $(1, -1)$. For $(1, 1)$ compute $A\mathbf{v}$.` },
-        { id: 'd', label: '$6$', value: 6, trapExplanation: r`$A\mathbf{v} = (3, 3)$, and $3 + 3 = 6$ — but the eigenvalue is the factor $\lambda$ in $A\mathbf{v} = \lambda\mathbf{v}$, not the sum of the entries.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$A\mathbf{v} = (2 + 1,\ 1 + 2) = (3, 3)$.`,
-        r`$(3, 3) = 3\cdot(1, 1)$.`,
-        r`So $\lambda = 3$.`,
-      ],
-      keyConceptTag: 'Eigenvalue from Av = λv',
-    },
-    {
-      id: 'la-07-3',
-      difficulty: 2,
-      promptText: r`Find the eigenvalues of $A = \begin{pmatrix} 4 & 1 \\ 2 & 3 \end{pmatrix}$.`,
-      options: [
-        { id: 'a', label: '$2$ and $5$', value: [2, 5] },
-        { id: 'b', label: '$3$ and $4$', value: [3, 4], trapExplanation: r`These are the diagonal entries, which are eigenvalues only for triangular matrices. Here the 1 and the 2 off the diagonal change them.` },
-        { id: 'c', label: '$-5$ and $-2$', value: [-5, -2], trapExplanation: r`The roots of $\lambda^2 - 7\lambda + 10$ are positive: their sum is $+7$. The sign was lost when factoring.` },
-        { id: 'd', label: 'There are no real eigenvalues', value: [], trapExplanation: r`With $\det A = 12 - 2 = 10$ the discriminant is $49 - 40 = 9 > 0$. Using $ad + bc = 14$ instead would make it negative.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\operatorname{tr}A = 7$, $\det A = 4\cdot3 - 1\cdot2 = 10$.`,
-        r`$\lambda^2 - 7\lambda + 10 = (\lambda - 2)(\lambda - 5) = 0$.`,
-        r`$\lambda = 2$ and $\lambda = 5$; check: sum 7 = trace, product 10 = det.`,
-      ],
-      keyConceptTag: 'Characteristic equation',
-    },
-    {
-      id: 'la-07-4',
-      difficulty: 2,
-      promptText: r`Which vector is an eigenvector of $A = \begin{pmatrix} 4 & 1 \\ 2 & 3 \end{pmatrix}$ for the eigenvalue $\lambda = 5$?`,
-      options: [
-        { id: 'a', label: '$(1, 1)$', value: [1, 1] },
-        { id: 'b', label: '$(1, -2)$', value: [1, -2], trapExplanation: r`$A(1, -2) = (2, -4) = 2(1, -2)$: an eigenvector, but for $\lambda = 2$, not $5$.` },
-        { id: 'c', label: '$(1, 0)$', value: [1, 0], trapExplanation: r`$A(1, 0) = (4, 2)$ is not a multiple of $(1, 0)$, so it is not an eigenvector at all.` },
-        { id: 'd', label: '$(-1, 1)$', value: [-1, 1], trapExplanation: r`$A - 5I$ gives $-x + y = 0$, i.e. $y = x$. Writing $y = -x$ is a sign slip; $A(-1, 1) = (-3, 1)$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$A - 5I = \begin{pmatrix} -1 & 1 \\ 2 & -2 \end{pmatrix}$.`,
-        r`$(A - 5I)\mathbf{v} = \mathbf{0}$ gives $-x + y = 0$, so $y = x$.`,
-        r`$\mathbf{v} = (1, 1)$. Check: $A(1, 1) = (5, 5)$. ✓`,
-      ],
-      keyConceptTag: 'Eigenvector from (A − λI)v = 0',
-    },
-    {
-      id: 'la-07-5',
-      difficulty: 3,
-      promptText: r`A $3\times 3$ matrix $A$ has eigenvalues $1$, $2$ and $4$. What is $\det(2A^{-1})$?`,
-      options: [
-        { id: 'a', label: '$1$', value: 1 },
-        { id: 'b', label: r`$\tfrac14$`, value: 1 / 4, trapExplanation: r`$2\cdot\det A^{-1} = 2/8$ forgets that $2A^{-1}$ scales all 3 rows: the factor is $2^3 = 8$.` },
-        { id: 'c', label: '$16$', value: 16, trapExplanation: r`$2\cdot\det A = 16$ uses $A$ instead of $A^{-1}$. The inverse has eigenvalues $1, \tfrac12, \tfrac14$.` },
-        { id: 'd', label: r`$\tfrac18$`, value: 1 / 8, trapExplanation: r`$\tfrac18 = \det(A^{-1})$. The factor 2 in front still multiplies the determinant by $2^3$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$\det A$ = product of eigenvalues $= 1\cdot2\cdot4 = 8$, so $\det A^{-1} = \tfrac18$.`,
-        r`$\det(2A^{-1}) = 2^3\det A^{-1}$ for a $3\times3$ matrix.`,
-        r`$8\cdot\tfrac18 = 1$. (Equivalently: $2A^{-1}$ has eigenvalues $2, 1, \tfrac12$, whose product is 1.)`,
-      ],
-      keyConceptTag: 'det = product of eigenvalues',
-    },
-    {
-      id: 'la-07-6',
-      difficulty: 3,
-      promptText: r`Let $A = \begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$. What is the top-right entry of $A^{10}$?`,
-      options: [
-        { id: 'a', label: '$1023$', value: 1023 },
-        { id: 'b', label: '$1024$', value: 1024, trapExplanation: r`$1024 = 2^{10}$ is the top-left entry. The top-right one collects $2^9 + 2^8 + \dots + 1 = 2^{10} - 1$.` },
-        { id: 'c', label: '$10$', value: 10, trapExplanation: r`For $\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$ the corner grows by 1 each time. Here the diagonal entry 2 doubles what was there before, so it grows much faster.` },
-        { id: 'd', label: '$1$', value: 1, trapExplanation: r`$1^{10} = 1$ raises the entry to the power. Matrix powers are repeated matrix products, not entrywise powers.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Eigenvalues 2 and 1 (triangular). Eigenvectors: $(1, 0)$ for 2 and $(1, -1)$ for 1, so $A = PDP^{-1}$ with $P = \begin{pmatrix} 1 & 1 \\ 0 & -1 \end{pmatrix}$, $D = \operatorname{diag}(2, 1)$.`,
-        r`$A^{n} = PD^{n}P^{-1} = \begin{pmatrix} 2^{n} & 2^{n} - 1 \\ 0 & 1 \end{pmatrix}$. Check $n = 1$: $\begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$. ✓`,
-        r`For $n = 10$: $2^{10} - 1 = 1023$.`,
-      ],
-      keyConceptTag: 'Powers via diagonalisation',
-    },
-  ],
+  questions: practice,
 });

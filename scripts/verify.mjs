@@ -7,7 +7,9 @@
 // unknown diagrams.
 
 import { readFileSync } from 'node:fs';
+import katex from 'katex';
 import { ALL_QUESTIONS as QUESTIONS, LESSONS } from '../src/data/questions.ts';
+import { variantOf } from '../src/lib/variants.ts';
 
 // ---------- numeric helpers ----------
 const EPS = 1e-9;
@@ -139,6 +141,15 @@ const cdiv = ([a, b], [c, d]) => {
 const cpow = (z, n) => (n === 0 ? [1, 0] : cmul(z, cpow(z, n - 1)));
 const cabs = ([a, b]) => Math.hypot(a, b);
 const round = (v) => v.map((x) => Math.round(x * 1e9) / 1e9 + 0);
+/** Simple maps of the plane, from their geometric meaning (same order as PLANE_MAPS in la-03). */
+const PLANE = [
+  ([x, y]) => [-y, x], // rotate 90° counter-clockwise
+  ([x, y]) => [y, -x], // rotate 90° clockwise
+  ([x, y]) => [y, x], // reflect in y = x
+  ([x, y]) => [x, -y], // reflect in the x-axis
+  ([x, y]) => [-x, y], // reflect in the y-axis
+  ([x, y]) => [-x, -y], // rotate 180°
+];
 
 // ---------- one independent computation per question ----------
 // Each returns a number, a list of numbers, { v, tol } or { id } (the option that must be correct).
@@ -343,132 +354,18 @@ const checks = {
 
   // ===== Linear Algebra =====
   // Lesson 1 · Vectors and linear combinations
-  'la-01-1': () => [0, 1, 2].map((i) => 2 * [2, -1, 3][i] - [1, 4, -2][i]),
-  'la-01-2': () => angle([3, -2], [4, 6]),
-  'la-01-3': () => norm([2, -3, 6]),
-  'la-01-4': () => angle([1, 0, 1], [0, 1, 1]),
-  'la-01-5': () => {
-    // u·v is linear in k: f(k) = f(0) + k (f(1) - f(0)).
-    const f = (k) => dot([k, 2, -1], [3, k, 4]);
-    return -f(0) / (f(1) - f(0));
-  },
-  'la-01-6': () => solve([[1, 1], [2, -1]], [1, 8]),
 
   // Lesson 2 · Linear systems (value = -1 if inconsistent, otherwise the number of free variables)
-  'la-02-1': () => solutionKind([[1, 2], [2, 4]], [3, 6]),
-  'la-02-3': () => solve([[1, 1, 1], [0, 2, 5], [2, 5, -1]], [6, -4, 27]),
-  'la-02-4': () => solutionKind([[1, 2, -1], [0, 1, 4], [0, 0, 0]], [3, 2, 5]),
-  'la-02-5': () => {
-    // Scan a fine grid of a for the values that make the system inconsistent.
-    const bad = [];
-    for (let k = -2000; k <= 2000; k++) {
-      const a = k / 100;
-      if (solutionKind([[1, 2], [3, a]], [1, 4]) === -1) bad.push(a);
-    }
-    if (bad.length !== 1) throw new Error(`expected one bad value, found ${bad}`);
-    return bad[0];
-  },
-  'la-02-6': () => solutionKind([[1, 2, 1, 1], [2, 4, 3, 1], [3, 6, 4, 2]], [3, 7, 10]),
 
   // Lesson 3 · Matrices
-  'la-03-1': () => {
-    const C = mul(Array.from({ length: 2 }, () => [1, 2, 3]), Array.from({ length: 3 }, () => [1, 2, 3, 4]));
-    return [C.length, C[0].length];
-  },
-  'la-03-2': () => mul([[1, 2], [3, 4]], [[0, 1], [5, -2]])[1][0],
-  'la-03-3': () => flat(pow([[1, 1], [0, 1]], 3)),
-  'la-03-4': () => flat(T(mul([[1, 2], [0, 1]], [[3, 0], [1, 1]]))),
-  'la-03-5': () => {
-    const t = Math.PI / 2;
-    return flat([[Math.cos(t), -Math.sin(t)], [Math.sin(t), Math.cos(t)]]).map((x) => Math.round(x * 1e12) / 1e12);
-  },
-  'la-03-6': () => {
-    // Apply the two maps to e1 and e2 directly, without matrices.
-    const rot = ([x, y]) => [-y, x];
-    const refl = ([x, y]) => [x, -y];
-    const c1 = refl(rot([1, 0]));
-    const c2 = refl(rot([0, 1]));
-    return [c1[0], c2[0], c1[1], c2[1]];
-  },
 
   // Lesson 4 · Determinants
-  'la-04-1': () => det([[3, 1], [4, 2]]),
-  'la-04-2': () => Math.abs(det([[3, 1], [1, 2]])),
-  'la-04-3': () => det([[2, 0, 1], [1, 3, 2], [1, 1, 2]]),
-  'la-04-4': () => {
-    const A = [[3, 0, 0], [1, 1, 0], [2, 5, 1]];
-    if (Math.abs(det(A) - 3) > 1e-9) throw new Error('test matrix should have det 3');
-    return det(scale(2, A));
-  },
-  'la-04-5': () => {
-    const A = [[2, 0, 0], [1, 1, 0], [3, 4, 1]];
-    const B = [[-3, 0, 0], [2, 1, 0], [5, 6, 1]];
-    if (Math.abs(det(A) - 2) > 1e-9 || Math.abs(det(B) + 3) > 1e-9) throw new Error('test matrices have the wrong determinants');
-    return det(mul(mul(T(A), inv(B)), mul(A, A)));
-  },
-  'la-04-6': () => intRoots((t) => det([[t, 1, 1], [1, t, 1], [1, 1, t]])),
 
   // Lesson 5 · Inverse
-  'la-05-1': () => flat(inv([[2, 1], [5, 3]])),
-  'la-05-2': () => {
-    const options = { a: [[2, 4], [1, 2]], b: [[2, 4], [1, 3]], c: [[0, 1], [1, 0]], d: [[1, 0], [0, 5]] };
-    const singular = Object.keys(options).filter((k) => Math.abs(det(options[k])) < EPS);
-    if (singular.length !== 1) throw new Error(`expected exactly one singular matrix, found ${singular}`);
-    return { id: singular[0] };
-  },
-  'la-05-3': () => solve([[1, 2], [3, 7]], [3, 10]),
-  'la-05-4': () => {
-    const A = inv([[1, 2], [0, 1]]);
-    const B = inv([[1, 0], [3, 1]]);
-    return flat(inv(mul(A, B)));
-  },
-  'la-05-5': () => inv([[1, 2, 3], [0, 1, 4], [0, 0, 1]])[0][2],
-  'la-05-6': () => {
-    const A = [[5, 0, 0], [2, 1, 0], [1, 1, 1]];
-    if (Math.abs(det(scale(2, A)) - 40) > 1e-9) throw new Error('test matrix should have det(2A) = 40');
-    return det(inv(A));
-  },
 
   // Lesson 6 · Independence, basis, rank
-  'la-06-1': () => rank(T([[1, 2, 3], [2, 4, 6], [0, 1, 1]])),
-  'la-06-3': () => rank([[1, 2, 0, 1], [2, 4, 1, 3], [3, 6, 1, 4]]),
-  'la-06-4': () => {
-    const roots = intRoots((k) => det(T([[1, 1, 0], [0, 1, 1], [1, k, 1]])));
-    if (roots.length !== 1) throw new Error(`expected one root, found ${roots}`);
-    return roots[0];
-  },
-  'la-06-5': () => {
-    // A concrete 5×7 matrix of rank 4: (5×4)·(4×7) with independent factors.
-    const L = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 2, 3, 4]];
-    const R = [[1, 2, 0, 1, 0, 3, 1], [0, 1, 1, 0, 2, 1, 0], [2, 0, 1, 1, 1, 0, 1], [0, 3, 0, 2, 1, 1, 1]];
-    const A = mul(L, R);
-    if (rank(A) !== 4) throw new Error('test matrix should have rank 4');
-    return A[0].length - rank(A);
-  },
-  'la-06-6': () => solve(T([[1, 1], [1, 2]]), [4, 7]),
 
   // Lesson 7 · Eigenvalues
-  'la-07-1': () => eig2([[2, 5], [0, 3]]),
-  'la-07-2': () => {
-    const Av = mulVec([[2, 1], [1, 2]], [1, 1]);
-    if (Math.abs(Av[0] - Av[1]) > EPS) throw new Error('(1, 1) is not an eigenvector');
-    return Av[0] / 1;
-  },
-  'la-07-3': () => eig2([[4, 1], [2, 3]]),
-  'la-07-4': () => {
-    // Null vector of A − 5I from its first row (a, b): v = (b, −a).
-    const [[a, b]] = [[4 - 5, 1], [2, 3 - 5]];
-    const v = direction([b, -a]);
-    const Av = mulVec([[4, 1], [2, 3]], v);
-    if (Av.some((x, i) => Math.abs(x - 5 * v[i]) > EPS)) throw new Error('not an eigenvector');
-    return v;
-  },
-  'la-07-5': () => {
-    const P = [[1, 1, 0], [0, 1, 1], [1, 0, 1]];
-    const A = mul(mul(P, [[1, 0, 0], [0, 2, 0], [0, 0, 4]]), inv(P));
-    return det(scale(2, inv(A)));
-  },
-  'la-07-6': () => pow([[2, 1], [0, 1]], 10)[0][1],
 };
 
 // ml-01 · quick checks and Extra practice
@@ -752,12 +649,6 @@ Object.assign(checks, {
     const reachable = rank([[2, -1], [4, -2]]) === rank([[2, -1, 1], [4, -2, 0]]);
     return pickId({ a: () => !reachable, b: () => reachable, c: () => reachable });
   },
-  'la-01-x1': () => [0, 1, 2].map((i) => [1, 2, 3][i] + [4, 0, -1][i]),
-  'la-01-x2': () => [2, -1].map((x) => 3 * x),
-  'la-01-x3': () => norm([3, 4]),
-  'la-01-x4': () => dot([2, -1, 3], [1, 4, 2]),
-  'la-01-x5': () => angle([2, 3], [-3, 2]),
-  'la-01-x6': () => solve([[1, 1], [1, -1]], [5, 1]),
 });
 
 // la-02 · quick checks and Extra practice
@@ -770,16 +661,6 @@ Object.assign(checks, {
   },
   'la-02-q2': () => [0, 1, 2].map((i) => [3, 1, 5][i] - 3 * [1, 2, 5][i]),
   'la-02-q3': () => solutionKind([[1, 3, 0, 2], [0, 0, 1, -1], [0, 0, 0, 0]], [1, 4, 0]),
-  'la-02-x1': () => solve([[1, 1], [1, -1]], [5, 1]),
-  'la-02-x2': () => solutionKind([[1, 1], [1, 1]], [2, 5]),
-  'la-02-x3': () => solutionKind([[1, 1], [0, 0]], [2, 3]),
-  'la-02-x4': () => solve([[1, 1, 1], [0, 1, 1], [0, 0, 1]], [6, 5, 3]),
-  'la-02-x5': () => {
-    const good = range(-200, 200).map((i) => i / 10).filter((k) => solutionKind([[1, 2], [2, 4]], [3, k]) > 0);
-    if (good.length !== 1) throw new Error(`expected one value of k, got [${good}]`);
-    return good[0];
-  },
-  'la-02-x6': () => solutionKind([[1, 1, 1], [2, 2, 2]], [1, 2]),
 });
 
 // la-03 · quick checks and Extra practice
@@ -790,18 +671,6 @@ Object.assign(checks, {
     const reflect = ([x, y]) => [-x, y];
     return flat(T([reflect([1, 0]), reflect([0, 1])]));
   },
-  'la-03-x1': () => {
-    const C = mul(Array.from({ length: 3 }, () => [1, 2]), Array.from({ length: 2 }, () => [1, 2, 3, 4, 5]));
-    return [C.length, C[0].length];
-  },
-  'la-03-x2': () => mulVec([[2, 0], [1, 3]], [1, 2]),
-  'la-03-x3': () => flat(T([[1, 2, 3], [4, 5, 6]])),
-  'la-03-x4': () => mul([[2, 1], [0, 3]], [[1, 4], [2, -1]])[0][1],
-  'la-03-x5': () => flat(pow([[0, 1], [1, 0]], 2)),
-  'la-03-x6': () => {
-    const stretch = ([x, y]) => [2 * x, y];
-    return flat(T([stretch([1, 0]), stretch([0, 1])]));
-  },
 });
 
 // la-04 · quick checks and Extra practice
@@ -809,17 +678,6 @@ Object.assign(checks, {
   'la-04-q1': () => det([[2, 1], [1, 3]]),
   'la-04-q2': () => det([[2, 5, 1], [0, 3, 7], [0, 0, 4]]),
   'la-04-q3': () => det(scale(3, [[2, 1], [0, 2]])),
-  'la-04-x1': () => det([[5, 2], [1, 1]]),
-  'la-04-x2': () => det([[1, 2], [2, 4]]),
-  'la-04-x3': () => Math.abs(det(T([[2, 0], [1, 3]]))),
-  'la-04-x4': () => det([[2, 0, 0], [0, -1, 0], [0, 0, 3]]),
-  'la-04-x5': () => det(inv([[5, 1], [0, 1]])),
-  'la-04-x6': () => {
-    const A = [[1, 2, 0], [0, 1, 3], [2, 0, 1]];
-    const k = 7 / det(A); // rescale the first row so that det A = 7
-    const A7 = [A[0].map((x) => k * x), A[1], A[2]];
-    return det([A7[1], A7[0], A7[2]]);
-  },
 });
 
 // la-05 · quick checks and Extra practice
@@ -827,15 +685,6 @@ Object.assign(checks, {
   'la-05-q1': () => flat(inv([[2, 0], [0, 2]])),
   'la-05-q2': () => flat(inv([[1, 1], [0, 1]])),
   'la-05-q3': () => flat(inv([[2, 0, 0], [0, 5, 0], [0, 0, -1]])),
-  'la-05-x1': () => flat(inv([[3, 0], [0, 4]])),
-  'la-05-x2': () => {
-    const ok = (A) => () => Math.abs(det(A)) > EPS;
-    return pickId({ a: ok([[1, 2], [3, 4]]), b: ok([[2, 4], [1, 2]]), c: ok([[0, 0], [1, 1]]), d: ok([[3, 6], [1, 2]]) });
-  },
-  'la-05-x3': () => flat(mul([[2, 1], [1, 1]], [[1, -1], [-1, 2]])),
-  'la-05-x4': () => flat(inv([[4, 7], [2, 4]])),
-  'la-05-x5': () => solve(inv([[2, -1], [-1, 1]]), [3, 4]),
-  'la-05-x6': () => flat(inv([[1, 2], [0, 1]])),
 });
 
 // la-06 · quick checks and Extra practice
@@ -849,19 +698,6 @@ Object.assign(checks, {
     return pickId({ a: () => basis, b: () => !basis, c: () => !basis });
   },
   'la-06-q3': () => rank([[1, 2, 3], [2, 4, 6], [3, 6, 9]]),
-  'la-06-x1': () => {
-    const dep = (A) => () => rank(A) < 2;
-    return pickId({ a: dep([[1, 2], [3, 6]]), b: dep([[1, 0], [0, 1]]), c: dep([[1, 1], [1, -1]]), d: dep([[2, 1], [1, 2]]) });
-  },
-  'la-06-x2': () => rank([[1, 0, 0], [0, 1, 0], [1, 1, 0]]),
-  'la-06-x3': () => rank(I(3)),
-  'la-06-x4': () => rank([[1, 2], [2, 4], [0, 1]]),
-  'la-06-x5': () => {
-    const A = [[1, 0, 0, 1, 2], [0, 1, 0, 3, 1], [0, 0, 1, 1, 1]];
-    if (rank(A) !== 3) throw new Error('example should have rank 3');
-    return A[0].length - rank(A);
-  },
-  'la-06-x6': () => solve(T([[1, 0], [1, 1]]), [3, 5]),
 });
 
 // la-07 · quick checks and Extra practice
@@ -880,25 +716,195 @@ Object.assign(checks, {
     };
     return pickId({ a: isEig([1, -2]), b: isEig([1, 1]), c: isEig([2, 1]) });
   },
-  'la-07-x1': () => eig2([[3, 0], [0, -2]]),
-  'la-07-x2': () => {
-    const Av = mulVec([[5, 0], [0, 2]], [1, 0]);
+});
+
+// la-01 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-01-1': ({ u, v, k }) => [0, 1, 2].map((i) => k * u[i] - v[i]),
+  'la-01-2': ({ u, v }) => angle(u, v),
+  'la-01-3': ({ v }) => norm(v),
+  'la-01-4': ({ u, v }) => angle(u, v),
+  'la-01-5': ({ a, b, c, d }) => {
+    // u·v is linear in k: f(k) = f(0) + k (f(1) - f(0)).
+    const f = (k) => dot([k, a, b], [c, k, d]);
+    return -f(0) / (f(1) - f(0));
+  },
+  'la-01-6': ({ p, q, t }) => solve(T([p, q]), t),
+  'la-01-x1': ({ u, v }) => u.map((x, i) => x + v[i]),
+  'la-01-x2': ({ c, v }) => v.map((x) => c * x),
+  'la-01-x3': ({ v }) => norm(v),
+  'la-01-x4': ({ u, v }) => dot(u, v),
+  'la-01-x5': ({ u, v }) => angle(u, v),
+  'la-01-x6': ({ t }) => solve([[1, 1], [1, -1]], t),
+});
+
+// la-02 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-02-1': ({ A, b }) => solutionKind(A, b),
+  'la-02-3': ({ A, b }) => solve(A, b),
+  'la-02-4': ({ A, b }) => solutionKind(A, b),
+  'la-02-5': ({ p, q, s, t }) => {
+    // det is linear in a; its root is the only candidate, and there the system must be inconsistent.
+    const f = (a) => det([[1, p], [q, a]]);
+    const a0 = -f(0) / (f(1) - f(0));
+    if (solutionKind([[1, p], [q, a0]], [s, t]) !== -1) throw new Error('system should be inconsistent at the root');
+    return a0;
+  },
+  'la-02-6': ({ A, b }) => solutionKind(A, b),
+  'la-02-x1': ({ s, d }) => solve([[1, 1], [1, -1]], [s, d]),
+  'la-02-x2': ({ A, b }) => solutionKind(A, b),
+  'la-02-x3': ({ A, b }) => solutionKind(A, b),
+  'la-02-x4': ({ A, b }) => solve(A, b),
+  'la-02-x5': ({ p, q, s }) => {
+    const good = range(-80, 80).filter((k) => solutionKind([[1, p], [q, q * p]], [s, k]) > 0);
+    if (good.length !== 1) throw new Error(`expected one value of k, got [${good}]`);
+    return good[0];
+  },
+  'la-02-x6': ({ A, b }) => solutionKind(A, b),
+});
+
+// la-03 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-03-1': ({ m, n, p }) => {
+    const C = mul(Array.from({ length: m }, () => Array(n).fill(1)), Array.from({ length: n }, () => Array(p).fill(1)));
+    return [C.length, C[0].length];
+  },
+  'la-03-2': ({ A, B, i, j }) => mul(A, B)[i - 1][j - 1],
+  'la-03-3': ({ A, n }) => flat(pow(A, n)),
+  'la-03-4': ({ A, B }) => flat(T(mul(A, B))),
+  // Each map rebuilt from its geometric meaning (same order as PLANE_MAPS in 03-matrices.practice.ts).
+  'la-03-5': ({ map }) => flat(T([PLANE[map]([1, 0]), PLANE[map]([0, 1])])),
+  'la-03-6': ({ first, second }) => {
+    const both = (v) => PLANE[second](PLANE[first](v));
+    return flat(T([both([1, 0]), both([0, 1])]));
+  },
+  'la-03-x1': ({ m, n, p }) => {
+    const C = mul(Array.from({ length: m }, () => Array(n).fill(1)), Array.from({ length: n }, () => Array(p).fill(1)));
+    return [C.length, C[0].length];
+  },
+  'la-03-x2': ({ A, v }) => mulVec(A, v),
+  'la-03-x3': ({ M }) => flat(T(M)),
+  'la-03-x4': ({ A, B }) => mul(A, B)[0][1],
+  'la-03-x5': ({ A }) => flat(pow(A, 2)),
+  'la-03-x6': ({ a, b }) => {
+    const stretch = ([x, y]) => [a * x, b * y];
+    return flat(T([stretch([1, 0]), stretch([0, 1])]));
+  },
+});
+
+// la-04 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-04-1': ({ A }) => det(A),
+  'la-04-2': ({ u, v }) => Math.abs(det(T([u, v]))),
+  'la-04-3': ({ A }) => det(A),
+  'la-04-4': ({ n, k, d }) => {
+    const A = I(n);
+    A[0][0] = d; // any matrix with det A = d
+    return det(scale(k, A));
+  },
+  'la-04-5': ({ dA, dB }) => {
+    const A = [[dA, 1, 0], [0, 1, 2], [0, 0, 1]];
+    const B = [[1, 0, 0], [3, dB, 0], [1, 1, 1]];
+    return det(mul(mul(T(A), inv(B)), pow(A, 2)));
+  },
+  'la-04-6': ({ s }) => intRoots((t) => det([[t, s, s], [s, t, s], [s, s, t]])),
+  'la-04-x1': ({ A }) => det(A),
+  'la-04-x2': ({ A }) => det(A),
+  'la-04-x3': ({ u, v }) => Math.abs(det(T([u, v]))),
+  'la-04-x4': ({ A }) => det(A),
+  'la-04-x5': ({ d }) => det(inv([[d, 2], [0, 1]])),
+  'la-04-x6': ({ A, i, j }) => {
+    const B = A.map((row) => [...row]);
+    [B[i], B[j]] = [B[j], B[i]];
+    return det(B);
+  },
+});
+
+// la-05 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-05-1': ({ A }) => flat(inv(A)),
+  'la-05-2': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => Math.abs(det(p[id])) < EPS]))),
+  'la-05-3': ({ A, b }) => solve(A, b),
+  'la-05-4': ({ Ai, Bi }) => flat(inv(mul(inv(Ai), inv(Bi)))),
+  'la-05-5': ({ A }) => inv(A)[0][2],
+  'la-05-6': ({ n, k, D }) => {
+    // Any n×n matrix with det(kA) = D: A = diag(D / k^n, 1, …).
+    const A = I(n);
+    A[0][0] = D / k ** n;
+    if (Math.abs(det(scale(k, A)) - D) > 1e-9) throw new Error('setup');
+    return det(inv(A));
+  },
+  'la-05-x1': ({ a, b }) => flat(inv([[a, 0], [0, b]])),
+  'la-05-x2': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => Math.abs(det(p[id])) > EPS]))),
+  'la-05-x3': ({ A, B }) => flat(mul(A, B)),
+  'la-05-x4': ({ A }) => flat(inv(A)),
+  'la-05-x5': ({ Ai, b }) => solve(inv(Ai), b),
+  'la-05-x6': ({ Ai }) => flat(inv(Ai)),
+});
+
+// la-06 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-06-1': ({ vs }) => rank(vs),
+  'la-06-3': ({ A }) => rank(A),
+  'la-06-4': ({ a, b, c }) => {
+    // det of the columns is linear in k; its root is the answer.
+    const f = (k) => det(T([[1, a, 0], [0, 1, b], [1, k, c]]));
+    return -f(0) / (f(1) - f(0));
+  },
+  'la-06-5': ({ m, n, rk }) => {
+    // Build an m×n matrix of rank rk and count free variables.
+    const A = Array.from({ length: m }, (_, i) => Array.from({ length: n }, (_, j) => (i < rk && i === j ? 1 : 0)));
+    if (rank(A) !== rk) throw new Error('setup');
+    return n - rank(A);
+  },
+  'la-06-6': ({ b1, b2, v }) => solve(T([b1, b2]), v),
+  'la-06-x1': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, () => rank(p[id]) < 2]))),
+  'la-06-x2': ({ vs }) => rank(vs),
+  'la-06-x3': ({ n }) => rank(I(n)),
+  'la-06-x4': ({ A }) => rank(A),
+  'la-06-x5': ({ m, n, rk }) => {
+    const A = Array.from({ length: m }, (_, i) => Array.from({ length: n }, (_, j) => (i < rk && i === j ? 1 : 0)));
+    return n - rank(A);
+  },
+  'la-06-x6': ({ b1, b2, v }) => solve(T([b1, b2]), v),
+});
+
+// la-07 · parametric questions: each check receives the variant's params
+Object.assign(checks, {
+  'la-07-1': ({ A }) => eig2(A),
+  'la-07-2': ({ A, v }) => {
+    const Av = mulVec(A, v);
+    if (Math.abs(Av[0] * v[1] - Av[1] * v[0]) > EPS) throw new Error('v is not an eigenvector');
+    return Av[0] / v[0];
+  },
+  'la-07-3': ({ A }) => eig2(A),
+  'la-07-4': (p) => {
+    const isEig = (v) => () => mulVec(p.A, v).every((x, i) => Math.abs(x - p.lambda * v[i]) < EPS);
+    return pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, isEig(p[id])])));
+  },
+  'la-07-5': ({ e, k }) => {
+    const A = [[e[0], 1, 0], [0, e[1], 1], [0, 0, e[2]]]; // triangular: these eigenvalues
+    return det(scale(k, inv(A)));
+  },
+  'la-07-6': ({ A, n }) => pow(A, n)[0][1],
+  'la-07-x1': ({ A }) => eig2(A),
+  'la-07-x2': ({ A, v }) => {
+    const Av = mulVec(A, v);
     if (Math.abs(Av[1]) > EPS) return -99;
     return Av[0];
   },
-  'la-07-x3': () => {
-    const A = [[2, 1], [0, 4]];
-    const Av = mulVec(A, [1, 2]);
-    if (Av[0] !== 4 || Av[1] !== 8) throw new Error('example matrix must satisfy Av = 4v');
-    return mulVec(A, [3, 6]);
+  'la-07-x3': ({ v, lam, c }) => {
+    const A = [[lam, 0], [0, lam]];
+    if (!mulVec(A, v).every((x, i) => x === lam * v[i])) throw new Error('setup');
+    return mulVec(A, v.map((x) => c * x));
   },
-  'la-07-x4': () => eig2([[2, 1], [1, 2]]),
-  'la-07-x5': () => eig2([[7, -10], [1, 0]]),
-  'la-07-x6': () => {
-    const A = [[3, 1], [0, 2]];
-    const A2v = mulVec(pow(A, 2), [1, 0]);
-    if (Math.abs(A2v[1]) > EPS) throw new Error('v must stay an eigenvector');
-    return A2v[0];
+  'la-07-x4': ({ A }) => eig2(A),
+  'la-07-x5': ({ t, d }) => eig2([[t, -d], [1, 0]]),
+  'la-07-x6': ({ lam, k }) => {
+    const A = [[lam, 1], [0, lam + 1]];
+    const Akv = mulVec(pow(A, k), [1, 0]);
+    if (Math.abs(Akv[1]) > EPS) throw new Error('v must stay an eigenvector');
+    return Akv[0];
   },
 });
 
@@ -961,24 +967,67 @@ for (const l of LESSONS) {
 // Questions
 const seen = new Set();
 let recomputed = 0;
+let variantsChecked = 0;
+/** Parametric questions are generated with this many seeds and every variant is checked. */
+const SEEDS = 300;
+// Artefacts of string building: "NaN", "undefined", doubled signs such as "- -3" or "+ -2", and TeX
+// commands that lost their backslash in a plain (non-raw) template string, such as "3cdot 4".
+const BROKEN = /NaN|undefined|Infinity|\[object|[+-]\s*[+-]\s*\d|(?<![\\a-zA-Z{])(cdot|tfrac|dfrac|mathbf|sqrt|mathbb|begin\{)/;
+
+function checkStructure(q, tag = q.id) {
+  if (q.svgDiagramType && !DIAGRAMS.has(q.svgDiagramType)) fail(tag, `unknown diagram "${q.svgDiagramType}"`);
+  const correct = q.options.find((o) => o.id === q.correctOptionId);
+  if (!correct) { fail(tag, 'correctOptionId does not match any option'); return false; }
+  if (new Set(q.options.map((o) => o.id)).size !== q.options.length) fail(tag, 'duplicate option ids');
+  if (new Set(q.options.map((o) => o.label)).size !== q.options.length) fail(tag, 'two options have the same label');
+  if (q.options.length < 4 || q.options.length > 5) fail(tag, 'needs 4–5 options');
+  for (const o of q.options) {
+    if (o.id !== q.correctOptionId && !o.trapExplanation) fail(tag, `option ${o.id} has no trapExplanation`);
+    if (o.id === q.correctOptionId && o.trapExplanation) fail(tag, 'correct option must not have a trapExplanation');
+  }
+  if (q.stepByStepSolution.length < 3) fail(tag, 'needs at least 3 solution steps');
+  const texts = [q.promptText, q.mathFormula ?? '', ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution];
+  for (const text of texts) {
+    dollars(tag, text);
+    if (BROKEN.test(text)) fail(tag, `broken text: ${text.match(BROKEN)[0]} in "${text.slice(0, 70)}…"`);
+  }
+  // Every formula must render: inline $…$ pieces and the display formula.
+  const formulas = [q.mathFormula ?? '', ...texts.flatMap((t) => t.split(/<i>(.*?)<\/i>/g).flatMap((piece) => piece.split('$').filter((_, i) => i % 2 === 1)))];
+  for (const tex of formulas.filter(Boolean)) {
+    try {
+      katex.renderToString(tex, { throwOnError: true });
+    } catch (e) {
+      fail(tag, `KaTeX cannot render "${tex.slice(0, 60)}": ${e.message.split('\n')[0]}`);
+    }
+  }
+  return true;
+}
+
 for (const q of QUESTIONS) {
   if (seen.has(q.id)) fail(q.id, 'duplicate id');
   seen.add(q.id);
   if (!q.id.startsWith(q.lessonId)) fail(q.id, `id should start with its lesson id ${q.lessonId}`);
-  if (q.svgDiagramType && !DIAGRAMS.has(q.svgDiagramType)) fail(q.id, `unknown diagram "${q.svgDiagramType}"`);
-
-  const correct = q.options.find((o) => o.id === q.correctOptionId);
-  if (!correct) { fail(q.id, 'correctOptionId does not match any option'); continue; }
-  if (new Set(q.options.map((o) => o.id)).size !== q.options.length) fail(q.id, 'duplicate option ids');
-  if (q.options.length < 4 || q.options.length > 5) fail(q.id, 'needs 4–5 options');
-  for (const o of q.options) {
-    if (o.id !== q.correctOptionId && !o.trapExplanation) fail(q.id, `option ${o.id} has no trapExplanation`);
-    if (o.id === q.correctOptionId && o.trapExplanation) fail(q.id, 'correct option must not have a trapExplanation');
+  if (!q.generate) {
+    if (checkStructure(q)) verifyKey(q);
+    continue;
   }
-  if (q.stepByStepSolution.length < 3) fail(q.id, 'needs at least 3 solution steps');
-  for (const text of [q.promptText, ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution]) dollars(q.id, text);
-
-  verifyKey(q);
+  // Parametric: every variant must be well formed and have a correct key.
+  const errorsBefore = errors.length;
+  for (let seed = 1; seed <= SEEDS && errors.length === errorsBefore; seed++) {
+    let v;
+    try {
+      v = variantOf(q, seed);
+    } catch (e) {
+      fail(q.id, `seed ${seed}: generate threw: ${e.message}`);
+      break;
+    }
+    if (!v.params) { fail(q.id, 'a parametric question must return params for the checker'); break; }
+    if (!checkStructure(v, `${q.id} (seed ${seed})`)) break;
+    const values = v.options.map((o) => JSON.stringify(o.value)).filter((x) => x !== undefined);
+    if (new Set(values).size !== values.length) fail(`${q.id} (seed ${seed})`, 'two options have the same value');
+    verifyKey(v, `${q.id} (seed ${seed})`);
+    variantsChecked++;
+  }
 }
 
 for (const b of quickChecks) {
@@ -992,35 +1041,36 @@ for (const b of quickChecks) {
 }
 
 /** Recomputes the answer of a question or quick check and compares it with the key. */
-function verifyKey(q) {
+function verifyKey(q, tag = q.id) {
   if (CONCEPTUAL.has(q.id)) return;
   const correct = q.options.find((o) => o.id === q.correctOptionId);
   const check = checks[q.id];
-  if (!check) return fail(q.id, 'no independent check defined');
+  if (!check) return fail(tag, 'no independent check defined');
 
   let res;
   try {
-    res = check();
+    res = check(q.params);
   } catch (e) {
-    return fail(q.id, `check threw: ${e.message}`);
+    return fail(tag, `check threw: ${e.message}`);
   }
   recomputed++;
   if (res && typeof res === 'object' && 'id' in res) {
-    if (res.id !== q.correctOptionId) fail(q.id, `computation picks option ${res.id}, key says ${q.correctOptionId}`);
+    if (res.id !== q.correctOptionId) fail(tag, `computation picks option ${res.id}, key says ${q.correctOptionId}`);
     return;
   }
-  if (q.options.some((o) => o.value === undefined)) return fail(q.id, 'every option needs a value');
+  if (q.options.some((o) => o.value === undefined)) return fail(tag, 'every option needs a value');
   const v = res && typeof res === 'object' && 'v' in res ? res.v : res;
   const tol = res && typeof res === 'object' && 'tol' in res ? res.tol : 1e-6;
-  if (!same(correct.value, v, tol)) fail(q.id, `computed ${show(v)}, key option ${correct.id} = ${show(correct.value)}`);
-  for (const o of q.options) if (o.id !== correct.id && same(o.value, v, tol)) fail(q.id, `distractor ${o.id} equals the computed answer`);
+  if (!same(correct.value, v, tol)) fail(tag, `computed ${show(v)}, key option ${correct.id} = ${show(correct.value)}`);
+  for (const o of q.options) if (o.id !== correct.id && same(o.value, v, tol)) fail(tag, `distractor ${o.id} equals the computed answer`);
 }
 
 console.log(`Lessons: ${LESSONS.length}   Questions: ${QUESTIONS.length}`);
 for (const l of LESSONS) {
   const t = [1, 2, 3].map((d) => l.questions.filter((q) => q.difficulty === d).length);
   const nq = l.lecture.flatMap((s) => s.blocks).filter((b) => b.kind === 'quiz').length;
-  console.log(`  ${l.id.padEnd(7)} ${l.title.padEnd(42)} ${l.lecture.length} sections · ${nq} checks · practice ${t.join('/')} · extra ${l.extra.length}`);
+  const np = [...l.questions, ...l.extra].filter((q) => q.generate).length;
+  console.log(`  ${l.id.padEnd(7)} ${l.title.padEnd(42)} ${l.lecture.length} sections · ${nq} checks · practice ${t.join('/')} · extra ${l.extra.length} · parametric ${np}`);
 }
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):`);
@@ -1028,3 +1078,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(`\nAll ${QUESTIONS.length + quickChecks.length} answer keys confirmed (${QUESTIONS.length} questions + ${quickChecks.length} quick checks; ${recomputed} recomputed, ${CONCEPTUAL.size} conceptual).`);
+const parametric = QUESTIONS.filter((q) => q.generate).length;
+if (parametric) console.log(`${parametric} parametric questions: ${variantsChecked} generated variants checked (${SEEDS} seeds each).`);

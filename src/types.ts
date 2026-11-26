@@ -34,10 +34,48 @@ export interface Question {
   keyConceptTag: string;
   /** Set on Extra practice (Practice 2) questions; they stay out of boss quizzes and exams. */
   extra?: boolean;
+  /**
+   * Parametric questions: builds a fresh variant (new numbers, same idea and traps) from a random source.
+   * The question object itself holds one fixed variant, used where no seed is known.
+   */
+  generate?: (rng: Rng) => QuestionVariant;
+  /** The seed of the variant shown (parametric questions only). */
+  seed?: number;
+  /** The random values of this variant, for scripts/verify.mjs. */
+  params?: Record<string, number | number[] | number[][]>;
+}
+
+/** The parts of a question that change from variant to variant. */
+export type QuestionVariant = Pick<Question, 'promptText' | 'options' | 'stepByStepSolution'> &
+  Partial<Pick<Question, 'mathFormula' | 'codeSnippet' | 'svgDiagramType' | 'params'>>;
+
+/** A seeded random source: the same seed always gives the same variant. */
+export interface Rng {
+  /** Uniform in [0, 1). */
+  next(): number;
+  /** Integer in [lo, hi]. */
+  int(lo: number, hi: number): number;
+  /** Non-zero integer in [lo, hi]. */
+  nonzero(lo: number, hi: number): number;
+  pick<T>(items: readonly T[]): T;
+  /** Draws with `make` until `ok` accepts the result (rejection sampling). */
+  until<T>(make: () => T, ok: (value: T) => boolean): T;
 }
 
 /** A question as written in a lesson file; the lesson fills in moduleId and lessonId. */
-export type QuestionDraft = Omit<Question, 'moduleId' | 'lessonId'>;
+export type QuestionDraft = Omit<Question, 'moduleId' | 'lessonId' | 'generate' | 'seed' | 'params'>;
+
+/**
+ * A parametric question as written in a lesson file. `generate` picks random values and returns the
+ * prompt, options (with their trap explanations) and solution for them. The correct option id is fixed.
+ */
+export interface QuestionTemplate {
+  id: string;
+  difficulty: Difficulty;
+  keyConceptTag: string;
+  correctOptionId: string;
+  generate: (rng: Rng) => QuestionVariant;
+}
 
 /**
  * One building block of a lecture. All text fields support $...$ maths,
@@ -85,6 +123,8 @@ export interface MistakeEntry {
   /** Consecutive correct answers in Review mode; the entry is cleared at 2. */
   correctStreak: number;
   lastMissedAt: string;
+  /** Seed of the missed variant of a parametric question, so Review can show the same numbers once. */
+  seed?: number;
 }
 
 export interface ExamResult {
@@ -95,4 +135,6 @@ export interface ExamResult {
   questionIds: string[];
   /** questionId -> chosen option id (missing = unanswered). */
   answers: Record<string, string>;
+  /** questionId -> seed of the variant shown (parametric questions only). */
+  seeds?: Record<string, number>;
 }

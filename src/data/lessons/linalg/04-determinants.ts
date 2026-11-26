@@ -1,5 +1,6 @@
 import { defineLesson, r } from '../define.ts';
 import { extra } from './04-determinants.extra.ts';
+import { practice } from './04-determinants.practice.ts';
 
 export default defineLesson({
   id: 'la-04',
@@ -165,116 +166,5 @@ export default defineLesson({
     },
   ],
   extra,
-  questions: [
-    {
-      id: 'la-04-1',
-      difficulty: 1,
-      promptText: r`Compute $\det\begin{pmatrix} 3 & 1 \\ 4 & 2 \end{pmatrix}$.`,
-      options: [
-        { id: 'a', label: '$2$', value: 2 },
-        { id: 'b', label: '$10$', value: 10, trapExplanation: r`$3\cdot2 + 1\cdot4 = 10$ adds the two products. The determinant subtracts: $ad - bc$.` },
-        { id: 'c', label: '$-2$', value: -2, trapExplanation: r`$bc - ad$ has the order reversed. The main diagonal (top-left to bottom-right) comes first.` },
-        { id: 'd', label: '$5$', value: 5, trapExplanation: r`$3 + 2 = 5$ is the trace (sum of the diagonal), a different number.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Main diagonal product: $3\cdot 2 = 6$.`,
-        r`Other diagonal product: $1\cdot 4 = 4$.`,
-        r`$\det = 6 - 4 = 2$.`,
-      ],
-      keyConceptTag: '2×2 determinant',
-    },
-    {
-      id: 'la-04-2',
-      difficulty: 1,
-      promptText: r`What is the area of the parallelogram spanned by the vectors $(3, 1)$ and $(1, 2)$?`,
-      options: [
-        { id: 'a', label: '$5$', value: 5 },
-        { id: 'b', label: '$7$', value: 7, trapExplanation: r`$3\cdot2 + 1\cdot1 = 7$ adds the products. The area is $|ad - bc|$.` },
-        { id: 'c', label: r`$2.5$`, value: 2.5, trapExplanation: r`Half the determinant is the area of the <i>triangle</i> with these two sides. The parallelogram is twice as large.` },
-        { id: 'd', label: '$6$', value: 6, trapExplanation: r`$3\cdot 2$ is the area of a rectangle with sides 3 and 2. The slant of the vectors removes $1\cdot 1$ from it.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Put the vectors in the columns of a matrix: $\begin{pmatrix} 3 & 1 \\ 1 & 2 \end{pmatrix}$.`,
-        r`$\det = 3\cdot2 - 1\cdot1 = 5$.`,
-        r`Area $= |\det| = 5$.`,
-      ],
-      keyConceptTag: 'Determinant as area',
-    },
-    {
-      id: 'la-04-3',
-      difficulty: 2,
-      promptText: r`Compute the determinant.`,
-      mathFormula: r`\begin{vmatrix} 2 & 0 & 1 \\ 1 & 3 & 2 \\ 1 & 1 & 2 \end{vmatrix}`,
-      options: [
-        { id: 'a', label: '$6$', value: 6 },
-        { id: 'b', label: '$13$', value: 13, trapExplanation: r`$13$ is only the sum of the three "downward" diagonal products in Sarrus' rule. The three "upward" products (total 7) must be subtracted.` },
-        { id: 'c', label: '$20$', value: 20, trapExplanation: r`$13 + 7$ adds the upward products instead of subtracting them.` },
-        { id: 'd', label: '$-6$', value: -6, trapExplanation: r`The signs of the cofactors were reversed. Along the first row they are $+,-,+$, starting with $+$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Expand along row 1: $2\begin{vmatrix} 3 & 2 \\ 1 & 2 \end{vmatrix} - 0 + 1\begin{vmatrix} 1 & 3 \\ 1 & 1 \end{vmatrix}$.`,
-        r`$= 2(6 - 2) + (1 - 3) = 8 - 2$.`,
-        r`$\det = 6$.`,
-      ],
-      keyConceptTag: '3×3 cofactor expansion',
-    },
-    {
-      id: 'la-04-4',
-      difficulty: 2,
-      promptText: r`$A$ is a $3\times3$ matrix with $\det A = 3$. What is $\det(2A)$?`,
-      options: [
-        { id: 'a', label: '$24$', value: 24 },
-        { id: 'b', label: '$6$', value: 6, trapExplanation: r`$2\det A$ would be right if only one row were doubled. $2A$ doubles all three rows, giving a factor $2^3$.` },
-        { id: 'c', label: '$12$', value: 12, trapExplanation: r`$2^2\cdot 3$ is the rule for a $2\times2$ matrix. The exponent is the size $n$, here 3.` },
-        { id: 'd', label: '$5$', value: 5, trapExplanation: r`Scaling a matrix multiplies the determinant; it never adds to it.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`$2A$ multiplies each of the 3 rows by 2.`,
-        r`Each row multiplication multiplies the determinant by 2: $\det(2A) = 2^3\det A$.`,
-        r`$8\cdot 3 = 24$. Geometrically: doubling every edge of a box multiplies its volume by 8.`,
-      ],
-      keyConceptTag: 'det(cA) = cⁿ det A',
-    },
-    {
-      id: 'la-04-5',
-      difficulty: 3,
-      promptText: r`$A$ and $B$ are $3\times 3$ matrices with $\det A = 2$ and $\det B = -3$. Compute $\det(A^{T}B^{-1}A^{2})$.`,
-      options: [
-        { id: 'a', label: r`$-\tfrac83$`, value: -8 / 3 },
-        { id: 'b', label: r`$\tfrac83$`, value: 8 / 3, trapExplanation: r`The sign comes from $\det(B^{-1}) = 1/(-3)$, which is negative. Nothing cancels it.` },
-        { id: 'c', label: '$-24$', value: -24, trapExplanation: r`$\det(B^{-1})$ is $1/\det B$, not $\det B$. The inverse divides.` },
-        { id: 'd', label: r`$-\tfrac43$`, value: -4 / 3, trapExplanation: r`$\det(A^2) = (\det A)^2 = 4$, not $2\det A$. The square applies to the determinant.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`The determinant of a product is the product: $\det(A^T)\cdot\det(B^{-1})\cdot\det(A^2)$.`,
-        r`$\det(A^T) = 2$, $\det(B^{-1}) = -\tfrac13$, $\det(A^2) = 2^2 = 4$.`,
-        r`$2\cdot(-\tfrac13)\cdot 4 = -\tfrac83$.`,
-      ],
-      keyConceptTag: 'Multiplicativity of det',
-    },
-    {
-      id: 'la-04-6',
-      difficulty: 3,
-      promptText: r`For which values of $t$ are the columns of this matrix linearly dependent?`,
-      mathFormula: r`\begin{pmatrix} t & 1 & 1 \\ 1 & t & 1 \\ 1 & 1 & t \end{pmatrix}`,
-      options: [
-        { id: 'a', label: r`$t = 1$ or $t = -2$`, value: [-2, 1] },
-        { id: 'b', label: r`$t = -1$ or $t = 2$`, value: [-1, 2], trapExplanation: r`Plug in $t = 2$: all rows sum to 4 and the determinant is $(2-1)^2(2+2) = 4 \ne 0$. The signs of the roots were flipped.` },
-        { id: 'c', label: r`Only $t = 1$`, value: [1], trapExplanation: r`At $t = 1$ all columns are equal, which is easy to spot — but $\det = (t - 1)^2(t + 2)$ also vanishes at $t = -2$.` },
-        { id: 'd', label: r`$t = 1$ or $t = 2$`, value: [1, 2], trapExplanation: r`$\det$ at $t = 2$ is $8 - 6 + 2 = 4 \ne 0$. The second root comes from the factor $t + 2$.` },
-      ],
-      correctOptionId: 'a',
-      stepByStepSolution: [
-        r`Columns are dependent exactly when $\det = 0$.`,
-        r`Expand: $\det = t(t^2 - 1) - (t - 1) + (1 - t) = t^3 - 3t + 2 = (t - 1)^2(t + 2)$.`,
-        r`So $\det = 0$ for $t = 1$ (all columns equal) and for $t = -2$ (the columns add up to the zero vector).`,
-      ],
-      keyConceptTag: 'det = 0 detects dependence',
-    },
-  ],
+  questions: practice,
 });
