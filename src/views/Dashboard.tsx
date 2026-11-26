@@ -1,28 +1,29 @@
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Cog, Crown, Flame, GraduationCap, Lightbulb, Lock, Moon, RotateCcw, Settings as SettingsIcon, Sun, Timer, Zap } from 'lucide-react';
-import type { ModuleId, NodeId } from '../types.ts';
-import { EXAM_QUESTIONS, EXAM_SECONDS, MODULES, NODES, nodeKey } from '../data/modules.ts';
-import { QUESTION_BY_ID } from '../data/questions.ts';
-import { currentStreak, useProgress } from '../store/useProgress.ts';
+import { BookOpen, Check, Crown, Flame, GraduationCap, Lock, Moon, RotateCcw, Settings as SettingsIcon, Sun, Target, Zap } from 'lucide-react';
+import type { Lesson, ModuleId } from '../types.ts';
+import { BOSS_QUESTIONS, EXAM_QUESTIONS, EXAM_SECONDS, MODULES, bossKey, lessonKey, type ModuleMeta } from '../data/modules.ts';
+import { QUESTIONS, QUESTION_BY_ID, lessonsOf } from '../data/questions.ts';
+import { currentStreak, useProgress, type ProgressData } from '../store/useProgress.ts';
 import { ModuleIcon, moduleColor } from '../components/ModuleIcon.tsx';
 import { IconButton, ProgressBar } from '../components/ui.tsx';
 import { SettingsDialog } from './SettingsDialog.tsx';
 
-const nodeIcons: Record<NodeId, typeof Lightbulb> = { intuition: Lightbulb, core: Cog, speed: Timer, boss: Crown };
-
 interface Props {
-  onStartNode: (moduleId: ModuleId, nodeId: NodeId) => void;
+  onOpenLecture: (lessonId: string) => void;
+  onStartPractice: (lessonId: string) => void;
+  onStartBoss: (moduleId: ModuleId) => void;
   onStartReview: () => void;
   onStartExam: () => void;
 }
 
-export function Dashboard({ onStartNode, onStartReview, onStartExam }: Props) {
+export function Dashboard({ onOpenLecture, onStartPractice, onStartBoss, onStartReview, onStartExam }: Props) {
   const xp = useProgress((s) => s.xp);
   const streak = useProgress((s) => currentStreak(s));
   const theme = useProgress((s) => s.theme);
   const toggleTheme = useProgress((s) => s.toggleTheme);
   const completed = useProgress((s) => s.completedNodes);
+  const lecturesRead = useProgress((s) => s.lecturesRead);
   const mistakes = useProgress((s) => s.mistakes);
   const lastExam = useProgress((s) => s.examResults[0]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -39,8 +40,8 @@ export function Dashboard({ onStartNode, onStartReview, onStartExam }: Props) {
       <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/95 px-4 py-3 backdrop-blur">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-2xl font-black text-white">∑</div>
         <div className="mr-auto min-w-0 leading-tight">
-          <div className="text-[15px] font-extrabold leading-[1.15] sm:text-lg">Math for <span className="whitespace-nowrap">DS prep</span></div>
-          <div className="hidden text-[11px] font-bold uppercase tracking-wider text-muted sm:block">Level {level}</div>
+          <div className="text-[15px] font-extrabold leading-[1.15] sm:text-lg">Advanced Math <span className="whitespace-nowrap">Trainer</span></div>
+          <div className="hidden text-[11px] font-bold uppercase tracking-wider text-muted sm:block">First-year university maths · Level {level}</div>
         </div>
         <span className={`flex items-center gap-1 rounded-xl px-2.5 py-2 font-extrabold tabular-nums ${streak > 0 ? 'text-warn' : 'text-muted'}`} title="Daily streak">
           <Flame size={20} fill={streak > 0 ? 'currentColor' : 'none'} /> {streak}
@@ -78,6 +79,7 @@ export function Dashboard({ onStartNode, onStartReview, onStartExam }: Props) {
         />
         <ActionCard
           onClick={onStartExam}
+          disabled={QUESTIONS.length === 0}
           icon={<GraduationCap size={24} />}
           tone="accent"
           title="Exam Simulator"
@@ -85,81 +87,30 @@ export function Dashboard({ onStartNode, onStartReview, onStartExam }: Props) {
         />
       </div>
 
-      {/* Skill path */}
+      {/* Modules */}
       <div className="space-y-6">
-        {MODULES.map((m, mi) => {
-          const done = NODES.filter((n) => completed[nodeKey(m.id, n.id)]).length;
-          const pending = mistakeIds.filter((id) => QUESTION_BY_ID[id].moduleId === m.id).length;
-          // 100 % is reserved for a finished path with no open mistakes.
-          const mastery = done === NODES.length && pending > 0 ? 90 : Math.round((done / NODES.length) * 100);
-          const color = moduleColor(m.id);
-          return (
-            <motion.section
-              key={m.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: mi * 0.05 }}
-              className="overflow-hidden rounded-3xl border-2 border-line bg-surface"
-            >
-              <div className="flex items-center gap-3 px-4 py-4">
-                <ModuleIcon id={m.id} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-extrabold uppercase tracking-wider text-muted">Module {mi + 1}</div>
-                  <h2 className="text-lg font-extrabold leading-tight">{m.title}</h2>
-                  <p className="text-sm leading-snug text-muted">{m.blurb}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-extrabold tabular-nums" style={{ color: mastery === 100 ? 'var(--c-primary)' : undefined }}>{mastery}%</div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted">mastered</div>
-                </div>
-              </div>
-              {done === NODES.length && pending > 0 && (
-                <button type="button" onClick={onStartReview} className="mx-4 mb-3 block w-[calc(100%-2rem)] rounded-xl bg-danger-soft px-3 py-2 text-left text-sm font-bold text-danger">
-                  Re-solve {pending} missed question{pending === 1 ? '' : 's'} to reach 100 %
-                </button>
-              )}
-
-              <ol className="relative px-4 pb-4">
-                {NODES.map((n, ni) => {
-                  const key = nodeKey(m.id, n.id);
-                  const isDone = !!completed[key];
-                  const unlocked = ni === 0 || !!completed[nodeKey(m.id, NODES[ni - 1].id)];
-                  const isNext = unlocked && !isDone;
-                  const Icon = isDone ? Check : unlocked ? nodeIcons[n.id] : Lock;
-                  const best = completed[key];
-                  return (
-                    <li key={n.id} className="relative flex items-center gap-4 py-2">
-                      {/* connector to the next node */}
-                      {ni < NODES.length - 1 && (
-                        <span className="absolute left-[27px] top-[calc(50%+26px)] h-[calc(100%-44px)] w-1.5 rounded-full" style={{ background: isDone ? color : 'var(--c-line)' }} />
-                      )}
-                      <motion.button
-                        type="button"
-                        disabled={!unlocked}
-                        onClick={() => onStartNode(m.id, n.id)}
-                        whileTap={unlocked ? { y: 4 } : undefined}
-                        animate={isNext ? { scale: [1, 1.07, 1] } : { scale: 1 }}
-                        transition={isNext ? { repeat: Infinity, duration: 1.8 } : undefined}
-                        aria-label={`${n.title}${isDone ? ', completed' : unlocked ? '' : ', locked'}`}
-                        className="relative z-[1] flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full border-b-[6px] text-white disabled:border-line disabled:bg-surface2 disabled:text-muted"
-                        style={unlocked ? { background: color, borderColor: 'rgba(0,0,0,0.28)' } : undefined}
-                      >
-                        <Icon size={26} strokeWidth={isDone ? 3.5 : 2.4} />
-                      </motion.button>
-                      <button type="button" disabled={!unlocked} onClick={() => onStartNode(m.id, n.id)} className="min-w-0 flex-1 text-left disabled:opacity-50">
-                        <div className="font-extrabold">{n.title}</div>
-                        <div className="text-sm text-muted">
-                          {isDone && best ? `Best ${best.bestCorrect}/${best.total} · tap to practise again` : unlocked ? n.blurb : `Finish “${NODES[ni - 1].title}” to unlock`}
-                        </div>
-                      </button>
-                      {isNext && <span className="rounded-lg px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white" style={{ background: color }}>Start</span>}
-                    </li>
-                  );
-                })}
-              </ol>
-            </motion.section>
-          );
-        })}
+        {MODULES.map((m, mi) => (
+          <motion.section
+            key={m.id}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: mi * 0.05 }}
+            className="overflow-hidden rounded-3xl border-2 border-line bg-surface"
+          >
+            <ModulePath
+              module={m}
+              number={mi + 1}
+              lessons={lessonsOf(m.id)}
+              completed={completed}
+              lecturesRead={lecturesRead}
+              pendingMistakes={mistakeIds.filter((id) => QUESTION_BY_ID[id].moduleId === m.id).length}
+              onOpenLecture={onOpenLecture}
+              onStartPractice={onStartPractice}
+              onStartBoss={onStartBoss}
+              onStartReview={onStartReview}
+            />
+          </motion.section>
+        ))}
       </div>
 
       <footer className="mt-10 text-center text-xs text-muted">
@@ -168,6 +119,181 @@ export function Dashboard({ onStartNode, onStartReview, onStartExam }: Props) {
 
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
+  );
+}
+
+interface PathProps {
+  module: ModuleMeta;
+  number: number;
+  lessons: Lesson[];
+  completed: ProgressData['completedNodes'];
+  lecturesRead: ProgressData['lecturesRead'];
+  pendingMistakes: number;
+  onOpenLecture: (lessonId: string) => void;
+  onStartPractice: (lessonId: string) => void;
+  onStartBoss: (moduleId: ModuleId) => void;
+  onStartReview: () => void;
+}
+
+function ModulePath({ module: m, number, lessons, completed, lecturesRead, pendingMistakes, onOpenLecture, onStartPractice, onStartBoss, onStartReview }: PathProps) {
+  const color = moduleColor(m.id);
+  const hasContent = lessons.length > 0;
+  const steps = lessons.length + 1; // every lesson + the boss quiz
+  const done = lessons.filter((l) => completed[lessonKey(l.id)]).length + (completed[bossKey(m.id)] ? 1 : 0);
+  const allDone = hasContent && done === steps;
+  // 100 % is reserved for a finished path with no open mistakes.
+  const mastery = !hasContent ? 0 : allDone && pendingMistakes > 0 ? 90 : Math.round((done / steps) * 100);
+
+  return (
+    <>
+      <div className="flex items-center gap-3 px-4 py-4">
+        <ModuleIcon id={m.id} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-muted">Module {number}</div>
+          <h2 className="text-lg font-extrabold leading-tight">{m.title}</h2>
+          <p className="text-sm leading-snug text-muted">{m.blurb}</p>
+        </div>
+        {hasContent ? (
+          <div className="text-right">
+            <div className="text-xl font-extrabold tabular-nums" style={{ color: mastery === 100 ? 'var(--c-primary)' : undefined }}>{mastery}%</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-muted">mastered</div>
+          </div>
+        ) : (
+          <span className="rounded-lg bg-surface2 px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-muted">Coming soon</span>
+        )}
+      </div>
+
+      {!hasContent && m.planned && (
+        <ul className="flex flex-wrap gap-2 px-4 pb-4">
+          {m.planned.map((t) => (
+            <li key={t} className="rounded-lg border border-line px-2.5 py-1 text-sm text-muted">{t}</li>
+          ))}
+        </ul>
+      )}
+
+      {allDone && pendingMistakes > 0 && (
+        <button type="button" onClick={onStartReview} className="mx-4 mb-3 block w-[calc(100%-2rem)] rounded-xl bg-danger-soft px-3 py-2 text-left text-sm font-bold text-danger">
+          Re-solve {pendingMistakes} missed question{pendingMistakes === 1 ? '' : 's'} to reach 100 %
+        </button>
+      )}
+
+      {hasContent && (
+        <ol className="relative px-4 pb-4">
+          {lessons.map((l, li) => {
+            const passed = completed[lessonKey(l.id)];
+            const unlocked = li === 0 || !!completed[lessonKey(lessons[li - 1].id)];
+            const read = !!lecturesRead[l.id];
+            const isNext = unlocked && !passed;
+            const primary = () => (read ? onStartPractice(l.id) : onOpenLecture(l.id));
+            const status = !unlocked
+              ? `Pass lesson ${li} to unlock`
+              : passed
+                ? `Best ${passed.bestCorrect}/${passed.total} · practise again any time`
+                : read
+                  ? `Lecture read · practice: ${l.questions.length} questions`
+                  : `${l.minutes}-minute lecture, then ${l.questions.length} questions`;
+            return (
+              <PathRow key={l.id} color={color} done={!!passed} connector>
+                <NodeButton
+                  color={color}
+                  unlocked={unlocked}
+                  pulse={isNext}
+                  done={!!passed}
+                  label={`Lesson ${li + 1}: ${l.title}${passed ? ', completed' : unlocked ? '' : ', locked'}`}
+                  onClick={primary}
+                >
+                  {li + 1}
+                </NodeButton>
+                <button type="button" disabled={!unlocked} onClick={primary} className="min-w-0 flex-1 text-left disabled:opacity-50">
+                  <div className="font-extrabold leading-snug">{l.title}</div>
+                  <div className="text-sm text-muted">{status}</div>
+                </button>
+                {unlocked && (
+                  <div className="flex shrink-0 gap-1.5">
+                    <StepChip label="Lecture" active={!read} done={read} color={color} onClick={() => onOpenLecture(l.id)}>
+                      <BookOpen size={17} />
+                    </StepChip>
+                    <StepChip label="Practice" active={read && !passed} done={!!passed} disabled={!read} color={color} onClick={() => onStartPractice(l.id)}>
+                      <Target size={17} />
+                    </StepChip>
+                  </div>
+                )}
+              </PathRow>
+            );
+          })}
+
+          {(() => {
+            const unlocked = lessons.every((l) => completed[lessonKey(l.id)]);
+            const best = completed[bossKey(m.id)];
+            return (
+              <PathRow color={color} done={!!best}>
+                <NodeButton color={color} unlocked={unlocked} pulse={unlocked && !best} done={!!best} label={`Boss Quiz${best ? ', completed' : unlocked ? '' : ', locked'}`} onClick={() => onStartBoss(m.id)}>
+                  <Crown size={26} strokeWidth={2.4} />
+                </NodeButton>
+                <button type="button" disabled={!unlocked} onClick={() => onStartBoss(m.id)} className="min-w-0 flex-1 text-left disabled:opacity-50">
+                  <div className="font-extrabold">Boss Quiz</div>
+                  <div className="text-sm text-muted">
+                    {best ? `Best ${best.bestCorrect}/${best.total} · tap to try again` : unlocked ? `${BOSS_QUESTIONS} mixed questions from the whole module` : 'Pass every lesson to unlock'}
+                  </div>
+                </button>
+              </PathRow>
+            );
+          })()}
+        </ol>
+      )}
+    </>
+  );
+}
+
+function PathRow({ color, done, connector, children }: { color: string; done: boolean; connector?: boolean; children: ReactNode }) {
+  return (
+    <li className="relative flex items-center gap-3 py-2 sm:gap-4">
+      {connector && <span className="absolute left-[27px] top-[calc(50%+26px)] h-[calc(100%-44px)] w-1.5 rounded-full" style={{ background: done ? color : 'var(--c-line)' }} />}
+      {children}
+    </li>
+  );
+}
+
+function NodeButton(p: { color: string; unlocked: boolean; pulse: boolean; done: boolean; label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <motion.button
+      type="button"
+      disabled={!p.unlocked}
+      onClick={p.onClick}
+      whileTap={p.unlocked ? { y: 4 } : undefined}
+      animate={p.pulse ? { scale: [1, 1.07, 1] } : { scale: 1 }}
+      transition={p.pulse ? { repeat: Infinity, duration: 1.8 } : undefined}
+      aria-label={p.label}
+      className="relative z-[1] flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full border-b-[6px] text-xl font-extrabold text-white disabled:border-line disabled:bg-surface2 disabled:text-muted"
+      style={p.unlocked ? { background: p.color, borderColor: 'rgba(0,0,0,0.28)' } : undefined}
+    >
+      {p.done ? <Check size={28} strokeWidth={3.5} /> : p.unlocked ? p.children : <Lock size={24} />}
+    </motion.button>
+  );
+}
+
+function StepChip(p: { label: string; active: boolean; done: boolean; disabled?: boolean; color: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={p.onClick}
+      disabled={p.disabled}
+      aria-label={p.label}
+      title={p.disabled ? `${p.label} (read the lecture first)` : p.label}
+      className="relative flex h-10 w-10 items-center justify-center rounded-xl border-2 border-b-4 transition-colors disabled:opacity-40"
+      style={
+        p.active
+          ? { background: p.color, borderColor: 'rgba(0,0,0,0.28)', color: 'white' }
+          : { borderColor: 'var(--c-line)', color: p.done ? p.color : 'var(--c-muted)' }
+      }
+    >
+      {p.children}
+      {p.done && (
+        <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+          <Check size={11} strokeWidth={4} />
+        </span>
+      )}
+    </button>
   );
 }
 

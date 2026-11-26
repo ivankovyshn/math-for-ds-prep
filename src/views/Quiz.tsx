@@ -19,11 +19,13 @@ export interface QuizProps {
   secondsPerQuestion?: number;
   onExit: () => void;
   onRetry: () => void;
+  /** When set, the result screen offers to re-read the lesson's lecture. */
+  onOpenLecture?: () => void;
 }
 
 type Phase = 'answering' | 'feedback';
 
-export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQuestion, onExit, onRetry }: QuizProps) {
+export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQuestion, onExit, onRetry, onOpenLecture }: QuizProps) {
   const { addXp, recordAnswer, completeNode, touchStreak } = useProgress.getState();
 
   const [idx, setIdx] = useState(0);
@@ -132,6 +134,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
         bestCombo={bestCombo}
         onExit={onExit}
         onRetry={onRetry}
+        onOpenLecture={onOpenLecture}
       />
     );
   }
@@ -300,6 +303,7 @@ function ResultScreen(p: {
   bestCombo: number;
   onExit: () => void;
   onRetry: () => void;
+  onOpenLecture?: () => void;
 }) {
   const passed = p.outcome === 'passed';
   const pending = useProgress((s) => Object.keys(s.mistakes).length);
@@ -324,7 +328,7 @@ function ResultScreen(p: {
       </motion.div>
       <div>
         <h1 className="text-3xl font-extrabold">
-          {passed ? (p.mode === 'review' ? 'Review complete' : 'Node complete!') : 'Out of hearts'}
+          {passed ? (p.mode === 'review' ? 'Review complete' : 'Complete!') : 'Out of hearts'}
         </h1>
         <p className="mt-2 text-muted">
           {passed
@@ -333,7 +337,9 @@ function ResultScreen(p: {
                 ? `${pending} question${pending === 1 ? '' : 's'} still in your review queue. A question leaves the queue after two correct answers in a row.`
                 : 'Your review queue is empty. Every missed concept has been re-solved.'
               : p.title
-            : 'Three mistakes end a session. The missed questions are waiting in Review Mistakes — study the breakdowns, then try again.'}
+            : p.onOpenLecture
+              ? 'Three mistakes end a session. Re-read the lecture — the missed questions are also waiting in Review Mistakes.'
+              : 'Three mistakes end a session. The missed questions are waiting in Review Mistakes — study the breakdowns, then try again.'}
         </p>
       </div>
       <div className="grid w-full grid-cols-3 gap-3">
@@ -343,6 +349,7 @@ function ResultScreen(p: {
       </div>
       <div className="flex w-full flex-col gap-3">
         {!passed && <Button full tone="accent" onClick={p.onRetry}>Try again</Button>}
+        {!passed && p.onOpenLecture && <Button full tone="neutral" onClick={p.onOpenLecture}>Re-read the lecture</Button>}
         <Button full tone={passed ? 'primary' : 'neutral'} onClick={p.onExit}>
           {passed ? 'Continue' : 'Back to path'}
         </Button>

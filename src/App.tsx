@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react';
-import type { ExamResult, ModuleId, NodeId, Question } from './types.ts';
-import { MODULE_BY_ID, NODE_BY_ID, nodeKey } from './data/modules.ts';
-import { buildExam, buildNodeSession, buildReview } from './lib/session.ts';
+import type { ExamResult, ModuleId, Question } from './types.ts';
+import { BOSS_BONUS_XP, LESSON_BONUS_XP, MODULE_BY_ID, bossKey, lessonKey } from './data/modules.ts';
+import { LESSON_BY_ID, lessonsOf } from './data/questions.ts';
+import { buildBoss, buildExam, buildLessonSession, buildReview } from './lib/session.ts';
 import { useProgress } from './store/useProgress.ts';
 import { Dashboard } from './views/Dashboard.tsx';
 import { Exam } from './views/Exam.tsx';
 import { ExamSummary } from './views/ExamSummary.tsx';
+import { Lecture } from './views/Lecture.tsx';
 import { Quiz } from './views/Quiz.tsx';
 import { QuestionBrowser } from './views/QuestionBrowser.tsx';
 
 /** `run` changes on every (re)start so that the view remounts with fresh state. */
 type View =
   | { name: 'home' }
-  | { name: 'node'; moduleId: ModuleId; nodeId: NodeId; questions: Question[]; run: number }
+  | { name: 'lecture'; lessonId: string; run: number }
+  | { name: 'practice'; lessonId: string; questions: Question[]; run: number }
+  | { name: 'boss'; moduleId: ModuleId; questions: Question[]; run: number }
   | { name: 'review'; questions: Question[]; run: number }
   | { name: 'exam'; questions: Question[]; run: number }
   | { name: 'examSummary'; result: ExamResult };
+
+const lessonNumber = (lessonId: string) => lessonsOf(LESSON_BY_ID[lessonId].moduleId).findIndex((l) => l.id === lessonId) + 1;
 
 export default function App() {
   const [view, setView] = useState<View>({ name: 'home' });
@@ -30,7 +36,7 @@ export default function App() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  // Author's page with the whole question bank: add #all to the address.
+  // Author's page with every lecture and question: add #all to the address.
   const [showAll, setShowAll] = useState(window.location.hash === '#all');
   useEffect(() => {
     const onHash = () => setShowAll(window.location.hash === '#all');
@@ -40,8 +46,9 @@ export default function App() {
   if (showAll) return <QuestionBrowser />;
 
   const home = () => setView({ name: 'home' });
-  const startNode = (moduleId: ModuleId, nodeId: NodeId) =>
-    setView({ name: 'node', moduleId, nodeId, questions: buildNodeSession(moduleId, nodeId), run: Date.now() });
+  const openLecture = (lessonId: string) => setView({ name: 'lecture', lessonId, run: Date.now() });
+  const startPractice = (lessonId: string) => setView({ name: 'practice', lessonId, questions: buildLessonSession(lessonId), run: Date.now() });
+  const startBoss = (moduleId: ModuleId) => setView({ name: 'boss', moduleId, questions: buildBoss(moduleId), run: Date.now() });
   const startReview = () => {
     const questions = buildReview(useProgress.getState().mistakes);
     if (questions.length) setView({ name: 'review', questions, run: Date.now() });
@@ -51,24 +58,57 @@ export default function App() {
 
   switch (view.name) {
     case 'home':
-      return <Dashboard onStartNode={startNode} onStartReview={startReview} onStartExam={startExam} />;
+      return (
+        <Dashboard
+          onOpenLecture={openLecture}
+          onStartPractice={startPractice}
+          onStartBoss={startBoss}
+          onStartReview={startReview}
+          onStartExam={startExam}
+        />
+      );
 
-    case 'node': {
-      const node = NODE_BY_ID[view.nodeId];
+    case 'lecture':
+      return (
+        <Lecture
+          key={view.run}
+          lesson={LESSON_BY_ID[view.lessonId]}
+          number={lessonNumber(view.lessonId)}
+          onExit={home}
+          onStartPractice={() => startPractice(view.lessonId)}
+        />
+      );
+
+    case 'practice': {
+      const lesson = LESSON_BY_ID[view.lessonId];
       return (
         <Quiz
           key={view.run}
-          title={`${MODULE_BY_ID[view.moduleId].title} · ${node.title}`}
+          title={`Lesson ${lessonNumber(lesson.id)} · ${lesson.title}`}
           questions={view.questions}
           mode="lesson"
-          nodeKey={nodeKey(view.moduleId, view.nodeId)}
-          bonusXp={node.bonusXp}
-          secondsPerQuestion={node.secondsPerQuestion}
+          nodeKey={lessonKey(lesson.id)}
+          bonusXp={LESSON_BONUS_XP}
           onExit={home}
-          onRetry={() => startNode(view.moduleId, view.nodeId)}
+          onRetry={() => startPractice(lesson.id)}
+          onOpenLecture={() => openLecture(lesson.id)}
         />
       );
     }
+
+    case 'boss':
+      return (
+        <Quiz
+          key={view.run}
+          title={`${MODULE_BY_ID[view.moduleId].title} · Boss Quiz`}
+          questions={view.questions}
+          mode="lesson"
+          nodeKey={bossKey(view.moduleId)}
+          bonusXp={BOSS_BONUS_XP}
+          onExit={home}
+          onRetry={() => startBoss(view.moduleId)}
+        />
+      );
 
     case 'review':
       return <Quiz key={view.run} title="Review Mistakes" questions={view.questions} mode="review" onExit={home} onRetry={startReview} />;

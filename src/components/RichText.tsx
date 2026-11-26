@@ -14,22 +14,26 @@ export const Tex = memo(function Tex({ tex, block = false }: { tex: string; bloc
   );
 });
 
-/** Plain text with <i>emphasis</i>. */
-function Emphasis({ text }: { text: string }) {
+/** Text in which $...$ is rendered as maths. */
+function Maths({ text }: { text: string }) {
+  const parts = text.split('$');
+  return <>{parts.map((p, i) => (i % 2 ? <Tex key={i} tex={p} /> : <Fragment key={i}>{p}</Fragment>))}</>;
+}
+
+/** One line of text with $...$ maths and <i>emphasis</i>; emphasis may contain maths. */
+export const Inline = memo(function Inline({ text }: { text: string }) {
   const parts = text.split(/<i>(.*?)<\/i>/g);
   return (
     <>
-      {parts.map((p, i) => (i % 2 ? <em key={i} className="font-semibold not-italic underline decoration-dotted underline-offset-4">{p}</em> : <Fragment key={i}>{p}</Fragment>))}
-    </>
-  );
-}
-
-/** One line of text in which $...$ is rendered as maths. */
-export const Inline = memo(function Inline({ text }: { text: string }) {
-  const parts = text.split('$');
-  return (
-    <>
-      {parts.map((p, i) => (i % 2 ? <Tex key={i} tex={p} /> : <Emphasis key={i} text={p} />))}
+      {parts.map((p, i) =>
+        i % 2 ? (
+          <em key={i} className="font-semibold not-italic underline decoration-dotted underline-offset-4">
+            <Maths text={p} />
+          </em>
+        ) : (
+          <Maths key={i} text={p} />
+        ),
+      )}
     </>
   );
 });

@@ -1,14 +1,14 @@
-import { Braces, Dices, Hash, Shapes, Sigma } from 'lucide-react';
+import { Axis3d, Database, Grid3x3, Infinity as InfinityIcon, Sigma } from 'lucide-react';
 import type { ModuleId } from '../types.ts';
 
-const icons = { geometry: Shapes, calculus: Sigma, combinatorics: Hash, probability: Dices, algorithms: Braces };
+const icons = { intro: InfinityIcon, linalg: Grid3x3, geometry: Axis3d, analysis: Sigma, datasci: Database };
 
 const colors: Record<ModuleId, string> = {
-  geometry: '#3fa9ff',
-  calculus: '#b67cff',
-  combinatorics: '#ff9d2e',
-  probability: '#ff6f91',
-  algorithms: '#2fd3b0',
+  intro: '#ff9d2e',
+  linalg: '#3fa9ff',
+  geometry: '#2fd3b0',
+  analysis: '#b67cff',
+  datasci: '#ff6f91',
 };
 
 export const moduleColor = (id: ModuleId) => colors[id];

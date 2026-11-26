@@ -7,7 +7,8 @@ import type { ExamResult, MistakeEntry } from '../types.ts';
  *
  * Migration note: the shape maps directly onto tables —
  *   profile(xp, streak_count, last_active_date, theme)
- *   completed_nodes(node_key, best_correct, total, completed_at)
+ *   completed_nodes(node_key, best_correct, total, completed_at)   -- node_key: lesson:<id> | boss:<module>
+ *   lectures_read(lesson_id, read_at)
  *   mistakes(question_id, misses, correct_streak, last_missed_at)
  *   exam_results(id, finished_at, duration_sec, time_limit_sec, question_ids, answers)
  * To move to Supabase/PostgreSQL, replace the `persist` storage below with an
@@ -19,6 +20,8 @@ export interface ProgressData {
   /** Local date (YYYY-MM-DD) of the last finished session. */
   lastActiveDate: string | null;
   completedNodes: Record<string, { bestCorrect: number; total: number; completedAt: string }>;
+  /** lessonId -> ISO time the lecture was first read to the end. */
+  lecturesRead: Record<string, string>;
   mistakes: Record<string, MistakeEntry>;
   examResults: ExamResult[];
   theme: 'dark' | 'light';
@@ -29,6 +32,7 @@ interface ProgressActions {
   /** Logs an answer. `inReview` answers can clear a mistake; others can only add one. */
   recordAnswer: (questionId: string, correct: boolean, inReview: boolean) => void;
   completeNode: (key: string, correct: number, total: number) => void;
+  markLectureRead: (lessonId: string) => void;
   saveExam: (result: ExamResult) => void;
   touchStreak: () => void;
   toggleTheme: () => void;
@@ -41,6 +45,7 @@ const initial: ProgressData = {
   streakCount: 0,
   lastActiveDate: null,
   completedNodes: {},
+  lecturesRead: {},
   mistakes: {},
   examResults: [],
   theme: 'dark',
@@ -97,6 +102,9 @@ export const useProgress = create<ProgressData & ProgressActions>()(
           };
         }),
 
+      markLectureRead: (lessonId) =>
+        set((s) => (s.lecturesRead[lessonId] ? {} : { lecturesRead: { ...s.lecturesRead, [lessonId]: new Date().toISOString() } })),
+
       saveExam: (result) => set((s) => ({ examResults: [result, ...s.examResults].slice(0, 30) })),
 
       touchStreak: () =>
@@ -115,7 +123,16 @@ export const useProgress = create<ProgressData & ProgressActions>()(
 
       reset: () => set((s) => ({ ...initial, theme: s.theme })),
     }),
-    { name: 'mathds-progress', version: 1 },
+    {
+      name: 'mathds-progress',
+      version: 2,
+      // v1 was the entrance-exam trainer: its questions are gone, so only XP, streak and theme carry over.
+      migrate: (persisted, version) => {
+        const old = (persisted ?? {}) as Partial<ProgressData>;
+        if (version < 2) return { ...initial, xp: old.xp ?? 0, streakCount: old.streakCount ?? 0, lastActiveDate: old.lastActiveDate ?? null, theme: old.theme ?? 'dark' };
+        return { ...initial, ...old };
+      },
+    },
   ),
 );
 
@@ -126,8 +143,8 @@ export function currentStreak(s: Pick<ProgressData, 'streakCount' | 'lastActiveD
 }
 
 export function exportProgress(): ProgressData {
-  const { xp, streakCount, lastActiveDate, completedNodes, mistakes, examResults, theme } = useProgress.getState();
-  return { xp, streakCount, lastActiveDate, completedNodes, mistakes, examResults, theme };
+  const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, mistakes, examResults, theme } = useProgress.getState();
+  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, mistakes, examResults, theme };
 }
 
 export function isProgressData(x: unknown): x is ProgressData {

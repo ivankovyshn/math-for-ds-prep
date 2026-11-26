@@ -1,338 +1,294 @@
-// Independent re-computation of the answer key.
+// Independent re-computation of the answer key, plus structural checks of every lesson.
 // Run with:  npm run verify   (needs Node 22.18+ / 24, which can import .ts files directly)
 //
 // For every question the script (1) checks the structure and (2) recomputes the
-// answer by brute force, numerical integration or by actually running the
-// pseudocode, then compares it with the `value` of the option marked correct.
+// answer with plain numerical linear algebra, then compares it with the `value`
+// of the option marked correct. Every lecture is checked for unbalanced $ and
+// unknown diagrams.
 
-import { QUESTIONS } from '../src/data/questions.ts';
+import { readFileSync } from 'node:fs';
+import { LESSONS, QUESTIONS } from '../src/data/questions.ts';
 
 // ---------- numeric helpers ----------
-const simpson = (f, a, b, n = 2000) => {
-  const h = (b - a) / n;
-  let s = f(a) + f(b);
-  for (let i = 1; i < n; i++) s += f(a + i * h) * (i % 2 ? 4 : 2);
-  return (s * h) / 3;
-};
-const deriv = (f, x, h = 1e-5) => (f(x + h) - f(x - h)) / (2 * h);
-/** Area of {(x,y) in box : inside(x,y)} by midpoint sampling. */
-const gridArea = (inside, x0, x1, y0, y1, n = 1500) => {
-  const dx = (x1 - x0) / n;
-  const dy = (y1 - y0) / n;
-  let c = 0;
-  for (let i = 0; i < n; i++)
-    for (let j = 0; j < n; j++) if (inside(x0 + (i + 0.5) * dx, y0 + (j + 0.5) * dy)) c++;
-  return c * dx * dy;
-};
-const dist = (x, y, a, b) => Math.hypot(x - a, y - b);
-const exps = (n, primes) => {
-  const e = primes.map(() => 0);
-  primes.forEach((p, i) => {
-    while (n % p === 0) {
-      n /= p;
-      e[i]++;
-    }
-  });
-  return { e, rest: n };
-};
-const divisors = (n) => {
-  const d = [];
-  for (let i = 1; i <= n; i++) if (n % i === 0) d.push(i);
-  return d;
-};
-const permutations = (arr) =>
-  arr.length <= 1 ? [arr] : arr.flatMap((x, i) => permutations([...arr.slice(0, i), ...arr.slice(i + 1)]).map((p) => [x, ...p]));
+const EPS = 1e-9;
+const I = (n) => Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)));
+const T = (A) => A[0].map((_, j) => A.map((row) => row[j]));
+const mul = (A, B) => A.map((row) => B[0].map((_, j) => row.reduce((s, a, k) => s + a * B[k][j], 0)));
+const mulVec = (A, v) => A.map((row) => row.reduce((s, a, k) => s + a * v[k], 0));
+const scale = (c, A) => A.map((row) => row.map((a) => c * a));
+const pow = (A, k) => (k === 0 ? I(A.length) : mul(A, pow(A, k - 1)));
+const flat = (A) => A.flat();
+const dot = (u, v) => u.reduce((s, x, i) => s + x * v[i], 0);
+const norm = (v) => Math.sqrt(dot(v, v));
+const deg = (rad) => (rad * 180) / Math.PI;
+const angle = (u, v) => deg(Math.acos(dot(u, v) / (norm(u) * norm(v))));
 
-const S3 = Math.sqrt(3);
+/** Row echelon form by Gaussian elimination with partial pivoting. Returns the matrix, rank and determinant sign/product. */
+function eliminate(M) {
+  const A = M.map((r) => [...r]);
+  const rows = A.length;
+  const cols = A[0].length;
+  let rank = 0;
+  let detProduct = 1;
+  for (let c = 0; c < cols && rank < rows; c++) {
+    let p = rank;
+    for (let i = rank + 1; i < rows; i++) if (Math.abs(A[i][c]) > Math.abs(A[p][c])) p = i;
+    if (Math.abs(A[p][c]) < EPS) {
+      detProduct = 0;
+      continue;
+    }
+    if (p !== rank) {
+      [A[p], A[rank]] = [A[rank], A[p]];
+      detProduct = -detProduct;
+    }
+    detProduct *= A[rank][c];
+    for (let i = rank + 1; i < rows; i++) {
+      const f = A[i][c] / A[rank][c];
+      for (let j = c; j < cols; j++) A[i][j] -= f * A[rank][j];
+    }
+    rank++;
+  }
+  return { A, rank, det: rank === rows && rows === cols ? detProduct : 0 };
+}
+const rank = (A) => eliminate(A).rank;
+const det = (A) => eliminate(A).det;
+
+/** Inverse by Gauss–Jordan on [A | I]. */
+function inv(A) {
+  const n = A.length;
+  const M = A.map((row, i) => [...row, ...I(n)[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let i = c + 1; i < n; i++) if (Math.abs(M[i][c]) > Math.abs(M[p][c])) p = i;
+    if (Math.abs(M[p][c]) < EPS) throw new Error('singular matrix');
+    [M[p], M[c]] = [M[c], M[p]];
+    const d = M[c][c];
+    M[c] = M[c].map((x) => x / d);
+    for (let i = 0; i < n; i++) if (i !== c) {
+      const f = M[i][c];
+      M[i] = M[i].map((x, j) => x - f * M[c][j]);
+    }
+  }
+  return M.map((row) => row.slice(n));
+}
+const solve = (A, b) => mulVec(inv(A), b);
+
+/**
+ * Classifies Ax = b: -1 if there is no solution, otherwise the number of free
+ * variables (0 = unique solution).
+ */
+const solutionKind = (A, b) => {
+  const rA = rank(A);
+  const rAb = rank(A.map((row, i) => [...row, b[i]]));
+  return rA < rAb ? -1 : A[0].length - rA;
+};
+
+/** Real eigenvalues of a 2×2 matrix, ascending; [] if they are complex. */
+function eig2([[a, b], [c, d]]) {
+  const tr = a + d;
+  const disc = tr * tr - 4 * (a * d - b * c);
+  if (disc < -EPS) return [];
+  const s = Math.sqrt(Math.max(0, disc));
+  return [(tr - s) / 2, (tr + s) / 2];
+}
+
+/** Integer roots of f in [-lo, lo], ascending (for "for which t" questions with integer answers). */
+const intRoots = (f, lo = 50) => {
+  const out = [];
+  for (let t = -lo; t <= lo; t++) if (Math.abs(f(t)) < 1e-7) out.push(t);
+  return out;
+};
+
+/** Direction of v scaled so that its first non-zero entry is 1. */
+const direction = (v) => {
+  const k = v.find((x) => Math.abs(x) > EPS);
+  return v.map((x) => x / k);
+};
 
 // ---------- one independent computation per question ----------
-// Each returns a number, or { v, tol } for grid-based areas.
+// Each returns a number, a list of numbers, { v, tol } or { id } (the option that must be correct).
 const checks = {
-  // Geometry
-  'geo-01': () => (Math.PI * 31 ** 2 * 102) / 1000,
-  'geo-02': () => (50 * 40 * 30) / 1000,
-  'geo-03': () => ({ v: gridArea((x, y) => dist(x, y, 1, 1) > 1, 0, 2, 0, 2) / 4, tol: 2e-3 }),
-  'geo-04': () => ((4 / 3) * Math.PI * 2 ** 3) / ((4 / 3) * Math.PI * 1 ** 3),
-  'geo-05': () => ({
-    v: gridArea(
-      (x, y) =>
-        y > 0 && y < S3 * x && y < S3 * (2 - x) && // inside the triangle (0,0),(2,0),(1,√3)
-        dist(x, y, 0, 0) > 1 && dist(x, y, 2, 0) > 1 && dist(x, y, 1, S3) > 1,
-      0, 2, 0, S3,
-    ),
-    tol: 3e-3,
-  }),
-  'geo-06': () => ((4 / 3) * Math.PI) / (Math.PI * 1 * 2),
-  'geo-07': () => ((4 / 3) * Math.PI * 30 ** 3) / 1000,
-  'geo-08': () => {
-    const pts = [0, 1, 2, 3, 4, 5].map((k) => [Math.cos((k * Math.PI) / 3), Math.sin((k * Math.PI) / 3)]);
-    let a = 0;
-    pts.forEach(([x, y], i) => {
-      const [x2, y2] = pts[(i + 1) % 6];
-      a += x * y2 - x2 * y;
-    });
-    return a / 2 / Math.PI;
+  // Lesson 1 · Vectors and linear combinations
+  'la-01-1': () => [0, 1, 2].map((i) => 2 * [2, -1, 3][i] - [1, 4, -2][i]),
+  'la-01-2': () => angle([3, -2], [4, 6]),
+  'la-01-3': () => norm([2, -3, 6]),
+  'la-01-4': () => angle([1, 0, 1], [0, 1, 1]),
+  'la-01-5': () => {
+    // u·v is linear in k: f(k) = f(0) + k (f(1) - f(0)).
+    const f = (k) => dot([k, 2, -1], [3, k, 4]);
+    return -f(0) / (f(1) - f(0));
   },
-  'geo-09': () => ({ v: gridArea((x, y) => dist(x, y, 0, 0) < 2 && dist(x, y, 2, 2) < 2, 0, 2, 0, 2) / 4, tol: 2e-3 }),
-  'geo-10': () => ({
-    v: gridArea((x, y) => dist(x, y, 0, 0) < 6 && y > 6 * Math.cos(Math.PI / 6), -3, 3, 5, 6, 2000),
-    tol: 5e-3,
-  }),
-  'geo-11': () => simpson((z) => z * z, 0, 0.5) / simpson((z) => z * z, 0, 1),
-  'geo-12': () => (Math.PI * 10 ** 2 * 1600) / 1000,
+  'la-01-6': () => solve([[1, 1], [2, -1]], [1, 8]),
 
-  // Calculus
-  'cal-01': () => deriv((x) => x ** 3 - 2 * x, 2),
-  'cal-02': () => deriv((x) => Math.exp(2 * x), 0),
-  'cal-03': () => simpson((x) => 3 * x * x, 0, 2),
-  'cal-05': () => deriv((x) => Math.exp(2 * x), 1) / deriv((x) => x ** 3, 1),
-  'cal-06': () => -deriv((x) => x * x, 3),
-  'cal-07': () => simpson(Math.sin, 0, Math.PI),
-  'cal-08': () => {
-    let m = 0;
-    for (let x = 0; x <= 20; x += 1e-4) m = Math.max(m, x * Math.exp(-x));
-    return m;
+  // Lesson 2 · Linear systems (value = -1 if inconsistent, otherwise the number of free variables)
+  'la-02-1': () => solutionKind([[1, 2], [2, 4]], [3, 6]),
+  'la-02-3': () => solve([[1, 1, 1], [0, 2, 5], [2, 5, -1]], [6, -4, 27]),
+  'la-02-4': () => solutionKind([[1, 2, -1], [0, 1, 4], [0, 0, 0]], [3, 2, 5]),
+  'la-02-5': () => {
+    // Scan a fine grid of a for the values that make the system inconsistent.
+    const bad = [];
+    for (let k = -2000; k <= 2000; k++) {
+      const a = k / 100;
+      if (solutionKind([[1, 2], [3, a]], [1, 4]) === -1) bad.push(a);
+    }
+    if (bad.length !== 1) throw new Error(`expected one bad value, found ${bad}`);
+    return bad[0];
   },
-  'cal-09': () => {
-    // Explicit solution of f'' + f = 3 sin x with f'(0) = 1, f'(π/2) = 3.
-    const A = (3 * Math.PI) / 4 - 3;
-    const B = 5 / 2;
-    const f = (x) => A * Math.cos(x) + B * Math.sin(x) - 1.5 * x * Math.cos(x);
-    const d1 = (x) => deriv(f, x);
-    const ok =
-      Math.abs(d1(0) - 1) < 1e-6 &&
-      Math.abs(d1(Math.PI / 2) - 3) < 1e-6 &&
-      [0.3, 1, 2.2].every((x) => Math.abs((f(x + 1e-3) - 2 * f(x) + f(x - 1e-3)) / 1e-6 + f(x) - 3 * Math.sin(x)) < 1e-4);
-    if (!ok) throw new Error('cal-09: example function does not satisfy the conditions');
-    return simpson(f, 0, Math.PI / 2);
+  'la-02-6': () => solutionKind([[1, 2, 1, 1], [2, 4, 3, 1], [3, 6, 4, 2]], [3, 7, 10]),
+
+  // Lesson 3 · Matrices
+  'la-03-1': () => {
+    const C = mul(Array.from({ length: 2 }, () => [1, 2, 3]), Array.from({ length: 3 }, () => [1, 2, 3, 4]));
+    return [C.length, C[0].length];
   },
-  'cal-10': () => simpson((x) => x ** 3 * Math.cos(x) + 3 * x * x, -2, 2),
-  'cal-11': () => deriv((x) => simpson((t) => Math.exp(-t * t), 0, x * x), 1, 1e-4),
-  'cal-12': () => {
-    // Largest c for which y = 4x + c still meets y = x²: c = min(x² − 4x).
-    let m = Infinity;
-    for (let x = -10; x <= 10; x += 1e-4) m = Math.min(m, x * x - 4 * x);
-    return m;
+  'la-03-2': () => mul([[1, 2], [3, 4]], [[0, 1], [5, -2]])[1][0],
+  'la-03-3': () => flat(pow([[1, 1], [0, 1]], 3)),
+  'la-03-4': () => flat(T(mul([[1, 2], [0, 1]], [[3, 0], [1, 1]]))),
+  'la-03-5': () => {
+    const t = Math.PI / 2;
+    return flat([[Math.cos(t), -Math.sin(t)], [Math.sin(t), Math.cos(t)]]).map((x) => Math.round(x * 1e12) / 1e12);
+  },
+  'la-03-6': () => {
+    // Apply the two maps to e1 and e2 directly, without matrices.
+    const rot = ([x, y]) => [-y, x];
+    const refl = ([x, y]) => [x, -y];
+    const c1 = refl(rot([1, 0]));
+    const c2 = refl(rot([0, 1]));
+    return [c1[0], c2[0], c1[1], c2[1]];
   },
 
-  // Number theory & combinatorics
-  'com-01': () => divisors(72).length,
-  'com-02': () => {
-    let c = 0;
-    for (let s = 0; s < 4; s++) for (let t = 0; t < 3; t++) for (let h = 0; h < 2; h++) c++;
-    return c;
+  // Lesson 4 · Determinants
+  'la-04-1': () => det([[3, 1], [4, 2]]),
+  'la-04-2': () => Math.abs(det([[3, 1], [1, 2]])),
+  'la-04-3': () => det([[2, 0, 1], [1, 3, 2], [1, 1, 2]]),
+  'la-04-4': () => {
+    const A = [[3, 0, 0], [1, 1, 0], [2, 5, 1]];
+    if (Math.abs(det(A) - 3) > 1e-9) throw new Error('test matrix should have det 3');
+    return det(scale(2, A));
   },
-  'com-03': () => {
-    let c = 0;
-    for (let n = 1; n <= 10000; n++) {
-      const { e, rest } = exps(n, [2, 5]);
-      if (rest === 1 && e.every((k) => k >= 1 && k <= 4)) c++;
-    }
-    return c;
+  'la-04-5': () => {
+    const A = [[2, 0, 0], [1, 1, 0], [3, 4, 1]];
+    const B = [[-3, 0, 0], [2, 1, 0], [5, 6, 1]];
+    if (Math.abs(det(A) - 2) > 1e-9 || Math.abs(det(B) + 3) > 1e-9) throw new Error('test matrices have the wrong determinants');
+    return det(mul(mul(T(A), inv(B)), mul(A, A)));
   },
-  'com-04': () => {
-    let c = 0;
-    for (let a = 1; a <= 5; a++) for (let b = 1; b <= 5; b++) for (let d = 1; d <= 5; d++) if (a !== b && a !== d && b !== d) c++;
-    return c;
+  'la-04-6': () => intRoots((t) => det([[t, 1, 1], [1, t, 1], [1, 1, t]])),
+
+  // Lesson 5 · Inverse
+  'la-05-1': () => flat(inv([[2, 1], [5, 3]])),
+  'la-05-2': () => {
+    const options = { a: [[2, 4], [1, 2]], b: [[2, 4], [1, 3]], c: [[0, 1], [1, 0]], d: [[1, 0], [0, 5]] };
+    const singular = Object.keys(options).filter((k) => Math.abs(det(options[k])) < EPS);
+    if (singular.length !== 1) throw new Error(`expected exactly one singular matrix, found ${singular}`);
+    return { id: singular[0] };
   },
-  'com-05': () => {
-    let c = 0;
-    for (let n = 1; n <= 210 ** 3; n++) {
-      if (n % 210 !== 0) continue;
-      const { e, rest } = exps(n, [2, 3, 5, 7]);
-      if (rest === 1 && e.every((k) => k >= 1 && k <= 3)) c++;
-    }
-    return c;
+  'la-05-3': () => solve([[1, 2], [3, 7]], [3, 10]),
+  'la-05-4': () => {
+    const A = inv([[1, 2], [0, 1]]);
+    const B = inv([[1, 0], [3, 1]]);
+    return flat(inv(mul(A, B)));
   },
-  'com-06': () => divisors(360).filter((d) => d % 2 === 1).length,
-  'com-07': () => {
-    let f = 1n;
-    for (let i = 2n; i <= 25n; i++) f *= i;
-    return /0*$/.exec(f.toString())[0].length;
-  },
-  'com-08': () => new Set(permutations([...'LEVEL']).map((p) => p.join(''))).size,
-  'com-09': () => {
-    let c = 0;
-    for (let n = 1; n <= 100; n++) if (n % 2 === 0 || n % 3 === 0 || n % 5 === 0) c++;
-    return c;
-  },
-  'com-10': () => divisors(2 ** 4 * 3 ** 3 * 5 ** 2).filter((d) => Number.isInteger(Math.sqrt(d))).length,
-  'com-11': () => {
-    const g = Array.from({ length: 4 }, () => Array(5).fill(1));
-    for (let y = 1; y <= 3; y++) for (let x = 1; x <= 4; x++) g[y][x] = g[y - 1][x] + g[y][x - 1];
-    return g[3][4];
-  },
-  'com-12': () => {
-    let x = 1n;
-    for (let i = 0; i < 2026; i++) x = (x * 7n) % 10n;
-    return Number(x);
+  'la-05-5': () => inv([[1, 2, 3], [0, 1, 4], [0, 0, 1]])[0][2],
+  'la-05-6': () => {
+    const A = [[5, 0, 0], [2, 1, 0], [1, 1, 1]];
+    if (Math.abs(det(scale(2, A)) - 40) > 1e-9) throw new Error('test matrix should have det(2A) = 40');
+    return det(inv(A));
   },
 
-  // Probability (exact enumeration)
-  'pro-01': () => {
-    let c = 0;
-    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a === 6 && b === 6) c++;
-    return c / 36;
+  // Lesson 6 · Independence, basis, rank
+  'la-06-1': () => rank(T([[1, 2, 3], [2, 4, 6], [0, 1, 1]])),
+  'la-06-3': () => rank([[1, 2, 0, 1], [2, 4, 1, 3], [3, 6, 1, 4]]),
+  'la-06-4': () => {
+    const roots = intRoots((k) => det(T([[1, 1, 0], [0, 1, 1], [1, k, 1]])));
+    if (roots.length !== 1) throw new Error(`expected one root, found ${roots}`);
+    return roots[0];
   },
-  'pro-02': () => {
-    let c = 0;
-    for (let m = 0; m < 8; m++) if (m !== 0) c++;
-    return c / 8;
+  'la-06-5': () => {
+    // A concrete 5×7 matrix of rank 4: (5×4)·(4×7) with independent factors.
+    const L = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 2, 3, 4]];
+    const R = [[1, 2, 0, 1, 0, 3, 1], [0, 1, 1, 0, 2, 1, 0], [2, 0, 1, 1, 1, 0, 1], [0, 3, 0, 2, 1, 1, 1]];
+    const A = mul(L, R);
+    if (rank(A) !== 4) throw new Error('test matrix should have rank 4');
+    return A[0].length - rank(A);
   },
-  'pro-03': () => 3 / (3 + 5),
-  'pro-04': () => {
-    // 10 × 10 grid of equally likely cells; A = first 5 rows, B = first 4 columns.
-    let c = 0;
-    for (let i = 0; i < 10; i++) for (let j = 0; j < 10; j++) if (i < 5 && j < 4) c++;
-    return c / 100;
-  },
-  'pro-05': () => {
-    let c = 0;
-    for (let m = 0; m < 6 ** 4; m++) {
-      let x = m;
-      let six = false;
-      for (let k = 0; k < 4; k++) {
-        if (x % 6 === 5) six = true;
-        x = Math.floor(x / 6);
-      }
-      if (six) c++;
-    }
-    return c / 6 ** 4;
-  },
-  'pro-06': () => 1 - (49 / 50) ** 50,
-  'pro-07': () => {
-    let c = 0;
-    for (let m = 0; m < 16; m++) if ([0, 1, 2, 3].filter((k) => (m >> k) & 1).length === 2) c++;
-    return c / 16;
-  },
-  'pro-08': () => {
-    const cards = [...'RRRRBBBBBB'];
-    let c = 0;
-    let n = 0;
-    for (let i = 0; i < 10; i++)
-      for (let j = 0; j < 10; j++) {
-        if (i === j) continue;
-        n++;
-        if (cards[i] === 'R' && cards[j] === 'R') c++;
-      }
-    return c / n;
-  },
-  'pro-09': () => {
-    const sickPos = 10000 * 0.01 * 0.9;
-    const healthyPos = 10000 * 0.99 * 0.09;
-    return sickPos / (sickPos + healthyPos);
-  },
-  'pro-10': () => {
-    let c = 0;
-    for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let d = 0; d < 10; d++) if (a === b || a === d || b === d) c++;
-    return c / 1000;
-  },
-  'pro-11': () => {
-    let n = 1;
-    while (1 - 0.5 ** n <= 0.99) n++;
-    return n;
-  },
-  'pro-12': () => {
-    // dp[k] = probability of k hits so far
-    let dp = [1, 0, 0];
-    for (let round = 0; round < 20; round++) {
-      const next = [0, 0, 0];
-      for (let k = 0; k < 3; k++) {
-        next[k] += dp[k] * (19 / 20);
-        next[Math.min(k + 1, 2)] += dp[k] * (1 / 20);
-      }
-      dp = next;
-    }
-    return dp[1];
-  },
+  'la-06-6': () => solve(T([[1, 1], [1, 2]]), [4, 7]),
 
-  // Algorithms: literal translations of the pseudocode
-  'alg-01': () => {
-    let N = 5, S = 0, n = 1;
-    while (n <= N) { S = S + n; n = n + 1; }
-    return S;
+  // Lesson 7 · Eigenvalues
+  'la-07-1': () => eig2([[2, 5], [0, 3]]),
+  'la-07-2': () => {
+    const Av = mulVec([[2, 1], [1, 2]], [1, 1]);
+    if (Math.abs(Av[0] - Av[1]) > EPS) throw new Error('(1, 1) is not an eigenvector');
+    return Av[0] / 1;
   },
-  'alg-02': () => {
-    let N = 40, c = 0;
-    while (N > 1) { N = Math.floor(N / 2); c = c + 1; }
-    return c;
+  'la-07-3': () => eig2([[4, 1], [2, 3]]),
+  'la-07-4': () => {
+    // Null vector of A − 5I from its first row (a, b): v = (b, −a).
+    const [[a, b]] = [[4 - 5, 1], [2, 3 - 5]];
+    const v = direction([b, -a]);
+    const Av = mulVec([[4, 1], [2, 3]], v);
+    if (Av.some((x, i) => Math.abs(x - 5 * v[i]) > EPS)) throw new Error('not an eigenvector');
+    return v;
   },
-  'alg-03': () => {
-    const a = 7, b = 12;
-    let m;
-    if (a > b) m = a; else m = b;
-    if (m % 2 === 0) m = m / 2;
-    return m;
+  'la-07-5': () => {
+    const P = [[1, 1, 0], [0, 1, 1], [1, 0, 1]];
+    const A = mul(mul(P, [[1, 0, 0], [0, 2, 0], [0, 0, 4]]), inv(P));
+    return det(scale(2, inv(A)));
   },
-  'alg-04': () => {
-    const N = 5;
-    let p = 1, k = 0;
-    while (k < N) { p = 2 * p; k = k + 1; }
-    return p;
-  },
-  'alg-05': () => {
-    const N = 6;
-    let S = 0, n = 1;
-    while (n <= N) { if (n % 2 === 1) S = S + n; n = n + 1; }
-    return S;
-  },
-  'alg-06': () => {
-    const N = 6;
-    let a = 0, b = 1, k = 0;
-    while (k < N) { const t = a + b; a = b; b = t; k = k + 1; }
-    return a;
-  },
-  'alg-07': () => {
-    let a = 84, b = 36;
-    while (b !== 0) { const r = a % b; a = b; b = r; }
-    return a;
-  },
-  'alg-08': () => {
-    let N = 2026, S = 0;
-    while (N > 0) { S = S + (N % 10); N = Math.floor(N / 10); }
-    return S;
-  },
-  'alg-09': () => {
-    const N = 5;
-    let c = 0, i = 1;
-    while (i <= N) { let j = i; while (j <= N) { c = c + 1; j = j + 1; } i = i + 1; }
-    return c;
-  },
-  'alg-10': () => {
-    let N = 6, c = 0;
-    while (N !== 1) { if (N % 2 === 0) N = N / 2; else N = 3 * N + 1; c = c + 1; }
-    return c;
-  },
-  'alg-11': () => {
-    const N = 36;
-    let c = 0, d = 1;
-    while (d * d <= N) { if (N % d === 0) { if (d * d === N) c = c + 1; else c = c + 2; } d = d + 1; }
-    return c;
-  },
-  'alg-12': () => {
-    const N = 4;
-    let S = 0, n = 1;
-    while (n <= N) { S = S + (2 * n - 1); n = n + 1; }
-    return S;
-  },
+  'la-07-6': () => pow([[2, 1], [0, 1]], 10)[0][1],
 };
 
-/** "Roughly how much" questions: the correct option is the closest one on a log scale. */
-const ESTIMATES = new Set(['geo-01', 'geo-07', 'geo-12', 'pro-06', 'pro-09']);
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */
-const CONCEPTUAL = new Set(['cal-04']);
+const CONCEPTUAL = new Set(['la-02-2', 'la-06-2']);
+
+// ---------- comparison ----------
+const closeNum = (a, b, tol) => a === b || Math.abs(a - b) <= tol;
+const same = (a, b, tol) => {
+  if (typeof a === 'number' && typeof b === 'number') return closeNum(a, b, tol);
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((x, i) => closeNum(x, b[i], tol));
+  return false;
+};
+const show = (x) => (Array.isArray(x) ? `[${x.map((n) => +n.toFixed(6)).join(', ')}]` : String(+x.toFixed?.(6) ?? x));
 
 // ---------- run ----------
 const errors = [];
 const fail = (id, msg) => errors.push(`${id}: ${msg}`);
-const seen = new Set();
-const tally = {};
+// The renderer splits on <i>…</i> first and then on $, so every piece must have balanced $.
+const dollars = (id, text) => {
+  for (const piece of text.split(/<i>(.*?)<\/i>/g))
+    if ((piece.match(/\$/g) ?? []).length % 2) fail(id, `unbalanced $ in: ${text.slice(0, 60)}…`);
+};
 
+const diagramSource = readFileSync(new URL('../src/components/Diagram.tsx', import.meta.url), 'utf8');
+const DIAGRAMS = new Set([...diagramSource.matchAll(/^  (\w+): \{$/gm)].map((m) => m[1]));
+
+// Lessons and lectures
+const lessonIds = new Set();
+for (const l of LESSONS) {
+  if (lessonIds.has(l.id)) fail(l.id, 'duplicate lesson id');
+  lessonIds.add(l.id);
+  if (l.lecture.length < 3) fail(l.id, 'a lecture needs at least 3 sections');
+  if (l.minutes < 5 || l.minutes > 8) fail(l.id, 'lectures are planned for 5–8 minutes');
+  if (l.questions.length < 5) fail(l.id, 'needs at least 5 practice questions');
+  for (const d of [1, 2, 3]) if (!l.questions.some((q) => q.difficulty === d)) fail(l.id, `has no level-${d} question`);
+  for (const s of l.lecture) {
+    if (!s.blocks.length) fail(l.id, `section "${s.title}" is empty`);
+    for (const b of s.blocks) {
+      const texts = { text: [b.text], formula: [b.caption ?? ''], box: [b.title, b.text], example: [b.prompt, ...(b.steps ?? [])], diagram: [b.caption ?? ''], check: [b.prompt, b.answer] }[b.kind];
+      if (!texts) { fail(l.id, `unknown block kind "${b.kind}"`); continue; }
+      for (const t of texts) dollars(`${l.id} / ${s.title}`, t);
+      if (b.kind === 'diagram' && !DIAGRAMS.has(b.type)) fail(l.id, `unknown diagram "${b.type}"`);
+    }
+  }
+}
+
+// Questions
+const seen = new Set();
+let recomputed = 0;
 for (const q of QUESTIONS) {
   if (seen.has(q.id)) fail(q.id, 'duplicate id');
   seen.add(q.id);
-  tally[q.moduleId] ??= { 1: 0, 2: 0, 3: 0 };
-  tally[q.moduleId][q.difficulty]++;
+  if (!q.id.startsWith(q.lessonId)) fail(q.id, `id should start with its lesson id ${q.lessonId}`);
+  if (q.svgDiagramType && !DIAGRAMS.has(q.svgDiagramType)) fail(q.id, `unknown diagram "${q.svgDiagramType}"`);
 
   const correct = q.options.find((o) => o.id === q.correctOptionId);
   if (!correct) { fail(q.id, 'correctOptionId does not match any option'); continue; }
@@ -343,34 +299,39 @@ for (const q of QUESTIONS) {
     if (o.id === q.correctOptionId && o.trapExplanation) fail(q.id, 'correct option must not have a trapExplanation');
   }
   if (q.stepByStepSolution.length < 3) fail(q.id, 'needs at least 3 solution steps');
-  for (const text of [q.promptText, ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution]) {
-    if ((text.match(/\$/g) ?? []).length % 2) fail(q.id, `unbalanced $ in: ${text.slice(0, 50)}…`);
-  }
+  for (const text of [q.promptText, ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution]) dollars(q.id, text);
 
   if (CONCEPTUAL.has(q.id)) continue;
   const check = checks[q.id];
   if (!check) { fail(q.id, 'no independent check defined'); continue; }
-  if (q.options.some((o) => typeof o.value !== 'number')) { fail(q.id, 'every option needs a numeric value'); continue; }
 
-  const res = check();
-  const v = typeof res === 'number' ? res : res.v;
-  const tol = typeof res === 'number' ? 1e-6 * Math.max(1, Math.abs(v)) : res.tol;
-
-  if (ESTIMATES.has(q.id)) {
-    const nearest = [...q.options].sort((a, b) => Math.abs(Math.log(a.value / v)) - Math.abs(Math.log(b.value / v)))[0];
-    if (nearest.id !== q.correctOptionId) fail(q.id, `computed ≈ ${v}, nearest option is ${nearest.id}, key says ${q.correctOptionId}`);
-  } else {
-    if (Math.abs(correct.value - v) > tol) fail(q.id, `computed ${v}, key option ${correct.id} = ${correct.value}`);
-    for (const o of q.options)
-      if (o.id !== correct.id && Math.abs(o.value - v) <= tol * 10) fail(q.id, `distractor ${o.id} equals the computed answer`);
+  let res;
+  try {
+    res = check();
+  } catch (e) {
+    fail(q.id, `check threw: ${e.message}`);
+    continue;
   }
+  recomputed++;
+  if (res && typeof res === 'object' && 'id' in res) {
+    if (res.id !== q.correctOptionId) fail(q.id, `computation picks option ${res.id}, key says ${q.correctOptionId}`);
+    continue;
+  }
+  if (q.options.some((o) => o.value === undefined)) { fail(q.id, 'every option needs a value'); continue; }
+  const v = res && typeof res === 'object' && 'v' in res ? res.v : res;
+  const tol = res && typeof res === 'object' && 'tol' in res ? res.tol : 1e-6;
+  if (!same(correct.value, v, tol)) fail(q.id, `computed ${show(v)}, key option ${correct.id} = ${show(correct.value)}`);
+  for (const o of q.options) if (o.id !== correct.id && same(o.value, v, tol)) fail(q.id, `distractor ${o.id} equals the computed answer`);
 }
 
-console.log(`Questions: ${QUESTIONS.length}`);
-for (const [m, t] of Object.entries(tally)) console.log(`  ${m.padEnd(14)} level 1: ${t[1]}  level 2: ${t[2]}  level 3: ${t[3]}`);
+console.log(`Lessons: ${LESSONS.length}   Questions: ${QUESTIONS.length}`);
+for (const l of LESSONS) {
+  const t = [1, 2, 3].map((d) => l.questions.filter((q) => q.difficulty === d).length);
+  console.log(`  ${l.id.padEnd(7)} ${l.title.padEnd(42)} ${l.lecture.length} sections · questions ${t.join('/')}`);
+}
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):`);
   for (const e of errors) console.error('  ✗ ' + e);
   process.exit(1);
 }
-console.log(`\nAll ${QUESTIONS.length} answer keys confirmed (${QUESTIONS.length - CONCEPTUAL.size} recomputed, ${CONCEPTUAL.size} conceptual).`);
+console.log(`\nAll ${QUESTIONS.length} answer keys confirmed (${recomputed} recomputed, ${CONCEPTUAL.size} conceptual).`);

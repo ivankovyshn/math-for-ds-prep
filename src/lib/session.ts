@@ -1,6 +1,6 @@
-import type { Difficulty, ModuleId, NodeId, Question } from '../types.ts';
-import { QUESTIONS, QUESTION_BY_ID } from '../data/questions.ts';
-import { MODULES } from '../data/modules.ts';
+import type { ModuleId, Question } from '../types.ts';
+import { LESSON_BY_ID, QUESTIONS, QUESTION_BY_ID } from '../data/questions.ts';
+import { BOSS_QUESTIONS, EXAM_QUESTIONS, MODULES } from '../data/modules.ts';
 
 export function shuffle<T>(items: readonly T[]): T[] {
   const a = [...items];
@@ -11,32 +11,34 @@ export function shuffle<T>(items: readonly T[]): T[] {
   return a;
 }
 
-const pick = (moduleId: ModuleId, difficulty: Difficulty) =>
-  QUESTIONS.filter((q) => q.moduleId === moduleId && q.difficulty === difficulty);
-
-/** Selects the questions for one node of the skill path. */
-export function buildNodeSession(moduleId: ModuleId, nodeId: NodeId): Question[] {
-  const d1 = pick(moduleId, 1);
-  const d2 = pick(moduleId, 2);
-  const d3 = pick(moduleId, 3);
-  switch (nodeId) {
-    case 'intuition':
-      // All level-1 questions, then one taste of level 2.
-      return [...shuffle(d1), ...shuffle(d2).slice(0, 1)];
-    case 'core':
-      // One warm-up, all level-2 questions, one stretch question.
-      return [...shuffle(d1).slice(0, 1), ...shuffle(d2), ...shuffle(d3).slice(0, 1)];
-    case 'speed':
-      return shuffle([...shuffle(d2).slice(0, 3), ...shuffle(d3).slice(0, 3)]);
-    case 'boss':
-      return [...shuffle(d2).slice(0, 3), ...shuffle(d3)];
-  }
+/** A lesson's practice: every question, easiest first, shuffled within a level. */
+export function buildLessonSession(lessonId: string): Question[] {
+  const qs = LESSON_BY_ID[lessonId].questions;
+  return ([1, 2, 3] as const).flatMap((d) => shuffle(qs.filter((q) => q.difficulty === d)));
 }
 
-/** Two questions per module, mixed: the exam simulator paper. */
+/** Boss quiz: the harder questions of the module, spread over its lessons. */
+export function buildBoss(moduleId: ModuleId): Question[] {
+  const pool = QUESTIONS.filter((q) => q.moduleId === moduleId && q.difficulty >= 2);
+  const groups: Record<string, Question[]> = {};
+  for (const q of shuffle(pool)) (groups[q.lessonId] ??= []).push(q);
+  const byLesson = Object.values(groups);
+  // Round-robin over lessons so that every topic is represented.
+  const picked: Question[] = [];
+  for (let round = 0; picked.length < BOSS_QUESTIONS && byLesson.some((l) => l.length > round); round++)
+    for (const l of shuffle(byLesson)) if (l[round] && picked.length < BOSS_QUESTIONS) picked.push(l[round]);
+  return picked.sort((a, b) => a.difficulty - b.difficulty);
+}
+
+/** The exam simulator paper: harder questions mixed over every module that has content. */
 export function buildExam(): Question[] {
+  const modules = MODULES.filter((m) => QUESTIONS.some((q) => q.moduleId === m.id));
+  const perModule = Math.ceil(EXAM_QUESTIONS / Math.max(1, modules.length));
   return shuffle(
-    MODULES.flatMap((m) => shuffle(QUESTIONS.filter((q) => q.moduleId === m.id && q.difficulty >= 2)).slice(0, 2)),
+    shuffle(modules.flatMap((m) => shuffle(QUESTIONS.filter((q) => q.moduleId === m.id && q.difficulty >= 2)).slice(0, perModule))).slice(
+      0,
+      EXAM_QUESTIONS,
+    ),
   );
 }
 

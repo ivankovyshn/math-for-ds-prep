@@ -1,6 +1,5 @@
-export type ModuleId = 'geometry' | 'calculus' | 'combinatorics' | 'probability' | 'algorithms';
+export type ModuleId = 'intro' | 'linalg' | 'geometry' | 'analysis' | 'datasci';
 export type Difficulty = 1 | 2 | 3;
-export type NodeId = 'intuition' | 'core' | 'speed' | 'boss';
 
 export interface QuestionOption {
   id: string;
@@ -8,13 +7,17 @@ export interface QuestionOption {
   label: string;
   /** Why this specific distractor is tempting and wrong. Required on every wrong option. */
   trapExplanation?: string;
-  /** Numeric value of the option. Used only by scripts/verify.mjs to re-check the answer key. */
-  value?: number;
+  /**
+   * The option as a number or a list of numbers (a vector, or a matrix read row by row).
+   * Used only by scripts/verify.mjs to re-check the answer key; the app never shows it.
+   */
+  value?: number | number[];
 }
 
 export interface Question {
   id: string;
   moduleId: ModuleId;
+  lessonId: string;
   difficulty: Difficulty;
   /** Plain text; wrap maths in $...$. Use \n\n for a paragraph break. */
   promptText: string;
@@ -29,6 +32,37 @@ export interface Question {
   /** First-principles breakdown, one step per entry. Supports $...$. */
   stepByStepSolution: string[];
   keyConceptTag: string;
+}
+
+/** A question as written in a lesson file; the lesson fills in moduleId and lessonId. */
+export type QuestionDraft = Omit<Question, 'moduleId' | 'lessonId'>;
+
+/**
+ * One building block of a lecture. All text fields support $...$ maths,
+ * blank-line paragraphs and "• " bullets (see RichText).
+ */
+export type LectureBlock =
+  | { kind: 'text'; text: string }
+  | { kind: 'formula'; tex: string; caption?: string }
+  | { kind: 'box'; variant: 'definition' | 'theorem' | 'tip' | 'pitfall'; title: string; text: string }
+  | { kind: 'example'; title: string; prompt: string; steps: string[] }
+  | { kind: 'diagram'; type: string; caption?: string }
+  | { kind: 'check'; prompt: string; answer: string };
+
+export interface LectureSection {
+  title: string;
+  blocks: LectureBlock[];
+}
+
+export interface Lesson {
+  id: string;
+  moduleId: ModuleId;
+  title: string;
+  blurb: string;
+  /** Estimated reading time of the lecture, in minutes. */
+  minutes: number;
+  lecture: LectureSection[];
+  questions: Question[];
 }
 
 export interface MistakeEntry {

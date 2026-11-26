@@ -1,23 +1,16 @@
-import type { Question } from '../types.ts';
-import { geometry } from './questions/geometry.ts';
-import { calculus } from './questions/calculus.ts';
-import { combinatorics } from './questions/combinatorics.ts';
-import { probability } from './questions/probability.ts';
-import { algorithms } from './questions/algorithms.ts';
+import type { Lesson, ModuleId } from '../types.ts';
+import { linalg } from './lessons/linalg/index.ts';
 
 /**
- * The complete question bank. Each module file holds 12 questions:
- * four per difficulty level (1 = intuition, 2 = core mechanics, 3 = exam level).
- * See README.md for how to add a question.
+ * Every lesson with content, in path order. A lesson file holds the lecture
+ * and its practice questions together. See README.md for the format.
  */
-export const QUESTIONS: Question[] = [
-  ...geometry,
-  ...calculus,
-  ...combinatorics,
-  ...probability,
-  ...algorithms,
-];
+export const LESSONS: Lesson[] = [...linalg];
 
-export const QUESTION_BY_ID: Record<string, Question> = Object.fromEntries(
-  QUESTIONS.map((q) => [q.id, q]),
-);
+export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
+
+export const lessonsOf = (moduleId: ModuleId) => LESSONS.filter((l) => l.moduleId === moduleId);
+
+export const QUESTIONS = LESSONS.flatMap((l) => l.questions);
+
+export const QUESTION_BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
