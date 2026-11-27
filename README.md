@@ -9,8 +9,8 @@ Runs entirely in the browser. No account, no server, no API keys.
 ## What is inside
 
 - **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
-  Optimization, Programming Foundations. Mathematical Language (6 lessons), Linear Algebra (11 lessons), Calculus & Analysis (7 lessons), Probability (6 lessons), Statistics (5 lessons) and Optimization (5 lessons) are
-  available; the other modules show their planned lessons as "coming soon".
+  Optimization, Programming Foundations: 46 lessons in all (6, 11, 7, 6, 5, 5 and 6). A module without lessons
+  would show its `planned` titles as "coming soon".
 - **Lessons** — lecture → Practice 1 → (Extra practice if needed) → next lesson. The lecture is shown one
   section at a time, with definition / key-fact / trap boxes, step-by-step worked examples and 2–3 quick checks:
   multiple-choice questions with an instant explanation and no hearts. Answering a section's quick checks
@@ -143,7 +143,11 @@ fresh ones. All modules with content use templates (`NN-name.practice.ts`, `NN-n
 numerically from the function itself (finite differences, Simpson's rule, limits evaluated near the point),
 probability answers by enumerating the sample space or integrating the density, statistics answers by
 maximising the log-likelihood numerically, solving the normal equations or deriving z from the normal CDF,
-optimization answers by running gradient descent, momentum and constrained searches numerically; in
+optimization answers by running gradient descent, momentum and constrained searches numerically.
+Programming questions show Python in `codeSnippet` and their options are printed output in `<c>…</c>`:
+`npm run verify` runs every snippet with `python3` (all of them in one interpreter) and compares what it prints
+with the key, including lecture `code` blocks that state an `output`. NumPy is not required: NumPy questions
+are re-checked by a small re-implementation of the relevant semantics (shapes, axes, broadcasting, printing). In
 logic and proofs the variation comes from pools of statements, sets and functions rather than only from numbers.
 
 ```ts

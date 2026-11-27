@@ -7,6 +7,7 @@
 // unknown diagrams.
 
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import katex from 'katex';
 import { ALL_QUESTIONS as QUESTIONS, LESSONS } from '../src/data/questions.ts';
 import { variantOf } from '../src/lib/variants.ts';
@@ -2184,6 +2185,132 @@ Object.assign(checks, {
   'op-05-x6': ({ a, b }) => near(-shadowPrice((bb) => clampOpt(a, bb, true).f, b) + 0, 1e-4),
 });
 
+// pg · programming: Python questions are checked by running their code with python3 (see the end of this file)
+/** Runs the question's own code snippet. */
+const runSnippet = (_, q) => ({ py: q.codeSnippet });
+const py = (code) => () => ({ py: code });
+const PY_IDS = (lesson) => [1, 2, 3, 4, 5, 6].flatMap((i) => [`${lesson}-${i}`, `${lesson}-x${i}`]);
+Object.assign(checks, {
+  'pg-01-q1': py('print(type(6 / 3))'),
+  'pg-01-q2': py('print(17 // 5, 17 % 5)'),
+  'pg-01-q3': py('s = "python"\nprint(s[1:4])'),
+  ...Object.fromEntries(PY_IDS('pg-01').map((id) => [id, runSnippet])),
+  'pg-02-q1': py('def f(x):\n    x * 2\n\nprint(f(3))'),
+  'pg-02-q2': py('total = 0\nfor i in range(1, 5):\n    total += i\nprint(total)'),
+  'pg-02-q3': py('n = 20\nk = 0\nwhile n > 1:\n    n = n // 2\n    k += 1\nprint(k)'),
+  ...Object.fromEntries(PY_IDS('pg-02').map((id) => [id, runSnippet])),
+  'pg-03-q1': py('xs = [4, 7, 1]\nxs.append(6)\nprint(xs[-1] + len(xs))'),
+  'pg-03-q2': py('a = [1, 2]\nb = a\nb.append(3)\nprint(a)'),
+  'pg-03-q3': py('print(len(set("banana")))'),
+  ...Object.fromEntries(PY_IDS('pg-03').map((id) => [id, runSnippet])),
+});
+
+// pg-04 · NumPy: numpy is not available to the checker, so its semantics are re-implemented here
+// (element-wise arithmetic, reductions along an axis, broadcasting) together with its print format.
+/** How NumPy prints a 1-D integer array: entries right-aligned to a common width. */
+const npFmt = (xs) => {
+  const s = xs.map(String);
+  const w = Math.max(...s.map((t) => t.length));
+  return `[${s.map((t) => t.padStart(w)).join(' ')}]`;
+};
+/** How NumPy prints a 1-D float array of whole numbers: "1." entries, right-aligned. */
+const npFmtWhole = (xs) => npFmt(xs.map((x) => `${Math.round(x)}.`));
+const tup = (sh) => (sh.length === 1 ? `(${sh[0]},)` : `(${sh.join(', ')})`);
+const pyFloatStr = (x) => (Number.isInteger(x) ? x.toFixed(1) : String(x));
+const reshapeShape = (n, dims) => {
+  const known = dims.filter((d) => d !== -1).reduce((a, b) => a * b, 1);
+  return dims.map((d) => (d === -1 ? n / known : d));
+};
+const sumAxis = (A, axis) => (axis === 0 ? A[0].map((_, j) => sum(A.map((row) => row[j]))) : A.map(sum));
+const argmax1 = (xs) => xs.reduce((b, x, i) => (x > xs[b] ? i : b), 0);
+/** NumPy broadcasting: pad with leading 1s, then each pair of sizes must agree or contain a 1. */
+const bcast = (s, t) => {
+  const n = Math.max(s.length, t.length);
+  const a = Array(n - s.length).fill(1).concat(s);
+  const b = Array(n - t.length).fill(1).concat(t);
+  if (a.some((x, i) => x !== b[i] && x !== 1 && b[i] !== 1)) return null;
+  return a.map((x, i) => Math.max(x, b[i]));
+};
+const arangeJs = (a, b, s = 1) => range(0, Math.ceil((b - a) / s) - 1).map((i) => a + i * s);
+const o = (v) => ({ out: String(v) });
+Object.assign(checks, {
+  'pg-04-q1': () => o(npFmt([1, 2, 3].map((x) => 2 * x))),
+  'pg-04-q2': () => o(tup(reshapeShape(12, [3, -1]))),
+  'pg-04-q3': () => o(tup([4, 5].filter((_, i) => i !== 0))),
+  'pg-04-1': ({ xs, k, c }) => o(npFmt(xs.map((x) => x * k + c))),
+  'pg-04-2': ({ rr, c }) => o(tup(reshapeShape(rr * c, [rr, -1]))),
+  'pg-04-3': ({ A }) => o(npFmt(sumAxis(A, 0))),
+  'pg-04-4': ({ s, t }) => {
+    const b = bcast(s, t);
+    return o(b ? tup(b) : 'ValueError');
+  },
+  'pg-04-5': ({ xs, t }) => o(npFmt(xs.filter((x) => x > t))),
+  'pg-04-6': ({ A }) => o(npFmt(A.map(argmax1))),
+  'pg-04-x1': ({ a, b }) => o(`${tup([a, b])} ${a * b}`),
+  'pg-04-x2': ({ xs }) => o(pyFloatStr(sum(xs) / xs.length)),
+  'pg-04-x3': ({ a, b, s }) => o(npFmt(arangeJs(a, b, s))),
+  'pg-04-x4': ({ dims, k }) => o(tup(dims.filter((_, i) => i !== k))),
+  'pg-04-x5': ({ xs, t }) => o(xs.filter((x) => x > t).length),
+  'pg-04-x6': runSnippet,
+});
+
+// pg-05 · linear algebra in NumPy: shapes of @ products and the same numbers computed with plain arrays
+/** Shape of s @ t following NumPy's rules for 1-D and 2-D operands, or null on a mismatch. */
+const matmulShape = (s, t) => {
+  const inner = [s[s.length - 1], t[0]];
+  if (inner[0] !== inner[1]) return null;
+  return [...s.slice(0, -1), ...t.slice(1)];
+};
+Object.assign(checks, {
+  'pg-05-q1': () => o(npFmt(mulVec([[1, 2], [3, 4]], [2, 1]))),
+  'pg-05-q2': () => o(tup(matmulShape([3, 2], [2, 5]))),
+  'pg-05-q3': () => o(pyFloatStr(norm([6, 8]))),
+  'pg-05-1': ({ A, v }) => o(npFmt(mulVec(A, v))),
+  'pg-05-2': ({ m, n, p }) => o(tup(matmulShape([m, n], [n, p]))),
+  'pg-05-3': ({ A, B, i, j }) => o(`${mul(A, B)[i][j]} ${A[i][j] * B[i][j]}`),
+  'pg-05-4': ({ v }) => o(pyFloatStr(norm(v))),
+  'pg-05-5': ({ A, b }) => o(npFmtWhole(solve(A, b))),
+  'pg-05-6': ({ m, n }) => {
+    const X = [m, n];
+    const y = [m];
+    const shapes = [matmulShape([n, m], y), matmulShape(X, y), matmulShape([n, m], X), matmulShape(y, [n, m])];
+    return pickBy(4, (i) => shapes[i] !== null && shapes[i].length === 1 && shapes[i][0] === n);
+  },
+  'pg-05-x1': ({ A }) => o(`${tup([A[0].length, A.length])} ${npFmt(T(A)[0])}`),
+  'pg-05-x2': ({ u, v }) => o(`${dot(u, v)} ${npFmt(u.map((x, i) => x * v[i]))}`),
+  'pg-05-x3': ({ A }) => o(trace(A)),
+  'pg-05-x4': ({ m, n }) => o(tup(matmulShape([n, m], [m, n]))),
+  'pg-05-x5': ({ A }) => o(Math.round(det(A))),
+  'pg-05-x6': ({ X }) => o(npFmtWhole(T(X).map((col) => sum(col) / col.length))),
+});
+
+// pg-06 · simulation: the exact probabilities and expectations the simulations estimate
+// (rng.integers(a, b) draws a..b-1; random.randint is checked by running Python)
+const randintCount = (a, b) => ({ py: `import random\nrandom.seed(3)\nprint(len({random.randint(${a}, ${b}) for _ in range(20000)}))` });
+Object.assign(checks, {
+  'pg-06-q1': () => randintCount(1, 6),
+  'pg-06-q2': () => prob(arangeJs(1, 7), (x) => x >= 5),
+  'pg-06-q3': () => SD(mapDist(binomDist(10000, 0.5), (k) => k / 10000)),
+  'pg-06-1': ({ k, m }) => prob(arangeJs(1, k + 1), (x) => x <= m),
+  'pg-06-2': ({ a, b }) => randintCount(a, b),
+  'pg-06-3': ({ p, n }) => near(SD(mapDist(binomDist(n, p), (k) => k / n)), 1e-4),
+  'pg-06-4': ({ s }) => prob(tuples(arangeJs(1, 7), 2), (t) => t[0] + t[1] === s),
+  'pg-06-5': ({ e }) => Math.ceil(Var(twoPoint(0, 0.5)) / (e * e) - 1e-9),
+  'pg-06-6': ({ n }) => SD(sumIid(0, 1, n)),
+  'pg-06-x1': ({ a, b }) => arangeJs(a, b).length,
+  'pg-06-x2': ({ t }) => near(uniformProb(0, 1, 0, t), 1e-3),
+  'pg-06-x3': runSnippet,
+  'pg-06-x4': ({ n, k }) => {
+    // Standard error of a mean of N draws: √(Var / N), with the variance of one 0/1 draw at p = 0.3.
+    const se = (N) => Math.sqrt(Var([[0, 0.7], [1, 0.3]]) / N);
+    let N = n;
+    while (se(N) > se(n) / k + 1e-15) N += n;
+    return N;
+  },
+  'pg-06-x5': ({ n }) => prob(tuples(arangeJs(0, n), n), (t) => !t.includes(0)),
+  'pg-06-x6': ({ k }) => E(arangeJs(1, k + 1).map((x) => [x, 1 / k])),
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */
@@ -2210,6 +2337,17 @@ const dollars = (id, text) => {
 const diagramSource = readFileSync(new URL('../src/components/Diagram.tsx', import.meta.url), 'utf8');
 const DIAGRAMS = new Set([...diagramSource.matchAll(/^  (\w+): \{$/gm)].map((m) => m[1]));
 
+/** Python programs collected from the checks, run together at the end. */
+const pyJobs = [];
+/** Option labels hold printed output as <c>…</c>; compare the text itself. */
+const plain = (label) => label.replace(/<\/?c>/g, '').replace(/\$/g, '').trim();
+function compareOutput(tag, q, out) {
+  const printed = out.trim();
+  const correct = q.options.find((o) => o.id === q.correctOptionId);
+  if (plain(correct.label) !== printed) fail(tag, `the code prints "${printed}", key option ${correct.id} is "${plain(correct.label)}"`);
+  for (const o of q.options) if (o.id !== correct.id && plain(o.label) === printed) fail(tag, `distractor ${o.id} is what the code prints`);
+}
+
 // Lessons and lectures
 const lessonIds = new Set();
 const quickChecks = [];
@@ -2227,10 +2365,13 @@ for (const l of LESSONS) {
   for (const s of l.lecture) {
     if (!s.blocks.length) fail(l.id, `section "${s.title}" is empty`);
     for (const b of s.blocks) {
-      const texts = { text: [b.text], formula: [b.caption ?? ''], box: [b.title, b.text], example: [b.prompt, ...(b.steps ?? [])], diagram: [b.caption ?? ''], quiz: [b.prompt, b.explanation, ...(b.options ?? []).flatMap((o) => [o.label, o.trapExplanation ?? ''])] }[b.kind];
+      const texts = { text: [b.text], formula: [b.caption ?? ''], box: [b.title, b.text], example: [b.prompt, ...(b.steps ?? [])], diagram: [b.caption ?? ''], code: [b.caption ?? ''], quiz: [b.prompt, b.explanation, ...(b.options ?? []).flatMap((o) => [o.label, o.trapExplanation ?? ''])] }[b.kind];
       if (!texts) { fail(l.id, `unknown block kind "${b.kind}"`); continue; }
       for (const t of texts) dollars(`${l.id} / ${s.title}`, t);
       if (b.kind === 'diagram' && !DIAGRAMS.has(b.type)) fail(l.id, `unknown diagram "${b.type}"`);
+      // Lecture code with a stated output is run too (NumPy code cannot run here and is skipped).
+      if (b.kind === "code" && b.output !== undefined && !/import numpy|\bnp\./.test(b.code))
+        pyJobs.push({ tag: `${l.id} / ${s.title} (code block)`, q: { options: [{ id: 'a', label: b.output }], correctOptionId: 'a' }, code: b.code });
       if (b.kind === 'quiz') {
         if (!b.id.startsWith(`${l.id}-q`)) fail(b.id, `quick-check id should start with ${l.id}-q`);
         if (b.options.length < 3 || b.options.length > 4) fail(b.id, 'a quick check needs 3–4 options');
@@ -2248,7 +2389,7 @@ let variantsChecked = 0;
 const SEEDS = 300;
 // Artefacts of string building: "NaN", "undefined", doubled signs such as "- -3" or "+ -2", and TeX
 // commands that lost their backslash in a plain (non-raw) template string, such as "3cdot 4".
-const BROKEN = /NaN|undefined|Infinity|\[object|[+-]\s*[+-]\s*\d|(?<![\\a-zA-Z{])(cdot|tfrac|dfrac|mathbf|sqrt|mathbb|begin\{)/;
+const BROKEN = /NaN|undefined|Infinity|\[object|[+-]\s*[+-]\s*\d|(?<![\\a-zA-Z{.])(cdot|tfrac|dfrac|mathbf|sqrt|mathbb|begin\{)/;
 
 function checkStructure(q, tag = q.id) {
   if (q.svgDiagramType && !DIAGRAMS.has(q.svgDiagramType)) fail(tag, `unknown diagram "${q.svgDiagramType}"`);
@@ -2325,11 +2466,17 @@ function verifyKey(q, tag = q.id) {
 
   let res;
   try {
-    res = check(q.params);
+    res = check(q.params, q);
   } catch (e) {
     return fail(tag, `check threw: ${e.message}`);
   }
   recomputed++;
+  // Programming questions: the answer is printed text, compared with the option labels.
+  if (res && typeof res === 'object' && 'py' in res) {
+    pyJobs.push({ tag, q, code: res.py });
+    return;
+  }
+  if (res && typeof res === 'object' && 'out' in res) return compareOutput(tag, q, res.out);
   if (res && typeof res === 'object' && 'id' in res) {
     if (res.id !== q.correctOptionId) fail(tag, `computation picks option ${res.id}, key says ${q.correctOptionId}`);
     return;
@@ -2339,6 +2486,32 @@ function verifyKey(q, tag = q.id) {
   const tol = res && typeof res === 'object' && 'tol' in res ? res.tol : 1e-6;
   if (!same(correct.value, v, tol)) fail(tag, `computed ${show(v)}, key option ${correct.id} = ${show(correct.value)}`);
   for (const o of q.options) if (o.id !== correct.id && same(o.value, v, tol)) fail(tag, `distractor ${o.id} equals the computed answer`);
+}
+
+// Run every collected Python program in one interpreter and compare what it prints with the key.
+if (pyJobs.length) {
+  const RUNNER = [
+    'import sys, json, io, contextlib',
+    'out = []',
+    'for code in json.load(sys.stdin):',
+    '    buf = io.StringIO()',
+    '    try:',
+    '        with contextlib.redirect_stdout(buf):',
+    "            exec(code, {'__name__': '__main__'})",
+    '        out.append(buf.getvalue())',
+    '    except Exception as e:',
+    "        out.append('!EXC ' + type(e).__name__ + ': ' + str(e))",
+    'print(json.dumps(out))',
+  ].join('\n');
+  let outs;
+  try {
+    outs = JSON.parse(execFileSync('python3', ['-c', RUNNER], { input: JSON.stringify(pyJobs.map((j) => j.code)), maxBuffer: 1 << 28 }).toString());
+  } catch (e) {
+    fail('python', `could not run python3 to check the programming answers: ${e.message.split('\n')[0]}`);
+    outs = [];
+  }
+  pyJobs.forEach((j, i) => outs[i] !== undefined && compareOutput(j.tag, j.q, outs[i]));
+  console.log(`Python: ${pyJobs.length} programs executed.`);
 }
 
 console.log(`Lessons: ${LESSONS.length}   Questions: ${QUESTIONS.length}`);

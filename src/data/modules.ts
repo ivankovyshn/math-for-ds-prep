@@ -43,7 +43,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'programming',
     title: 'Programming Foundations',
     blurb: 'Python and NumPy as a tool for everything above',
-    planned: ['Python basics', 'Functions and loops', 'Data structures', 'NumPy and vectorisation', 'Linear algebra in NumPy', 'Simulating probability'],
   },
 ];
 

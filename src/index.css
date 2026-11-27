@@ -108,6 +108,18 @@ button:disabled {
 .code-kw { color: var(--c-code-kw); font-weight: 700; }
 .code-num { color: var(--c-code-num); }
 .code-op { color: var(--c-code-op); }
+.code-fn { color: var(--c-accent); }
+.code-str { color: var(--c-primary); }
+.code-com { color: var(--c-muted); font-style: italic; }
+.code-inline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  white-space: pre;
+  padding: 0.05em 0.35em;
+  border-radius: 0.4em;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+}
 
 :focus-visible {
   outline: 3px solid var(--c-accent);

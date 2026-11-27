@@ -5,6 +5,7 @@ import type { LectureBlock, Lesson } from '../types.ts';
 import { MODULE_BY_ID } from '../data/modules.ts';
 import { useProgress } from '../store/useProgress.ts';
 import { Diagram } from '../components/Diagram.tsx';
+import { CodeWithOutput } from '../components/Pseudocode.tsx';
 import { OptionList } from '../components/QuestionCard.tsx';
 import { shuffle } from '../lib/session.ts';
 import { Inline, RichText, Tex } from '../components/RichText.tsx';
@@ -184,6 +185,18 @@ export function LectureBlockView({ block, picked, onPick }: { block: LectureBloc
       return (
         <figure>
           <Diagram type={block.type} large />
+          {block.caption && (
+            <figcaption className="mt-2 text-center text-sm text-muted">
+              <Inline text={block.caption} />
+            </figcaption>
+          )}
+        </figure>
+      );
+
+    case 'code':
+      return (
+        <figure>
+          <CodeWithOutput code={block.code} output={block.output} />
           {block.caption && (
             <figcaption className="mt-2 text-center text-sm text-muted">
               <Inline text={block.caption} />

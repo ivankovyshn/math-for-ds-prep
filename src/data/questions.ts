@@ -5,12 +5,13 @@ import { linalg } from './lessons/linalg/index.ts';
 import { probability } from './lessons/probability/index.ts';
 import { statistics } from './lessons/statistics/index.ts';
 import { optimization } from './lessons/optimization/index.ts';
+import { programming } from './lessons/programming/index.ts';
 
 /**
  * Every lesson with content, in path order. A lesson file holds the lecture
  * and its practice questions together. See README.md for the format.
  */
-export const LESSONS: Lesson[] = [...intro, ...linalg, ...calculus, ...probability, ...statistics, ...optimization];
+export const LESSONS: Lesson[] = [...intro, ...linalg, ...calculus, ...probability, ...statistics, ...optimization, ...programming];
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 

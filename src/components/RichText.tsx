@@ -20,7 +20,23 @@ function Maths({ text }: { text: string }) {
   return <>{parts.map((p, i) => (i % 2 ? <Tex key={i} tex={p} /> : <Fragment key={i}>{p}</Fragment>))}</>;
 }
 
-/** One line of text with $...$ maths and <i>emphasis</i>; emphasis may contain maths. */
+/** Text with <c>inline code</c> pieces; everything else may contain $...$ maths. */
+function CodeAndMaths({ text }: { text: string }) {
+  const parts = text.split(/<c>([\s\S]*?)<\/c>/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 ? (
+          <code key={i} className="code-inline">{p}</code>
+        ) : (
+          <Maths key={i} text={p} />
+        ),
+      )}
+    </>
+  );
+}
+
+/** One line of text with $...$ maths, <c>code</c> and <i>emphasis</i>; emphasis may contain maths and code. */
 export const Inline = memo(function Inline({ text }: { text: string }) {
   const parts = text.split(/<i>(.*?)<\/i>/g);
   return (
@@ -28,10 +44,10 @@ export const Inline = memo(function Inline({ text }: { text: string }) {
       {parts.map((p, i) =>
         i % 2 ? (
           <em key={i} className="font-semibold not-italic underline decoration-dotted underline-offset-4">
-            <Maths text={p} />
+            <CodeAndMaths text={p} />
           </em>
         ) : (
-          <Maths key={i} text={p} />
+          <CodeAndMaths key={i} text={p} />
         ),
       )}
     </>

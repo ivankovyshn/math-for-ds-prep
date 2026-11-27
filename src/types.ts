@@ -87,6 +87,8 @@ export type LectureBlock =
   | { kind: 'box'; variant: 'definition' | 'theorem' | 'tip' | 'pitfall'; title: string; text: string }
   | { kind: 'example'; title: string; prompt: string; steps: string[] }
   | { kind: 'diagram'; type: string; caption?: string }
+  /** A Python code block, optionally with the text it prints. */
+  | { kind: 'code'; code: string; output?: string; caption?: string }
   | {
       /** A quick multiple-choice question inside the lecture: no hearts, instant explanation. */
       kind: 'quiz';
