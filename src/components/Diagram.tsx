@@ -868,6 +868,146 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
       );
     },
   },
+
+  biasVariance: {
+    title: 'Two targets with the true value at the centre. Left: estimates scattered widely around the centre (unbiased, high variance). Right: estimates tightly clustered away from the centre (biased, low variance)',
+    viewBox: '0 0 330 160',
+    body: () => {
+      const spiral = (n: number, rad: number, cx: number, cy: number) =>
+        Array.from({ length: n }, (_, i) => {
+          const rr = rad * Math.sqrt((i + 0.5) / n);
+          return [cx + rr * Math.cos(i * 2.39996), cy + rr * Math.sin(i * 2.39996)] as Pt;
+        });
+      const panels: [number, Pt[], string, string][] = [
+        [82, spiral(16, 40, 82, 70), 'unbiased,', 'high variance'],
+        [248, spiral(16, 9, 268, 52), 'biased,', 'low variance'],
+      ];
+      return (
+        <>
+          {panels.map(([cx, pts, l1, l2]) => (
+            <g key={cx}>
+              {[46, 31, 16].map((rad) => <circle key={rad} cx={cx} cy={70} r={rad} {...thin} opacity={0.35} />)}
+              <circle cx={cx} cy={70} r={3.5} fill={GREEN} />
+              {pts.map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={2.8} fill={BLUE} opacity={0.8} />)}
+              <Text at={[cx, 134]} style={caption}>{l1}</Text>
+              <Text at={[cx, 150]} style={caption}>{l2}</Text>
+            </g>
+          ))}
+        </>
+      );
+    },
+  },
+
+  likelihood: {
+    title: 'The likelihood of 7 heads in 10 tosses as a function of p: a single hump that peaks at p = 0.7, the maximum likelihood estimate',
+    viewBox: '0 0 320 185',
+    body: () => {
+      const [x0, x1, yBot, h] = [30, 300, 150, 125];
+      const L = (p: number) => p ** 7 * (1 - p) ** 3;
+      const top = L(0.7);
+      const pt = (p: number): Pt => [x0 + (x1 - x0) * p, yBot - (h * L(p)) / top];
+      const curve = Array.from({ length: 101 }, (_, i) => pt(i / 100).join(',')).join(' ');
+      return (
+        <>
+          <line x1={x0} y1={yBot} x2={x1 + 8} y2={yBot} {...thin} opacity={0.5} />
+          <line x1={x0} y1={yBot} x2={x0} y2={yBot - h - 10} {...thin} opacity={0.5} />
+          <line x1={pt(0.7)[0]} y1={yBot} x2={pt(0.7)[0]} y2={pt(0.7)[1]} {...dashed} />
+          <polyline points={curve} fill="none" stroke={BLUE} strokeWidth={2.4} />
+          <Dot at={pt(0.7)} color={BLUE} />
+          {[0, 0.5, 1].map((p) => <Text key={p} at={[x0 + (x1 - x0) * p, yBot]} dy={17} style={caption}>{p}</Text>)}
+          <Text at={[pt(0.7)[0], yBot]} dy={17} color={BLUE} style={caption}>p̂ = 0.7</Text>
+          <Text at={[x0, yBot - h]} dx={30} dy={-2} style={caption}>L(p)</Text>
+          <Text at={[x1, yBot]} dx={4} dy={-8} style={caption}>p</Text>
+        </>
+      );
+    },
+  },
+
+  ciCoverage: {
+    title: 'Twenty 95% confidence intervals from twenty samples, drawn as horizontal bars around a vertical line at the true mean. Nineteen cross the line; one, in red, misses it',
+    viewBox: '0 0 320 222',
+    body: () => {
+      const zs = [0.3, -1.1, 0.8, -0.4, 1.5, -0.9, 0.1, 2.3, -1.6, 0.6, -0.2, 1.2, -1.4, 0.5, -0.7, 1.8, -0.1, 0.9, -1.3, 0.4];
+      const [cx, unit, y0, dy] = [160, 30, 34, 8.4];
+      return (
+        <>
+          <line x1={cx} y1={22} x2={cx} y2={y0 + dy * 19 + 10} stroke={GREEN} strokeWidth={1.6} />
+          <Text at={[cx, 18]} dy={0} color={GREEN} style={caption}>μ</Text>
+          {zs.map((z, i) => {
+            const miss = Math.abs(z) > 1.96;
+            const y = y0 + i * dy;
+            const c = cx + unit * z;
+            return (
+              <g key={i}>
+                <line x1={c - unit * 1.96} y1={y} x2={c + unit * 1.96} y2={y} stroke={miss ? RED : BLUE} strokeWidth={2} opacity={miss ? 1 : 0.75} />
+                <circle cx={c} cy={y} r={2.4} fill={miss ? RED : BLUE} />
+              </g>
+            );
+          })}
+          <Text at={[cx, y0 + dy * 19]} dy={26} style={caption}>19 of 20 intervals cover μ</Text>
+        </>
+      );
+    },
+  },
+
+  pValue: {
+    title: 'The null distribution of the test statistic, a standard normal curve. The observed value z = 2.1 is marked, and both tails beyond −2.1 and +2.1 are shaded: their total area is the two-sided p-value',
+    viewBox: '0 0 320 190',
+    body: () => {
+      const [cx, base, ux, uy] = [160, 150, 40, 300];
+      const zObs = 2.1;
+      const f = (z: number) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+      const pt = (z: number): Pt => [cx + ux * z, base - uy * f(z)];
+      const area = (a: number, b: number) => {
+        const zs = Array.from({ length: 31 }, (_, i) => a + ((b - a) * i) / 30);
+        return `M${cx + ux * a},${base} ${zs.map((z) => `L${pt(z).join(',')}`).join(' ')} L${cx + ux * b},${base} Z`;
+      };
+      const curve = Array.from({ length: 141 }, (_, i) => pt(-3.5 + i * 0.05).join(',')).join(' ');
+      return (
+        <>
+          <path d={area(zObs, 3.5)} fill={RED} fillOpacity={0.45} />
+          <path d={area(-3.5, -zObs)} fill={RED} fillOpacity={0.45} />
+          <line x1={10} y1={base} x2={310} y2={base} {...thin} opacity={0.5} />
+          <polyline points={curve} {...thin} strokeWidth={2.2} />
+          <line x1={cx + ux * zObs} y1={base} x2={cx + ux * zObs} y2={base - 70} stroke={RED} strokeWidth={1.6} />
+          <Text at={[cx + ux * zObs, base - 70]} dy={-6} color={RED} style={caption}>z = 2.1</Text>
+          <Text at={[cx - ux * zObs, base - 70]} dy={-6} color={RED} style={caption}>−2.1</Text>
+          <line x1={cx - ux * zObs} y1={base} x2={cx - ux * zObs} y2={base - 70} stroke={RED} strokeWidth={1.6} strokeDasharray="4 3" />
+          <Text at={[cx, base]} dy={18} style={caption}>0</Text>
+          <Text at={[cx, base - 50]} style={caption}>H₀ true</Text>
+          <Text at={[cx, base]} dy={34} color={RED} style={caption}>p-value = red area ≈ 0.036</Text>
+        </>
+      );
+    },
+  },
+
+  regression: {
+    title: 'A scatter of data points with the least-squares line through them; dashed vertical segments show the residuals, the vertical distances from each point to the line',
+    viewBox: '0 0 300 200',
+    body: () => {
+      const data: Pt[] = [[1, 1.6], [2, 3.4], [3, 2.6], [4, 5.2], [5, 4.1], [6, 6.3], [7, 5.6], [8, 7.9]];
+      const n = data.length;
+      const mx = data.reduce((s, [x]) => s + x, 0) / n;
+      const my = data.reduce((s, [, y]) => s + y, 0) / n;
+      const b1 = data.reduce((s, [x, y]) => s + (x - mx) * (y - my), 0) / data.reduce((s, [x]) => s + (x - mx) ** 2, 0);
+      const b0 = my - b1 * mx;
+      const at = (x: number, y: number): Pt => [30 + 30 * x, 185 - 21 * y];
+      return (
+        <>
+          <Axes o={at(0, 0)} x0={20} x1={290} y0={10} y1={190} />
+          <line x1={at(0.3, b0 + b1 * 0.3)[0]} y1={at(0.3, b0 + b1 * 0.3)[1]} x2={at(8.6, b0 + b1 * 8.6)[0]} y2={at(8.6, b0 + b1 * 8.6)[1]} stroke={BLUE} strokeWidth={2.4} />
+          {data.map(([x, y]) => (
+            <g key={x}>
+              <line x1={at(x, y)[0]} y1={at(x, y)[1]} x2={at(x, b0 + b1 * x)[0]} y2={at(x, b0 + b1 * x)[1]} stroke={RED} strokeWidth={1.4} strokeDasharray="3 3" />
+              <circle cx={at(x, y)[0]} cy={at(x, y)[1]} r={3.4} fill="currentColor" />
+            </g>
+          ))}
+          <Text at={at(5.4, b0 + b1 * 8.6)} dy={-4} color={BLUE} style={caption}>ŷ = β₀ + β₁x</Text>
+          <Text at={at(4, 5.2)} dx={-34} dy={-6} color={RED} style={caption}>residual</Text>
+        </>
+      );
+    },
+  },
 };
 
 export const DIAGRAM_TYPES = Object.keys(figures);

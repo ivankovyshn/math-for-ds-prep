@@ -1678,6 +1678,208 @@ Object.assign(checks, {
   'pr-06-x6': ({ s, n }) => SD(sumIid(0, s, n)),
 });
 
+// st-01 · estimators: expectations over explicit sampling distributions
+/** The empirical distribution of a data set: each value with probability 1/n. */
+const empirical = (xs) => xs.map((x) => [x, 1 / xs.length]);
+/** Sample variance s² as the variance of the empirical distribution, rescaled by n/(n−1). */
+const sampleVar = (xs) => (Var(empirical(xs)) * xs.length) / (xs.length - 1);
+/** E[(θ̂ − θ)²] over the distribution of θ̂. */
+const mseOf = (dist, t) => E(dist, (x) => (x - t) ** 2);
+Object.assign(checks, {
+  'st-01-q1': () => E(empirical([2, 4, 9])),
+  'st-01-q2': () => sampleVar([1, 3, 5]),
+  'st-01-q3': () => mseOf(twoPoint(2, Math.sqrt(5)), 0),
+  'st-01-1': ({ xs }) => E(empirical(xs)),
+  'st-01-2': ({ xs }) => sampleVar(xs),
+  'st-01-3': ({ m, n }) => E(mapDist(sumIid(m, 1, n), (s) => s / (n + 1))) - m,
+  'st-01-4': ({ t, b, v }) => mseOf(twoPoint(t + b, Math.sqrt(v)), t),
+  'st-01-5': ({ n, v }) => {
+    // Every sample of n values ±√v (equally likely): the average of the divide-by-n variance.
+    const samples = tuples([-Math.sqrt(v), Math.sqrt(v)], n);
+    return samples.reduce((s, xs) => s + Var(empirical(xs)), 0) / samples.length;
+  },
+  'st-01-6': ({ c, m, s, n }) => mseOf(mapDist(meanIid(m, s, n), (x) => c * x), m),
+  'st-01-x1': ({ xs }) => E(empirical(xs)),
+  'st-01-x2': ({ k, m }) => EJ(indepPair(twoPoint(m, 1), twoPoint(m, 1)), (x, y) => (2 * x + y) / k) - m,
+  'st-01-x3': ({ xs }) => sampleVar(xs),
+  'st-01-x4': ({ b, v }) => mseOf(twoPoint(b, Math.sqrt(v)), 0),
+  'st-01-x5': ({ n }) => Var(twoPoint(0, 1)) / Var(meanIid(0, 1, n)),
+  'st-01-x6': ({ bA, vA, vB, aIsA }) => {
+    const mA = mseOf(twoPoint(bA, Math.sqrt(vA)), 0);
+    const mB = mseOf(twoPoint(0, Math.sqrt(vB)), 0);
+    if (!!aIsA !== mA < mB) throw new Error('option a names the estimator with the larger MSE');
+    return Math.min(mA, mB);
+  },
+});
+
+// st-02 · maximum likelihood: the log-likelihood is maximised numerically (golden-section search)
+const argmax = (f, lo, hi, iters = 200) => {
+  const phi = (Math.sqrt(5) - 1) / 2;
+  let [a, b] = [lo, hi];
+  for (let i = 0; i < iters; i++) {
+    const c = b - phi * (b - a);
+    const d = a + phi * (b - a);
+    if (f(c) > f(d)) b = d;
+    else a = c;
+  }
+  return (a + b) / 2;
+};
+const mle = (logf, lo, hi) => {
+  const v = argmax(logf, lo, hi);
+  return near(v, 1e-5 * Math.max(1, Math.abs(v)));
+};
+const bernLL = (k, n) => (p) => k * Math.log(p) + (n - k) * Math.log(1 - p);
+const poisLL = (xs) => (lam) => xs.reduce((s, x) => s + x * Math.log(lam) - lam, 0);
+const expLL = (xs) => (lam) => xs.reduce((s, x) => s + Math.log(lam) - lam * x, 0);
+const normLL = (xs, mu) => (v) => xs.reduce((s, x) => s - 0.5 * Math.log(v) - (x - mu) ** 2 / (2 * v), 0);
+const sum = (xs) => xs.reduce((s, x) => s + x, 0);
+Object.assign(checks, {
+  'st-02-q1': () => [0.6, 0.4, 0.6].reduce((s, p) => s * p, 1),
+  'st-02-q2': () => mle(bernLL(12, 40), 1e-9, 1 - 1e-9),
+  'st-02-q3': () => mle(expLL([4]), 1e-9, 50),
+  'st-02-1': ({ k, n }) => mle(bernLL(k, n), 1e-9, 1 - 1e-9),
+  'st-02-2': ({ xs }) => mle(poisLL(xs), 1e-9, 50),
+  'st-02-3': ({ xs }) => mle(expLL(xs), 1e-9, 50),
+  'st-02-4': ({ xs }) => {
+    const mu = argmax((m) => -sum(xs.map((x) => (x - m) ** 2)), -100, 100);
+    return mle(normLL(xs, mu), 1e-6, 500);
+  },
+  'st-02-5': ({ xs }) => {
+    // L(θ) = θ^(−n) when every x ≤ θ, else 0: scan a fine grid of θ.
+    let best = [0, -Infinity];
+    for (let t = 0.001; t <= 60; t += 0.001) {
+      const L = xs.every((x) => x <= t + 1e-9) ? -xs.length * Math.log(t) : -Infinity;
+      if (L > best[1]) best = [t, L];
+    }
+    return near(best[0], 2e-3);
+  },
+  'st-02-6': ({ ks, ns }) => mle((p) => ks.reduce((s, k, i) => s + bernLL(k, ns[i])(p), 0), 1e-9, 1 - 1e-9),
+  'st-02-x1': ({ seq }) => mle((p) => seq.reduce((s, x) => s + Math.log(x ? p : 1 - p), 0), 1e-9, 1 - 1e-9),
+  'st-02-x2': ({ xs }) => mle(poisLL(xs), 1e-9, 50),
+  'st-02-x3': ({ xs }) => mle((mu) => -sum(xs.map((x) => (x - mu) ** 2)) / 8, -100, 100),
+  'st-02-x4': ({ seq, p }) => seq.reduce((s, x) => s * (x ? p : 1 - p), 1),
+  'st-02-x5': ({ m, n }) => mle(expLL(Array(n).fill(m)), 1e-9, 50),
+  'st-02-x6': ({ n, k, cands }) => cands.reduce((best, p) => (bernLL(k, n)(p) > bernLL(k, n)(best) ? p : best), cands[1]),
+});
+
+// st-03 · confidence intervals: z from the normal CDF (Simpson integration and bisection)
+/** The z with P(−z < Z < z) = level for Z ~ N(0, 1). */
+const zFor = (level) => {
+  let [lo, hi] = [0, 6];
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (normalProb(0, 1, -mid, mid) < level) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+};
+const Z95 = zFor(0.95);
+const ciOf = (c, se, level = 0.95) => near([c - zFor(level) * se, c + zFor(level) * se], 1e-3);
+const propSE = (p, n) => SD(mapDist(binomDist(n, p), (k) => k / n));
+Object.assign(checks, {
+  'st-03-q1': () => ciOf(50, SD(meanIid(0, 20, 100))),
+  'st-03-q2': () => E(binomDist(200, 0.05)),
+  'st-03-q3': () => {
+    const zs = 6 * Math.sqrt(50); // z·σ from the first study
+    let n = 1;
+    while (zs / Math.sqrt(n) > 3 + 1e-9) n++;
+    return n;
+  },
+  'st-03-1': ({ xb, s, n }) => ciOf(xb, SD(meanIid(0, s, n))),
+  'st-03-2': ({ L, se }) => near(zFor(L / 100) * se, 0.003 * se),
+  'st-03-3': ({ s, e }) => {
+    let n = 1;
+    while ((1.96 * s) / Math.sqrt(n) > e + 1e-9) n++;
+    return n;
+  },
+  'st-03-4': ({ k, n }) => ciOf(k / n, propSE(k / n, n)),
+  'st-03-5': ({ w, k, L }) => near((w * zFor(L / 100)) / Z95 / Math.sqrt(k), 0.01),
+  'st-03-6': ({ c, N }) => near(1 - binomDist(N, c)[N][1], 1e-3),
+  'st-03-x1': ({ s, n }) => near(Z95 * SD(meanIid(0, s, n)), 1e-3),
+  'st-03-x2': ({ a, b }) => [(a + b) / 2, (b - a) / 2],
+  'st-03-x3': ({ L, N }) => E(binomDist(N, 1 - L / 100)),
+  'st-03-x4': ({ w, k, n }) => near((w * SD(meanIid(0, 1, k * n))) / SD(meanIid(0, 1, n)), 1e-4),
+  'st-03-x5': ({ p, n }) => near(Z95 * propSE(p, n), 1e-3),
+  'st-03-x6': ({ L }) => near(zFor(L / 100), 0.002),
+});
+
+// st-04 · hypothesis tests: tail areas by integrating the normal density
+const upperTail = (z) => normalProb(0, 1, z, Infinity);
+const twoSided = (z) => 2 * upperTail(Math.abs(z));
+/** "≈" answers read off the 68–95 rule: within 0.012 of the exact tail area. */
+const ruleNear = (v) => ({ v, tol: 0.012 });
+const anyRejection = (m, a) => 1 - binomDist(m, a)[0][1];
+Object.assign(checks, {
+  'st-04-q1': () => (106 - 100) / SD(meanIid(0, 15, 25)),
+  'st-04-q2': () => ruleNear(twoSided(2)),
+  'st-04-q3': () => E(binomDist(100, 0.05)),
+  'st-04-1': ({ xb, m0, s, n }) => (xb - m0) / SD(meanIid(0, s, n)),
+  'st-04-2': ({ p, alpha, rejectIsA }) => ({ id: (p <= alpha) === !!rejectIsA ? 'a' : 'b' }),
+  'st-04-3': ({ z, two }) => ruleNear(two ? twoSided(z) : upperTail(z)),
+  'st-04-4': ({ m, a }) => near(anyRejection(m, a), 1e-3),
+  'st-04-5': ({ kA, kB, n }) => {
+    const p = (kA + kB) / (2 * n);
+    return near((kB / n - kA / n) / (propSE(p, n) * Math.SQRT2), 1e-6);
+  },
+  'st-04-6': ({ m0, s, n, mu }) => {
+    const se = SD(meanIid(0, s, n));
+    return pctNear(normalProb(mu, se, m0 + 2 * se, Infinity));
+  },
+  'st-04-x1': ({ xb, m0, s, n }) => (xb - m0) / SD(meanIid(0, s, n)),
+  'st-04-x2': ({ m, a }) => E(binomDist(m, a)),
+  'st-04-x3': ({ m, a }) => {
+    // The largest per-test threshold t with m·t ≤ a (the union bound), found by bisection.
+    let [lo, hi] = [0, 1];
+    for (let i = 0; i < 80; i++) {
+      const t = (lo + hi) / 2;
+      if (m * t <= a) lo = t;
+      else hi = t;
+    }
+    return lo;
+  },
+  'st-04-x4': ({ h0True, rejected, order }) => {
+    const kind = h0True ? (rejected ? 0 : 3) : rejected ? 2 : 1;
+    return { id: 'abcd'[order.indexOf(kind)] };
+  },
+  'st-04-x5': ({ q }) => {
+    // Recover |z| from the two-sided p-value, then take one tail.
+    const z = zFor(1 - q);
+    return near(upperTail(z), 1e-6);
+  },
+  'st-04-x6': ({ ps }) => ps.filter((p) => p <= 0.05 / ps.length).length,
+});
+
+// st-05 · linear regression: least squares by the normal equations of the design matrix
+const fitLine = (xs, ys) => lstsq(xs.map((x) => [1, x]), ys);
+const r2Of = (xs, ys) => {
+  const [b0, b1] = fitLine(xs, ys);
+  const m = sum(ys) / ys.length;
+  return 1 - sum(xs.map((x, i) => (ys[i] - b0 - b1 * x) ** 2)) / sum(ys.map((y) => (y - m) ** 2));
+};
+/** R² of the least-squares line for a joint distribution: 1 − Var(residual)/Var(y). */
+const r2J = (J) => {
+  const slope = CovJ(J) / VarJ(J, (x) => x);
+  return 1 - VarJ(J, (x, y) => y - slope * x) / VarJ(J, (_, y) => y);
+};
+const slopeJ = (J) => CovJ(J) / VarJ(J, (x) => x);
+Object.assign(checks, {
+  'st-05-q1': () => 9 - mulVec([[1, 3]], [1, 2])[0],
+  'st-05-q2': () => fitLine([0, 1, 2, 3], [1, 3, 2, 6])[1],
+  'st-05-q3': () => r2J(corrPair(1, 1, 0.8)),
+  'st-05-1': ({ b0, b1, x }) => dot([1, x], [b0, b1]),
+  'st-05-2': ({ b0, b1, x, y }) => y - dot([1, x], [b0, b1]),
+  'st-05-3': ({ xs, ys }) => fitLine(xs, ys)[1],
+  'st-05-4': ({ rho, sx, sy }) => near(slopeJ(corrPair(sx, sy, rho)), 1e-4),
+  'st-05-5': ({ xs, ys }) => r2Of(xs, ys),
+  'st-05-6': ({ A, t }) => solve(A, t),
+  'st-05-x1': ({ b0, b1, x }) => dot([1, x], [b0, b1]),
+  'st-05-x2': ({ b0, b1, x, y }) => y - dot([1, x], [b0, b1]),
+  'st-05-x3': ({ rho }) => r2J(corrPair(1, 1, rho)),
+  'st-05-x4': ({ mx, my, b1 }) => fitLine([mx - 1, mx + 1], [my - b1, my + b1])[0],
+  'st-05-x5': ({ c, vx, vy }) => slopeJ(corrPair(Math.sqrt(vx), Math.sqrt(vy), c / Math.sqrt(vx * vy))),
+  'st-05-x6': ({ tot, res }) => 1 - res / tot,
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */

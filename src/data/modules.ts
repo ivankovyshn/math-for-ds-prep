@@ -33,7 +33,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'statistics',
     title: 'Statistics',
     blurb: 'Learning from data: estimation, inference and regression',
-    planned: ['Estimators, bias and variance', 'Maximum likelihood', 'Confidence intervals', 'Hypothesis tests', 'Linear regression'],
   },
   {
     id: 'optimization',
