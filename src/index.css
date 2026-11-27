@@ -125,3 +125,27 @@ button:disabled {
   outline: 3px solid var(--c-accent);
   outline-offset: 2px;
 }
+
+/* Calculator and scratchpad (components/Tools.tsx): the page makes room for them. */
+:root {
+  --tools-w: 360px;
+}
+@media (min-width: 1024px) {
+  :root[data-tools='side'] .tools-shift {
+    padding-right: var(--tools-w);
+  }
+  :root[data-tools='side'] .tools-shift-fixed {
+    right: var(--tools-w);
+  }
+}
+@media (max-width: 1023.98px) {
+  :root[data-tools='sheet'] .tools-shift {
+    padding-bottom: var(--sheet-h);
+  }
+}
+.scratch-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--c-line) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--c-line) 55%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

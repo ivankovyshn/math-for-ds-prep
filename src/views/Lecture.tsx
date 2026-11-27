@@ -10,6 +10,7 @@ import { OptionList } from '../components/QuestionCard.tsx';
 import { shuffle } from '../lib/session.ts';
 import { Inline, RichText, Tex } from '../components/RichText.tsx';
 import { Button, IconButton, Kbd, ProgressBar } from '../components/ui.tsx';
+import { isToolsEvent, ToolButtons, ToolsPanel } from '../components/Tools.tsx';
 
 interface Props {
   lesson: Lesson;
@@ -50,6 +51,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (isToolsEvent(e)) return;
       if (e.target instanceof HTMLElement && e.target.closest('button') && e.key === 'Enter') return;
       if (e.key === 'ArrowRight' || e.key === 'Enter') next();
       else if (e.key === 'ArrowLeft') back();
@@ -59,7 +61,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
   });
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="tools-shift flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 py-3">
           <IconButton label="Close lecture" className="!h-10 !w-10 shrink-0 !border-0 !bg-transparent" onClick={onExit}>
@@ -69,6 +71,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
           <span className="flex items-center gap-1 text-sm font-extrabold tabular-nums text-muted" title="Estimated reading time">
             <Clock size={16} /> {lesson.minutes} min
           </span>
+          <ToolButtons />
         </div>
       </header>
 
@@ -102,7 +105,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
         </AnimatePresence>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 border-t-2 border-line bg-bg">
+      <div data-tools-bar className="tools-shift-fixed fixed inset-x-0 bottom-0 border-t-2 border-line bg-bg">
         <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Button tone="neutral" onClick={back} disabled={idx === 0} aria-label="Previous section" className="!px-4">
             <ArrowLeft size={20} />
@@ -131,6 +134,8 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
           </Button>
         </div>
       </div>
+
+      <ToolsPanel pageKey={`${lesson.id}-${idx}`} pageLabel={section.title} pin={section.title} />
     </div>
   );
 }

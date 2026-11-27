@@ -8,6 +8,7 @@ import { useProgress } from '../store/useProgress.ts';
 import { OptionList, QuestionBody } from '../components/QuestionCard.tsx';
 import { Inline } from '../components/RichText.tsx';
 import { Button, IconButton, Kbd, ProgressBar } from '../components/ui.tsx';
+import { isToolsEvent, ToolButtons, ToolsPanel } from '../components/Tools.tsx';
 
 export interface QuizProps {
   title: string;
@@ -123,7 +124,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
   // Keyboard: 1–5 select an option, Enter checks / continues.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (outcome) return;
+      if (outcome || isToolsEvent(e)) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         if (phase === 'answering') check();
@@ -161,7 +162,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
   const lowTime = !!secondsPerQuestion && timeLeft <= 15;
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="tools-shift flex min-h-dvh flex-col">
       {/* Top bar */}
       <header className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 py-3">
@@ -175,6 +176,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
             <X size={24} />
           </IconButton>
           <ProgressBar value={answeredCount / questions.length} className="flex-1" />
+          <ToolButtons />
           {combo >= 2 && (
             <motion.span key={combo} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="flex items-center gap-0.5 font-extrabold text-warn" title="Correct answers in a row">
               <Flame size={20} fill="currentColor" />
@@ -222,7 +224,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
 
       {/* Check bar */}
       {phase === 'answering' && (
-        <div className="fixed inset-x-0 bottom-0 border-t-2 border-line bg-bg">
+        <div data-tools-bar className="tools-shift-fixed fixed inset-x-0 bottom-0 border-t-2 border-line bg-bg">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <span className="hidden items-center gap-1.5 text-xs text-muted sm:flex">
               <Kbd>1</Kbd>–<Kbd>{options.length}</Kbd> select · <Kbd>Enter</Kbd> check
@@ -242,7 +244,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className={`fixed inset-x-0 bottom-0 z-20 flex max-h-[78dvh] flex-col border-t-4 ${lastCorrect ? 'border-primary' : 'border-danger'} bg-surface shadow-[0_-12px_40px_rgba(0,0,0,0.35)]`}
+            className={`tools-shift-fixed fixed inset-x-0 bottom-0 z-20 flex max-h-[78dvh] flex-col border-t-4 ${lastCorrect ? 'border-primary' : 'border-danger'} bg-surface shadow-[0_-12px_40px_rgba(0,0,0,0.35)]`}
             role="status"
             aria-live="polite"
           >
@@ -306,6 +308,8 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ToolsPanel pageKey={`${idx}-${q.id}`} pageLabel={`Question ${idx + 1}`} pin={q.promptText} suspended={phase === 'feedback'} />
     </div>
   );
 }

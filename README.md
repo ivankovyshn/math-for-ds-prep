@@ -26,6 +26,10 @@ Runs entirely in the browser. No account, no server, no API keys.
   A module shows 100 % only when its path is finished *and* its queue is empty.
 - **Review** — 15 mixed questions from the lessons passed so far, spread evenly over them; a lesson joins the
   pool as soon as it is passed. No hearts, instant feedback; missed questions go to Mistakes.
+- **Calculator and scratchpad** — in lectures and every kind of practice (`C` / `N` or the header buttons, `Esc`
+  closes). The calculator takes typed expressions (`sqrt(0.25/100)`, `C(5,2)*0.5^5`, `2π`, `5!`, `ans`) with a
+  keypad and history; the scratchpad gives every question its own grid sheet (pen, eraser, undo, earlier sheets
+  of the session). On a wide screen they dock on the right; on phones they open as a bottom sheet with two heights.
 - Numeric questions are parametric: every attempt brings new numbers (same idea, same traps).
 - Every answer key is re-computed by `npm run verify` — for parametric questions, on 300 generated variants each.
 - Dark mode by default, light mode toggle. Keyboard: `1`–`5` select, `Enter` check / continue, `←` `→` in lectures.
