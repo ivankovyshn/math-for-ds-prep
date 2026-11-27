@@ -38,7 +38,6 @@ export const MODULES: ModuleMeta[] = [
     id: 'optimization',
     title: 'Optimization',
     blurb: 'Convexity, gradient descent and constrained problems',
-    planned: ['Convex sets and functions', 'Gradient descent', 'Momentum and stochastic gradients', 'Lagrange multipliers', 'Optimality conditions'],
   },
   {
     id: 'programming',

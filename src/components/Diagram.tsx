@@ -1008,6 +1008,155 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
       );
     },
   },
+
+  convexity: {
+    title: 'Left: a bowl-shaped convex function with a chord lying above the graph. Right: a function with two valleys; the chord joining the valley floors passes below the hump between them',
+    viewBox: '0 0 330 160',
+    body: () => {
+      const panels: [number, (x: number) => number, number, number, string, string][] = [
+        [82, (x) => x * x, 70, -0.85, 'convex', GREEN],
+        [248, (x) => x ** 4 - 1.3 * x * x + 0.5, 100, -0.806, 'not convex', RED],
+      ];
+      return (
+        <>
+          {panels.map(([cx, f, sy, a, lab, col]) => {
+            const P = (x: number): Pt => [cx + 55 * x, 128 - sy * f(x)];
+            const curve = Array.from({ length: 49 }, (_, i) => P(-1.2 + i * 0.05).join(',')).join(' ');
+            const b = -a + (cx === 82 ? 0.15 : 0);
+            return (
+              <g key={cx}>
+                <line x1={cx - 72} y1={128} x2={cx + 72} y2={128} {...thin} opacity={0.35} />
+                <polyline points={curve} fill="none" stroke="currentColor" strokeWidth={2.2} />
+                <line x1={P(a)[0]} y1={P(a)[1]} x2={P(b)[0]} y2={P(b)[1]} stroke={col} strokeWidth={2} />
+                <Dot at={P(a)} color={col} />
+                <Dot at={P(b)} color={col} />
+                <Text at={[cx, 150]} color={col} style={caption}>{lab}</Text>
+              </g>
+            );
+          })}
+        </>
+      );
+    },
+  },
+
+  stepSizes: {
+    title: 'Gradient descent on the same parabola with three learning rates. Too small: many tiny steps creeping down one side. Good: a few steps reach the bottom. Too large: each step jumps across the bottom and lands higher than before',
+    viewBox: '0 0 330 165',
+    body: () => {
+      const panels: [number, number, string, string][] = [
+        [56, 0.82, 'η too small', YELLOW],
+        [165, 0.3, 'η good', GREEN],
+        [274, -1.22, 'η too large', RED],
+      ];
+      return (
+        <>
+          {panels.map(([cx, factor, lab, col]) => {
+            const P = (x: number): Pt => [cx + 32 * x, 128 - 38 * x * x];
+            const curve = Array.from({ length: 41 }, (_, i) => P(-1.6 + i * 0.08).join(',')).join(' ');
+            const xs = [1];
+            while (xs.length < (factor > 0 && factor < 0.5 ? 4 : factor > 0 ? 7 : 3)) xs.push(xs[xs.length - 1] * factor);
+            return (
+              <g key={cx}>
+                <polyline points={curve} fill="none" stroke="currentColor" strokeWidth={1.6} opacity={0.6} />
+                <polyline points={xs.map((x) => P(x).join(',')).join(' ')} fill="none" stroke={col} strokeWidth={1.6} />
+                {xs.map((x, i) => <circle key={i} cx={P(x)[0]} cy={P(x)[1]} r={i === 0 ? 3.6 : 2.8} fill={col} />)}
+                <Text at={[cx, 152]} color={col} style={caption}>{lab}</Text>
+              </g>
+            );
+          })}
+        </>
+      );
+    },
+  },
+
+  momentum: {
+    title: 'Level curves of a long, narrow valley. Plain gradient descent (red) zigzags between the steep walls while creeping along the valley; gradient descent with momentum (green) takes a smoother path and gets further towards the minimum in the same number of steps',
+    viewBox: '0 0 320 185',
+    body: () => {
+      const [l1, l2] = [1, 16];
+      const at = (x: number, y: number): Pt => [272 + 50 * x, 82 - 55 * y];
+      const run = (eta: number, beta: number) => {
+        let [x, y, vx, vy] = [-4, 0.7, 0, 0];
+        const pts: Pt[] = [at(x, y)];
+        for (let k = 0; k < 18; k++) {
+          vx = beta * vx + l1 * x;
+          vy = beta * vy + l2 * y;
+          x -= eta * vx;
+          y -= eta * vy;
+          pts.push(at(x, y));
+        }
+        return pts;
+      };
+      const gdPts = run(0.115, 0);
+      const moPts = run(0.05, 0.6);
+      return (
+        <>
+          {[0.5, 2, 5, 12].map((lvl) => (
+            <ellipse key={lvl} cx={at(0, 0)[0]} cy={at(0, 0)[1]} rx={50 * Math.sqrt((2 * lvl) / l1)} ry={55 * Math.sqrt((2 * lvl) / l2)} {...thin} opacity={0.3} />
+          ))}
+          <polyline points={gdPts.map((p) => p.join(',')).join(' ')} fill="none" stroke={RED} strokeWidth={1.6} />
+          <polyline points={moPts.map((p) => p.join(',')).join(' ')} fill="none" stroke={GREEN} strokeWidth={2} />
+          {gdPts.map((p, i) => <circle key={`g${i}`} cx={p[0]} cy={p[1]} r={2} fill={RED} />)}
+          {moPts.map((p, i) => <circle key={`m${i}`} cx={p[0]} cy={p[1]} r={2.2} fill={GREEN} />)}
+          <Dot at={at(0, 0)} />
+          <Text at={at(0, 0)} dy={18} style={caption}>min</Text>
+          <Text at={[80, 176]} color={RED} style={caption}>gradient descent</Text>
+          <Text at={[230, 176]} color={GREEN} style={caption}>with momentum</Text>
+        </>
+      );
+    },
+  },
+
+  lagrange: {
+    title: 'Circular level curves of f = x² + y² around the origin and the constraint line x + y = 2. The line touches the circle through (1, 1); there the gradients of f and of the constraint point in the same direction',
+    viewBox: '0 0 300 210',
+    body: () => {
+      const o: Pt = [95, 150];
+      const u = 50;
+      const at = (x: number, y: number): Pt => [o[0] + u * x, o[1] - u * y];
+      const P = at(1, 1);
+      return (
+        <>
+          <Axes o={o} x0={15} x1={285} y0={8} y1={202} />
+          {[0.7, Math.SQRT2, 2.1].map((rad) => (
+            <circle key={rad} cx={o[0]} cy={o[1]} r={u * rad} {...thin} opacity={rad === Math.SQRT2 ? 0.85 : 0.35} />
+          ))}
+          <line x1={at(-0.5, 2.5)[0]} y1={at(-0.5, 2.5)[1]} x2={at(2.9, -0.9)[0]} y2={at(2.9, -0.9)[1]} stroke={BLUE} strokeWidth={2.4} />
+          <Arrow from={P} to={at(1.85, 1.85)} color={GREEN} width={2.8} />
+          <Arrow from={P} to={at(1.42, 1.42)} color={YELLOW} width={2.4} />
+          <Dot at={P} />
+          <Text at={at(1.85, 1.85)} dx={14} dy={-2} color={GREEN} style={caption}>∇f</Text>
+          <Text at={at(1.42, 1.42)} dx={20} dy={10} color={YELLOW} style={caption}>∇g</Text>
+          <Text at={P} dx={-22} dy={18} style={caption}>(1, 1)</Text>
+          <Text at={at(2.2, -0.2)} dx={50} dy={6} color={BLUE} style={caption}>x + y = 2</Text>
+        </>
+      );
+    },
+  },
+
+  kkt: {
+    title: 'The parabola (x − 3)² with the feasible region x ≤ 1 shaded. The free minimum at x = 3 lies outside the region, so the constrained minimum is on the boundary at x = 1',
+    viewBox: '0 0 320 200',
+    body: () => {
+      const at = (x: number, y: number): Pt => [40 + 50 * x, 170 - 10 * y];
+      const f = (x: number) => (x - 3) ** 2;
+      const curve = Array.from({ length: 61 }, (_, i) => at(-0.6 + i * 0.09, f(-0.6 + i * 0.09)).join(',')).join(' ');
+      return (
+        <>
+          <rect x={at(-0.6, 0)[0]} y={10} width={at(1, 0)[0] - at(-0.6, 0)[0]} height={160} fill={GREEN} fillOpacity={0.12} />
+          <line x1={at(-0.6, 0)[0]} y1={170} x2={at(5.4, 0)[0]} y2={170} {...thin} opacity={0.5} />
+          <line x1={at(1, 0)[0]} y1={10} x2={at(1, 0)[0]} y2={170} stroke={GREEN} strokeWidth={1.6} strokeDasharray="5 4" />
+          <polyline points={curve} fill="none" stroke="currentColor" strokeWidth={2.2} />
+          <circle cx={at(3, 0)[0]} cy={at(3, 0)[1]} r={4} fill="none" stroke={RED} strokeWidth={2} />
+          <Dot at={at(1, f(1))} color={GREEN} />
+          <Text at={at(3, 0)} dy={-10} color={RED} style={caption}>free min 3</Text>
+          <Text at={at(1, f(1))} dx={30} dy={-4} color={GREEN} style={caption}>x* = 1</Text>
+          <Text at={at(0.2, 0)} dy={18} color={GREEN} style={caption}>feasible: x ≤ 1</Text>
+          <Text at={at(1, 0)} dy={18} dx={28} style={caption}>1</Text>
+        </>
+      );
+    },
+  },
 };
 
 export const DIAGRAM_TYPES = Object.keys(figures);

@@ -1880,6 +1880,310 @@ Object.assign(checks, {
   'st-05-x6': ({ tot, res }) => 1 - res / tot,
 });
 
+// op-01 · convexity: the midpoint inequality tested on a grid of point pairs
+const gridOf = (lo, hi, step) => Array.from({ length: Math.round((hi - lo) / step) + 1 }, (_, i) => lo + i * step);
+const GRID1 = gridOf(-4, 4, 0.25);
+/** Midpoint convexity of a function of one variable on [lo, hi]. */
+const isConvex1 = (f, xs = GRID1) => xs.every((x) => xs.every((y) => f((x + y) / 2) <= (f(x) + f(y)) / 2 + 1e-9 * (1 + Math.abs(f(x)) + Math.abs(f(y)))));
+/** Midpoint convexity of a function of two variables on a coarse grid. */
+const GRID2 = gridOf(-3, 3, 1).flatMap((x) => gridOf(-3, 3, 1).map((y) => [x, y]));
+const isConvex2 = (f) => GRID2.every(([a, b]) => GRID2.every(([c, d]) => f((a + c) / 2, (b + d) / 2) <= (f(a, b) + f(c, d)) / 2 + 1e-9));
+/** A set is convex on the sample grid if the midpoint of any two members is a member. */
+const isConvexSet = (member, pts) => {
+  const inside = pts.filter((p) => member(...p));
+  return inside.every((p) => inside.every((q) => member(...p.map((x, i) => (x + q[i]) / 2))));
+};
+const FN = [
+  (p, q) => (x) => Math.exp(p * x) + q * x * x,
+  (p, q) => (x) => p * x * x + q * x,
+  (p, q) => (x) => Math.abs(x - p) + q * x * x,
+  (p) => (x) => Math.sqrt(x * x + p),
+  (p, q) => (x) => Math.max(p * x, q * x),
+  (p, q) => (x) => -p * x * x + q * x,
+  (p) => (x) => x ** 3 + p * x,
+  (p) => (x) => x ** 4 - p * x * x,
+  (p) => (x) => Math.sin(x) + p * x,
+  (p) => (x) => p * x * x - Math.abs(x),
+];
+const SETS = [
+  (p, q) => (x) => x >= p && x <= q,
+  (p, q) => (x) => Math.abs(x - p) <= q,
+  (p, q) => (x, y) => x + p * y <= q,
+  (p) => (x, y) => x * x + y * y <= p * p,
+  (p, q) => (x) => Math.abs(x - p) >= q,
+  (p, q) => (x, y) => x * x + y * y >= p * p && x * x + y * y <= q * q,
+  (p) => (x) => (x >= p && x <= p + 1) || (x >= p + 3 && x <= p + 4),
+  (p) => (x, y) => Math.abs(x) + Math.abs(y) >= p,
+];
+const PTS1 = gridOf(-8, 8, 0.25).map((x) => [x, 0]);
+const PTS2 = gridOf(-6, 6, 1).flatMap((x) => gridOf(-6, 6, 1).map((y) => [x, y]));
+const pickBy = (n, test) => pickId(Object.fromEntries(Array.from({ length: n }, (_, i) => ['abcd'[i], () => test(i)])));
+/** Shape code of a function: 0 convex, 1 concave, 2 neither, 3 both. */
+const shapeOf = (isC, f, neg) => {
+  const cv = isC(f);
+  const cc = isC(neg);
+  return cv && cc ? 3 : cv ? 0 : cc ? 1 : 2;
+};
+Object.assign(checks, {
+  'op-01-q1': () => pickBy(3, (i) => isConvexSet([(x) => Math.abs(x - 1) <= 3, (x) => Math.abs(x) >= 2, (x) => (x >= 0 && x <= 1) || (x >= 2 && x <= 3)][i], PTS1)),
+  'op-01-q2': () => pickBy(3, (i) => isConvex1((x) => x ** 3, gridOf(...[[0, 6], [-6, 0], [-6, 6]][i], 0.25))),
+  'op-01-q3': () => {
+    const f = (x) => x * x;
+    return (f(0) + f(4)) / 2 - f(2);
+  },
+  'op-01-1': ({ a, c, u, v }) => {
+    const f = (x) => a * x * x + c;
+    return (f(u) + f(v)) / 2 - f((u + v) / 2);
+  },
+  'op-01-2': ({ p, b }) => {
+    const ks = gridOf(-20, 20, 0.5).filter((k) => isConvex1((x) => (k - p) * x * x + b * x));
+    return Math.max(...ks) >= 20 ? [1, Math.min(...ks)] : [-1, Math.max(...ks)];
+  },
+  'op-01-3': ({ fns }) => pickBy(4, (i) => isConvex1(FN[fns[i][0]](fns[i][1], fns[i][2]))),
+  'op-01-4': ({ a, c }) => {
+    const bs = gridOf(-200, 200, 0.5).filter((b) => eig2([[2 * a, b], [b, 2 * c]])[0] >= -1e-9);
+    return [Math.min(...bs), Math.max(...bs)];
+  },
+  'op-01-5': ({ x1, x0, x2, A, B }) => {
+    // The line through both points is itself convex and meets the data, so the chord value is attained.
+    const [c0, c1] = solve([[1, x1], [1, x2]], [A, B]);
+    return c0 + c1 * x0;
+  },
+  'op-01-6': ({ a1, b1, a2, b2 }) => {
+    const f = (x) => Math.max(a1 * x + b1, a2 * x + b2);
+    return near(f(argmax((x) => -f(x), -100, 100)), 1e-6);
+  },
+  'op-01-x1': ({ a, b, c, order }) => {
+    const f = (x) => a * x * x + b * x + c;
+    return { id: 'abcd'[order.indexOf(shapeOf(isConvex1, f, (x) => -f(x)))] };
+  },
+  'op-01-x2': ({ u, v }) => (u * u + v * v) / 2,
+  'op-01-x3': ({ sets }) => pickBy(4, (i) => {
+    const [t, p, q] = sets[i];
+    return isConvexSet(SETS[t](p, q), [2, 3, 5, 7].includes(t) ? PTS2 : PTS1);
+  }),
+  'op-01-x4': ({ x0, A, s, y }) => Math.min(...gridOf(0, 5, 0.5).map((k) => A + s * (y - x0) + k * (y - x0) ** 2)),
+  'op-01-x5': ({ a, c, order }) => {
+    const f = (x, y) => a * x * x + c * y * y;
+    return { id: 'abcd'[order.indexOf(shapeOf(isConvex2, f, (x, y) => -f(x, y)))] };
+  },
+  'op-01-x6': ({ al, be, order }) => {
+    const pairs = [[(x) => x, (x) => x * x], [(x) => x * x, (x) => (x - 2) ** 2], [Math.exp, (x) => Math.exp(-x)], [Math.abs, (x) => x * x]];
+    const combos = [
+      (f, g) => (x) => al * f(x) + be * g(x),
+      (f, g) => (x) => Math.max(f(x), g(x)),
+      (f, g) => (x) => al * f(x) - be * g(x),
+      (f, g) => (x) => Math.min(f(x), g(x)),
+      (f, g) => (x) => f(x) * g(x),
+      (f) => (x) => -al * f(x),
+    ];
+    return pickBy(4, (i) => pairs.every(([f, g]) => isConvex1(combos[order[i]](f, g))));
+  },
+});
+
+// op-02 · gradient descent: simulate the iteration with numerical gradients
+/** Runs k gradient steps on f from x0 (a vector) with step eta. */
+const gd = (f, x0, eta, k) => {
+  let x = [...x0];
+  for (let i = 0; i < k; i++) {
+    const gr = grad(f, x);
+    x = x.map((xi, j) => xi - eta * gr[j]);
+  }
+  return x;
+};
+/** Largest step for which gradient descent on f (from a fixed start) still shrinks towards the minimum, by bisection. */
+// From every coordinate direction separately, so that a slowly diverging direction cannot hide behind a fast-converging one.
+const starts = (x0) => (x0.length === 1 ? [x0] : x0.map((_, i) => x0.map((x, j) => (i === j ? x : 0))));
+const maxStableEta = (f, x0, xstar) => {
+  const dist = (x) => Math.hypot(...x.map((xi, i) => xi - xstar[i]));
+  let [lo, hi] = [0, 10];
+  for (let i = 0; i < 50; i++) {
+    const eta = (lo + hi) / 2;
+    if (starts(x0).every((s) => dist(gd(f, s, eta, 60)) < dist(s))) lo = eta;
+    else hi = eta;
+  }
+  return lo;
+};
+const near6 = (v) => near(v, 1e-5);
+Object.assign(checks, {
+  'op-02-q1': () => near6(gd((x) => x * x, [3], 0.1, 1)[0]),
+  "op-02-q2": () => near(maxStableEta((x) => 5 * x * x, [1], [0]), 1e-6),
+  'op-02-q3': () => near(maxStableEta((x, y) => 0.5 * (x * x + 50 * y * y), [1, 1], [0, 0]), 1e-6),
+  'op-02-1': ({ a, b, x0, eta }) => near6(gd((x) => a * x * x + b * x, [x0], eta, 1)[0]),
+  'op-02-2': ({ a, b, p, q, eta }) => near6(gd((x, y) => a * x * x + b * y * y, [p, q], eta, 1)),
+  'op-02-3': ({ c, b }) => near(maxStableEta((x) => c * x * x + b * x, [1 - b / (2 * c)], [-b / (2 * c)]), 1e-6),
+  'op-02-4': ({ c, eta, x0 }) => near6(gd((x) => c * x * x, [x0], eta, 3)[0]),
+  'op-02-5': ({ l1, l2 }) => {
+    const f = (x, y) => 0.5 * (l1 * x * x + l2 * y * y);
+    const eta = 2 / (l1 + l2);
+    return near6(Math.max(Math.abs(gd(f, [1, 0], eta, 1)[0]), Math.abs(gd(f, [0, 1], eta, 1)[1])));
+  },
+  'op-02-6': ({ xs, ys, w0, eta }) => near6(gd((w) => sum(xs.map((x, i) => (w * x - ys[i]) ** 2)), [w0], eta, 1)[0]),
+  'op-02-x1': ({ x0, eta }) => near6(gd((x) => x * x, [x0], eta, 1)[0]),
+  'op-02-x2': ({ a, b, p, q }) => near6(grad((x, y) => a * x * x + b * y * y, [p, q])),
+  'op-02-x3': ({ c, eta, order }) => {
+    const xs = [1];
+    for (let i = 0; i < 10; i++) xs.push(gd((x) => c * x * x, [xs[i]], eta, 1)[0]);
+    const flips = xs.slice(1).some((x, i) => Math.sign(x) !== Math.sign(xs[i]));
+    const kind = Math.abs(xs[10]) > 1 ? 2 : Math.abs(xs[10] - 1) < 1e-9 ? 3 : flips ? 1 : 0;
+    return { id: 'abcd'[order.indexOf(kind)] };
+  },
+  'op-02-x4': ({ l1, l2 }) => near(maxStableEta((x, y) => 0.5 * (l1 * x * x + l2 * y * y), [1, 1], [0, 0]), 1e-6),
+  'op-02-x5': ({ a, b }) => {
+    const ls = symEig(hessian((x, y) => a * x * x + b * y * y, [0.3, -0.2])).map(Math.abs);
+    return near(Math.max(...ls) / Math.min(...ls), 1e-4);
+  },
+  'op-02-x6': ({ c, eta, x0 }) => {
+    let x = [x0];
+    let n = 0;
+    while (Math.abs(x[0]) >= 1 - 1e-12) {
+      x = gd((t) => c * t * t, x, eta, 1);
+      n++;
+    }
+    return n;
+  },
+});
+
+// op-03 · SGD and momentum: count batches, simulate the heavy-ball iteration and moving averages
+const batchesPerEpoch = (n, B) => {
+  let steps = 0;
+  for (let i = 0; i < n; i += B) steps++;
+  return steps;
+};
+/** k steps of v ← βv + ∇f(x), x ← x − ηv. */
+const heavyBall = (f, x0, eta, beta, k, v0 = x0.map(() => 0)) => {
+  let [x, v] = [[...x0], [...v0]];
+  for (let i = 0; i < k; i++) {
+    const gr = grad(f, x);
+    v = v.map((vi, j) => beta * vi + gr[j]);
+    x = x.map((xi, j) => xi - eta * v[j]);
+  }
+  return x;
+};
+/** Length of the step after a long run on a slope with constant gradient gr. */
+const terminalStep = (gr, eta, beta) => {
+  const a = heavyBall((x) => gr * x, [0], eta, beta, 3000)[0];
+  const b = heavyBall((x) => gr * x, [0], eta, beta, 3001)[0];
+  return Math.abs(b - a);
+};
+const ema = (gs, beta) => gs.reduce((m, g) => beta * m + (1 - beta) * g, 0);
+Object.assign(checks, {
+  'op-03-q1': () => batchesPerEpoch(50000, 100),
+  'op-03-q2': () => SD(meanIid(0, 1, 100)) / SD(meanIid(0, 1, 25)),
+  'op-03-q3': () => near6(terminalStep(1, 1, 0.9)),
+  'op-03-1': ({ n, B }) => batchesPerEpoch(n, B),
+  'op-03-2': ({ gs }) => E(empirical(gs)),
+  'op-03-3': ({ c, eta, beta, x0 }) => near6(heavyBall((x) => c * x * x, [x0], eta, beta, 2)[0]),
+  'op-03-4': ({ gr, eta, beta }) => near6(terminalStep(gr, eta, beta)),
+  'op-03-5': ({ sigma, s }) => {
+    let B = 1;
+    while (SD(meanIid(0, sigma, B)) > s + 1e-12) B++;
+    return B;
+  },
+  'op-03-6': ({ beta, g1, g2 }) => near6(ema([g1, g2], beta) / ema([1, 1], beta)),
+  'op-03-x1': ({ n, B }) => batchesPerEpoch(n, B),
+  'op-03-x2': ({ w0, gs, eta }) => near6(w0 - eta * E(empirical(gs))),
+  'op-03-x3': ({ beta }) => near6(terminalStep(1, 1, beta)),
+  'op-03-x4': ({ x0, v0, gr, eta, beta }) => near6(heavyBall((x) => gr * x, [x0], eta, beta, 1, [v0])[0]),
+  'op-03-x5': ({ s, B }) => SD(meanIid(0, s, B)),
+  'op-03-x6': ({ beta, g1 }) => near6(ema([g1], beta)),
+});
+
+// op-04 · Lagrange multipliers: optimise numerically along the constraint
+/** Minimiser of f on the line p·x + q·y = c, by golden-section search along the line. */
+const minOnLine = (f, p, q, c) => {
+  const base = Math.abs(p) >= Math.abs(q) ? [c / p, 0] : [0, c / q];
+  const pt = (s) => [base[0] - q * s, base[1] + p * s];
+  return pt(argmax((s) => -f(...pt(s)), -200, 200));
+};
+/** Maximum of f on the circle of radius R, by a fine scan of angles refined with golden-section search. */
+const maxOnCircle = (f, R = 1) => {
+  const h = (t) => f(R * Math.cos(t), R * Math.sin(t));
+  let best = 0;
+  for (let i = 0; i < 3600; i++) if (h((i * Math.PI) / 1800) > h(best)) best = (i * Math.PI) / 1800;
+  const t = argmax(h, best - 0.01, best + 0.01);
+  return { value: h(t), at: [R * Math.cos(t), R * Math.sin(t)] };
+};
+const fStar = (c) => {
+  const [x, y] = minOnLine((x, y) => x * x + y * y, 1, 1, c);
+  return x * x + y * y;
+};
+/** dF/dc by a central difference of the numerically computed optimum. */
+const shadowPrice = (F, c, h = 1e-3) => (F(c + h) - F(c - h)) / (2 * h);
+const argmaxValue = (f, lo, hi) => f(argmax(f, lo, hi));
+const unitSign = (v) => (v.find((x) => Math.abs(x) > 1e-6) < 0 ? v.map((x) => -x) : v);
+Object.assign(checks, {
+  'op-04-q1': () => near(minOnLine((x, y) => x * x + y * y, 1, 1, 2), 1e-5),
+  'op-04-q2': () => near(argmaxValue((x) => x * (8 - x), -100, 100), 1e-6),
+  'op-04-q3': () => near(shadowPrice(fStar, 3) * 0.2, 1e-4),
+  'op-04-1': ({ p, q, c }) => near(minOnLine((x, y) => x * x + y * y, p, q, c), 1e-5),
+  'op-04-2': ({ s }) => near(argmaxValue((x) => x * (s - x), -100, 100), 1e-6),
+  'op-04-3': ({ p, q, c }) => {
+    const F = (cc) => {
+      const [x, y] = minOnLine((x, y) => x * x + y * y, p, q, cc);
+      return x * x + y * y;
+    };
+    return near(shadowPrice(F, c), 1e-4);
+  },
+  'op-04-4': ({ a, b, c }) => near(minOnLine((x, y) => a * x * x + b * y * y, 1, 1, c), 1e-5),
+  'op-04-5': ({ c0, d }) => near(fStar(c0) + shadowPrice(fStar, c0) * d, 1e-4),
+  'op-04-6': ({ A }) => near(maxOnCircle((x, y) => dot([x, y], mulVec(A, [x, y]))).value, 1e-6),
+  'op-04-x1': ({ c }) => near(minOnLine((x, y) => x * x + y * y, 1, 1, c), 1e-5),
+  'op-04-x2': ({ a, b, l }) => dot([l * a, l * b], [a, b]) / dot([a, b], [a, b]),
+  'op-04-x3': ({ a, b, s }) => near(argmaxValue((x) => (x * (s - a * x)) / b, 0, s / a), 1e-6),
+  'op-04-x4': ({ n, m }) => [...range(1, n), ...range(1, m)].length,
+  'op-04-x5': ({ a, b, R }) => near(maxOnCircle((x, y) => a * x + b * y, R).value, 1e-6),
+  'op-04-x6': ({ d1, d2 }) => near(unitSign(maxOnCircle((x, y) => d1 * x * x + d2 * y * y).at), 1e-4),
+});
+
+// op-05 · optimality conditions: numerical minimisation, Hessian tests and projected gradient descent
+/** Minimiser of f over an interval, by golden-section search. */
+const argminOn = (f, lo, hi) => argmax((x) => -f(x), lo, hi);
+/** Projected gradient descent onto the box x ≥ 0 (componentwise). */
+const projectedGD = (f, x0, eta, k) => {
+  let x = [...x0];
+  for (let i = 0; i < k; i++) x = gd(f, x, eta, 1).map((t) => Math.max(0, t));
+  return x;
+};
+/** Optimal value of min (x − a)² over x ≤ b (up) or x ≥ b, numerically. */
+const clampOpt = (a, b, up) => {
+  const f = (x) => (x - a) ** 2;
+  const x = up ? argminOn(f, b - 100, b) : argminOn(f, b, b + 100);
+  return { x, f: f(x) };
+};
+Object.assign(checks, {
+  'op-05-q1': () => near(argminOn((x) => x ** 3 - 3 * x, 0, 3), 1e-6),
+  'op-05-q2': () => near(gd((x, y) => 0.5 * (2 * x * x + 4 * y * y) - 4 * x - 8 * y, [0, 0], 0.2, 400), 1e-6),
+  'op-05-q3': () => near(clampOpt(2, 5, true).x, 1e-6),
+  'op-05-1': ({ a, b, c }) => near(argminOn((x) => a * x * x + b * x + c, -100, 100), 1e-6),
+  'op-05-2': ({ a, b, c, order }) => ({ id: 'abcd'[order.indexOf(criticalKind((x, y) => a * x * x + b * x * y + c * y * y, [0, 0]))] }),
+  'op-05-3': ({ A, b }) => {
+    const f = (x, y) => 0.5 * dot([x, y], mulVec(A, [x, y])) - dot(b, [x, y]);
+    return near(gd(f, [0, 0], 1 / (A[0][0] + A[1][1]), 4000), 1e-5);
+  },
+  'op-05-4': ({ a, b, up }) => near(clampOpt(a, b, !!up).x, 1e-6),
+  'op-05-5': ({ a, b }) => near(-shadowPrice((bb) => clampOpt(a, bb, true).f, b), 1e-4),
+  'op-05-6': ({ a, b }) => near(projectedGD((x, y) => (x - a) ** 2 + (y - b) ** 2, [1, 1], 0.25, 200), 1e-6),
+  'op-05-x1': ({ a, p }) => near(argminOn((x) => a * x * x - 2 * a * p * x, -100, 100), 1e-6),
+  'op-05-x2': ({ k }) => intRoots((x) => D1((t) => t ** 3 - 3 * k * k * t, x)),
+  'op-05-x3': ({ x0, v, order }) => {
+    // f(x) = v/2·(x − x0)²: compare f at x0 with its neighbours.
+    const f = (x) => (v / 2) * (x - x0) ** 2;
+    const [l, m, rr] = [f(x0 - 0.01), f(x0), f(x0 + 0.01)];
+    const kind = l > m && rr > m ? 0 : l < m && rr < m ? 1 : 2;
+    return { id: 'abcd'[order.indexOf(kind)] };
+  },
+  'op-05-x4': ({ a, b, p, q }) => near(gd((x, y) => a * x * x + b * y * y - p * x - q * y, [0, 0], 1 / (2 * Math.max(a, b)), 400), 1e-6),
+  'op-05-x5': ({ a, b, order }) => {
+    const { x } = clampOpt(a, b, false);
+    const active = Math.abs(x - b) < 1e-6 && Math.abs(x - a) > 1e-6;
+    const mu = shadowPrice((bb) => clampOpt(a, bb, false).f, b);
+    const kind = active ? (mu > 1e-6 ? 0 : 2) : mu > 1e-6 ? 3 : 1;
+    return { id: 'abcd'[order.indexOf(kind)] };
+  },
+  'op-05-x6': ({ a, b }) => near(-shadowPrice((bb) => clampOpt(a, bb, true).f, b) + 0, 1e-4),
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */
