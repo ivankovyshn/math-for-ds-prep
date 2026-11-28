@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Symmetric matrices',
+      covers: ['2', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -57,6 +58,7 @@ $A = Q\Lambda Q^T$, with $Q$ orthogonal (columns $\mathbf{q}_i$) and $\Lambda = 
     },
     {
       title: 'A sum of rank-one pieces',
+      covers: ['4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -84,6 +86,7 @@ $A = Q\Lambda Q^T$, with $Q$ orthogonal (columns $\mathbf{q}_i$) and $\Lambda = 
     },
     {
       title: 'Quadratic forms and definiteness',
+      covers: ['1', '3', '6', 'x2', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -110,6 +113,17 @@ $A = Q\Lambda Q^T$, with $Q$ orthogonal (columns $\mathbf{q}_i$) and $\Lambda = 
           text: r`Covariance matrices are always positive semidefinite, since a variance is never negative. A point where the gradient vanishes and the Hessian is positive definite is a strict local minimum — the basis of second-order checks in optimisation.`,
         },
         {
+          kind: 'example',
+          title: 'Evaluating a quadratic form',
+          prompt: r`Compute $\mathbf{x}^TA\mathbf{x}$ for $A = \begin{pmatrix} 3 & 1 \\ 1 & -2 \end{pmatrix}$ and $\mathbf{x} = (1, 2)$. What does the result say?`,
+          steps: [
+            r`$A\mathbf{x} = (3 + 2,\ 1 - 4) = (5, -3)$.`,
+            r`$\mathbf{x}^TA\mathbf{x} = (1, 2)\cdot(5, -3) = 5 - 6 = -1$.`,
+            r`Same with the formula: $3\cdot1^2 + 2\cdot1\cdot1\cdot2 - 2\cdot2^2 = 3 + 4 - 8 = -1$.`,
+            r`A negative value for some $\mathbf{x}$ means $A$ is not positive definite.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'la-10-q3',
           prompt: r`Is $\begin{pmatrix} 1 & 2 \\ 2 & 1 \end{pmatrix}$ positive definite?`,
@@ -125,6 +139,7 @@ $A = Q\Lambda Q^T$, with $Q$ orthogonal (columns $\mathbf{q}_i$) and $\Lambda = 
     },
     {
       title: 'Functions of a symmetric matrix',
+      covers: ['5', 'x6'],
       blocks: [
         { kind: 'formula', tex: r`A^k = Q\Lambda^kQ^T, \qquad A^{-1} = Q\Lambda^{-1}Q^T` },
         {
@@ -136,6 +151,17 @@ $A = Q\Lambda Q^T$, with $Q$ orthogonal (columns $\mathbf{q}_i$) and $\Lambda = 
           variant: 'pitfall',
           title: 'Only for symmetric matrices',
           text: r`A non-symmetric matrix may have eigenvectors that are not perpendicular, complex eigenvalues, or too few eigenvectors to diagonalise at all, like $\begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$. The spectral theorem is about symmetric matrices only; for any matrix, use the SVD (next lesson).`,
+        },
+        {
+          kind: 'example',
+          title: 'A power without multiplying',
+          prompt: r`$A = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$ has $\lambda_1 = 3$ with $\mathbf{q}_1 = \frac{1}{\sqrt2}(1, 1)$ and $\lambda_2 = 1$ with $\mathbf{q}_2 = \frac{1}{\sqrt2}(1, -1)$. Compute $A^3$.`,
+          steps: [
+            r`$A^3 = Q\Lambda^3Q^T = 3^3\,\mathbf{q}_1\mathbf{q}_1^T + 1^3\,\mathbf{q}_2\mathbf{q}_2^T$: the same eigenvectors, with the eigenvalues cubed (27 and 1).`,
+            r`$\mathbf{q}_1\mathbf{q}_1^T = \frac12\begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix}$ and $\mathbf{q}_2\mathbf{q}_2^T = \frac12\begin{pmatrix} 1 & -1 \\ -1 & 1 \end{pmatrix}$.`,
+            r`$A^3 = \frac{27}{2}\begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix} + \frac12\begin{pmatrix} 1 & -1 \\ -1 & 1 \end{pmatrix} = \begin{pmatrix} 14 & 13 \\ 13 & 14 \end{pmatrix}$.`,
+            r`Check: $A^2 = \begin{pmatrix} 5 & 4 \\ 4 & 5 \end{pmatrix}$, and $A^2A$ has top-left entry $10 + 4 = 14$. ✓`,
+          ],
         },
       ],
     },

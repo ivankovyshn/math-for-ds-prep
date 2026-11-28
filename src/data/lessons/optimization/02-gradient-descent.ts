@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'The update rule',
+      covers: ['1', '4', 'x1', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -22,6 +23,16 @@ export default defineLesson({
           text: r`The <i>learning rate</i> (step size) $\eta > 0$ sets how far each step goes. Near a point, $f(x - \eta\nabla f) \approx f(x) - \eta\lVert\nabla f\rVert^2$, so a small enough step always decreases $f$ unless the gradient is zero.`,
         },
         { kind: 'diagram', type: 'contours', caption: r`$-\nabla f$ points across the level curves, towards lower values. Gradient descent follows it in steps.` },
+        {
+          kind: 'example',
+          title: 'Several steps at once',
+          prompt: r`Gradient descent on $f(x) = 2x^2$ with $\eta = 0.1$ starts at $x_0 = 5$. Find $x_3$, and the first $k$ with $|x_k| < 1$.`,
+          steps: [
+            r`$f'(x) = 4x$, so each step is $x_{k+1} = x_k - 0.1\cdot 4x_k = 0.6\,x_k$.`,
+            r`Every step multiplies by 0.6: $x_k = 5\cdot 0.6^k$.`,
+            r`$x_3 = 5\cdot 0.216 = 1.08$, and $x_4 = 5\cdot 0.1296 = 0.648$. So $k = 4$.`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'op-02-q1',
@@ -38,6 +49,7 @@ export default defineLesson({
     },
     {
       title: 'Choosing the learning rate',
+      covers: ['3', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -70,6 +82,7 @@ export default defineLesson({
     },
     {
       title: 'Many directions: conditioning',
+      covers: ['5', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -96,6 +109,7 @@ export default defineLesson({
     },
     {
       title: 'Gradient descent in practice',
+      covers: ['2', '6', 'x2'],
       blocks: [
         {
           kind: 'example',
@@ -116,6 +130,16 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'A loss that goes up',
           text: r`If the training loss grows or turns into NaN, the learning rate is almost always too large for the steepest direction. Halve it and try again.`,
+        },
+        {
+          kind: 'example',
+          title: 'A least-squares step',
+          prompt: r`Fit $y \approx wx$ to $(1, 2)$ and $(2, 3)$ by minimising $L(w) = \sum_i(wx_i - y_i)^2$. Take one step from $w = 0$ with $\eta = 0.05$.`,
+          steps: [
+            r`$L'(w) = \sum_i 2x_i(wx_i - y_i)$.`,
+            r`At $w = 0$: $L'(0) = 2\cdot1\cdot(-2) + 2\cdot2\cdot(-3) = -4 - 12 = -16$.`,
+            r`$w_1 = 0 - 0.05\cdot(-16) = 0.8$. The exact minimiser is $\frac{\sum x_iy_i}{\sum x_i^2} = \frac{8}{5} = 1.6$, so the step moved halfway.`,
+          ],
         },
       ],
     },

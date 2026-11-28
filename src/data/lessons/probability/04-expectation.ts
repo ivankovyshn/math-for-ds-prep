@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Expectation',
+      covers: ['1', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -43,6 +44,7 @@ export default defineLesson({
     },
     {
       title: 'Linearity',
+      covers: ['2', 'x2', 'x6'],
       blocks: [
         { kind: 'formula', tex: r`E[aX + b] = a\,E[X] + b, \qquad E[X + Y] = E[X] + E[Y]` },
         {
@@ -71,6 +73,7 @@ export default defineLesson({
     },
     {
       title: 'Variance',
+      covers: ['3', '4', '6', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -84,6 +87,17 @@ export default defineLesson({
           text: r`• $\operatorname{Var}(aX + b) = a^2\operatorname{Var}X$: shifting does not change spread, scaling multiplies it by $a^2$.
 
 • If $X$ and $Y$ are independent, $\operatorname{Var}(X + Y) = \operatorname{Var}X + \operatorname{Var}Y$ — and also $\operatorname{Var}(X - Y) = \operatorname{Var}X + \operatorname{Var}Y$.`,
+        },
+        {
+          kind: 'example',
+          title: 'A variance from a table',
+          prompt: r`$P(X = 0) = 0.5$, $P(X = 1) = 0.3$, $P(X = 2) = 0.2$. Find $\operatorname{Var}X$.`,
+          steps: [
+            r`$E[X] = 0\cdot0.5 + 1\cdot0.3 + 2\cdot0.2 = 0.7$.`,
+            r`$E[X^2] = 0 + 1\cdot0.3 + 4\cdot0.2 = 1.1$.`,
+            r`$\operatorname{Var}X = E[X^2] - (E[X])^2 = 1.1 - 0.49 = 0.61$.`,
+            r`Check with the definition: $0.5\cdot0.7^2 + 0.3\cdot0.3^2 + 0.2\cdot1.3^2 = 0.245 + 0.027 + 0.338 = 0.61$. ✓`,
+          ],
         },
         {
           kind: 'quiz',
@@ -101,6 +115,7 @@ export default defineLesson({
     },
     {
       title: 'The standard results',
+      covers: ['5', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -119,6 +134,17 @@ export default defineLesson({
           variant: 'tip',
           title: 'In machine learning',
           text: r`Mean squared error is an expectation, $E[(\hat y - y)^2]$, and it splits into bias² + variance — the bias–variance trade-off of the Statistics module. Standardising features means subtracting the mean and dividing by the standard deviation.`,
+        },
+        {
+          kind: 'example',
+          title: 'Mean and variance of a count',
+          prompt: r`Each of 200 emails is spam with probability 0.05, independently. Find the mean, variance and standard deviation of the number of spam emails.`,
+          steps: [
+            r`The count $X$ is Binomial$(200, 0.05)$: a sum of 200 independent Bernoulli$(0.05)$ variables.`,
+            r`Each Bernoulli$(p)$ has mean $p = 0.05$ and variance $p(1 - p) = 0.0475$.`,
+            r`Means always add; for independent terms variances add too: $E[X] = np = 10$ and $\operatorname{Var}X = np(1 - p) = 9.5$.`,
+            r`$\sigma = \sqrt{9.5} \approx 3.08$.`,
+          ],
         },
       ],
     },

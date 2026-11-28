@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'The sample mean',
+      covers: ['1', '3', 'x1', 'x2', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -24,6 +25,16 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`The last quantity is the <i>standard error</i>. It follows from linearity and from independent variances adding: $\operatorname{Var}\sum X_i = n\sigma^2$, divided by $n^2$.`,
+        },
+        {
+          kind: 'example',
+          title: 'How much data',
+          prompt: r`Measurements have $\sigma = 12$. How many make the standard error 2? What does four times as much data do?`,
+          steps: [
+            r`$\operatorname{SE} = \frac{\sigma}{\sqrt n} = 2$ gives $\sqrt n = 6$, so $n = 36$.`,
+            r`With $4\cdot 36 = 144$ observations: $\operatorname{SE} = \frac{12}{12} = 1$.`,
+            r`Four times the data halves the error; to divide it by 10 takes 100 times the data.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -41,6 +52,7 @@ export default defineLesson({
     },
     {
       title: 'The law of large numbers',
+      covers: ['x3'],
       blocks: [
         {
           kind: 'box',
@@ -59,10 +71,21 @@ export default defineLesson({
           title: "The gambler's fallacy",
           text: r`After ten heads in a row, tails is <i>not</i> "due". The coin has no memory; the law of large numbers works by drowning early deviations in many new tosses, not by correcting them.`,
         },
+        {
+          kind: 'example',
+          title: 'Long-run frequency',
+          prompt: r`A fair die is rolled 6000 times. About how many sixes come up, and how far from that is the count typically?`,
+          steps: [
+            r`The share of sixes settles near $\frac16$ (law of large numbers), so about $6000\cdot\frac16 = 1000$ sixes.`,
+            r`The count itself still wanders: its standard deviation is $\sqrt{np(1 - p)} = \sqrt{6000\cdot\frac16\cdot\frac56} \approx 29$.`,
+            r`So 970 or 1030 sixes are unremarkable, while the <i>share</i> is off from $\frac16$ by only about $0.005$.`,
+          ],
+        },
       ],
     },
     {
       title: 'The central limit theorem',
+      covers: ['2', '5', 'x5', 'x6'],
       blocks: [
         {
           kind: 'box',
@@ -73,6 +96,12 @@ export default defineLesson({
 $\bar X \approx N\Big(\mu, \frac{\sigma^2}{n}\Big)$, equivalently $\frac{\bar X - \mu}{\sigma/\sqrt n} \approx N(0, 1)$.
 
 The sum $\sum X_i$ is approximately $N(n\mu, n\sigma^2)$.`,
+        },
+        {
+          kind: 'box',
+          variant: 'tip',
+          title: 'A small table of normal tails',
+          text: r`For $Z \sim N(0, 1)$: $P(Z > 1) \approx 16\%$, $P(Z > 1.5) \approx 7\%$, $P(Z > 1.75) \approx 4\%$, $P(Z > 2) \approx 2.3\%$ (the 68–95 rule rounds it to 2.5%), $P(Z > 2.5) \approx 0.6\%$, $P(Z > 3) \approx 0.13\%$. Lower tails are the same by symmetry: $P(Z < -2) \approx 2.3\%$.`,
         },
         {
           kind: 'example',
@@ -100,6 +129,7 @@ The sum $\sum X_i$ is approximately $N(n\mu, n\sigma^2)$.`,
     },
     {
       title: 'Using the CLT',
+      covers: ['4', '6'],
       blocks: [
         {
           kind: 'text',
@@ -108,6 +138,17 @@ The sum $\sum X_i$ is approximately $N(n\mu, n\sigma^2)$.`,
 • Confidence intervals: $\bar X \pm 2\frac{\sigma}{\sqrt n}$ covers $\mu$ about 95% of the time (more precisely $\pm1.96$).
 
 • Sample size: the error shrinks like $\frac{1}{\sqrt n}$ — four times the data halves the error.`,
+        },
+        {
+          kind: 'example',
+          title: 'A proportion and an interval',
+          prompt: r`(a) 400 independent views with true click rate $p = 0.2$: what is the standard error of the observed share? (b) A sample of $n = 25$ has $\bar x = 80$ and $\sigma = 10$: give a 95% interval for the mean.`,
+          steps: [
+            r`(a) A share is the mean of 0/1 values with variance $p(1 - p)$: $\operatorname{SE} = \sqrt{\frac{p(1 - p)}{n}} = \sqrt{\frac{0.16}{400}} = 0.02$.`,
+            r`So the observed rate typically lands within about $\pm 0.04$ (two standard errors) of 0.2.`,
+            r`(b) $\operatorname{SE} = \frac{10}{\sqrt{25}} = 2$, and 95% of a normal distribution lies within $1.96$ standard errors.`,
+            r`Interval: $80 \pm 1.96\cdot 2 = 80 \pm 3.92$, that is $[76.08,\ 83.92]$.`,
+          ],
         },
         {
           kind: 'quiz',

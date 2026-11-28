@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'One variable, revisited',
+      covers: ['2', 'x1', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -27,10 +28,21 @@ export default defineLesson({
           title: 'Evaluate at the right point',
           text: r`$f'$ is evaluated at $g(x)$, the point where $f$ is actually applied — not at $x$. If $g(2) = 5$, the chain rule at $x = 2$ needs $f'(5)$.`,
         },
+        {
+          kind: 'example',
+          title: 'Evaluate at the inside value',
+          prompt: r`$g(1) = 2$, $g'(1) = 3$, $f'(1) = 7$ and $f'(2) = 5$. Find $(f\circ g)'(1)$.`,
+          steps: [
+            r`Chain rule: $(f\circ g)'(1) = f'(g(1))\cdot g'(1)$.`,
+            r`The outer derivative is taken at the inside value $g(1) = 2$, not at 1: $f'(2) = 5$.`,
+            r`$(f\circ g)'(1) = 5\cdot 3 = 15$. Using $f'(1) = 7$ would give 21 — the classic slip.`,
+          ],
+        },
       ],
     },
     {
       title: 'Several paths',
+      covers: ['1', '4', 'x2', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -63,6 +75,7 @@ export default defineLesson({
     },
     {
       title: 'Computational graphs',
+      covers: ['3'],
       blocks: [
         {
           kind: 'text',
@@ -95,6 +108,7 @@ export default defineLesson({
     },
     {
       title: 'Backpropagation',
+      covers: ['5', '6', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -108,6 +122,17 @@ export default defineLesson({
             r`$\frac{\partial L}{\partial\hat y} = \hat y - y$ (the $\frac12$ cancels the 2).`,
             r`$\frac{\partial\hat y}{\partial w} = x$.`,
             r`$\frac{\partial L}{\partial w} = (\hat y - y)\,x$: the error times the input — the update rule of linear regression.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'The gradient of the logistic loss',
+          prompt: r`Logistic regression: $\hat p = \sigma(z)$ with $z = wx$, and $L = -\big[y\ln\hat p + (1 - y)\ln(1 - \hat p)\big]$. Show that $\frac{\partial L}{\partial w} = (\hat p - y)\,x$.`,
+          steps: [
+            r`Chain: $\frac{\partial L}{\partial w} = \frac{\partial L}{\partial\hat p}\cdot\frac{d\hat p}{dz}\cdot\frac{\partial z}{\partial w}$.`,
+            r`$\frac{\partial L}{\partial\hat p} = -\frac{y}{\hat p} + \frac{1 - y}{1 - \hat p}$; $\frac{d\hat p}{dz} = \hat p(1 - \hat p)$ (the sigmoid derivative); $\frac{\partial z}{\partial w} = x$.`,
+            r`Multiply the first two: $-y(1 - \hat p) + (1 - y)\hat p = -y + y\hat p + \hat p - y\hat p = \hat p - y$.`,
+            r`So $\frac{\partial L}{\partial w} = (\hat p - y)\,x$: prediction minus target, times the input. With $x = 2$, $y = 1$, $\hat p = 0.7$: $(0.7 - 1)\cdot 2 = -0.6$.`,
           ],
         },
         {

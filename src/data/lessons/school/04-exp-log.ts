@@ -11,12 +11,23 @@ export default defineLesson({
   lecture: [
     {
       title: 'Exponential functions',
+      covers: ['x6'],
       blocks: [
         {
           kind: 'text',
           text: r`In $b^x$ the variable sits in the exponent. For $b > 1$ the function grows faster and faster, for $0 < b < 1$ it decays, and it is always positive. Repeated percentage growth is exponential: an amount $P$ growing by a rate $r$ per year is worth $P(1 + r)^n$ after $n$ years.
 
 The most important base is $e \approx 2.718$. The function $e^x$ is the one whose slope at every point equals its own value, which makes it the natural choice in calculus, probability (the normal and exponential distributions) and machine learning (the sigmoid and softmax).`,
+        },
+        {
+          kind: 'example',
+          title: 'Compound growth',
+          prompt: r`1000 € earn 4% per year, and the interest is added each year. How much is there after 3 years?`,
+          steps: [
+            r`Each year multiplies the amount by $1 + 0.04 = 1.04$.`,
+            r`After 3 years: $1000\cdot 1.04^3 = 1000\cdot 1.124864 \approx 1124.86$ €.`,
+            r`Adding $3\cdot 40 = 120$ € would be simple interest: it ignores the interest earned on interest.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -34,6 +45,7 @@ The most important base is $e \approx 2.718$. The function $e^x$ is the one whos
     },
     {
       title: 'The logarithm',
+      covers: ['1', '2', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -64,6 +76,7 @@ The most important base is $e \approx 2.718$. The function $e^x$ is the one whos
     },
     {
       title: 'Rules of logarithms',
+      covers: ['3', '4', 'x2', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +107,7 @@ The most important base is $e \approx 2.718$. The function $e^x$ is the one whos
     },
     {
       title: 'Solving exponential equations',
+      covers: ['5', '6', 'x5'],
       blocks: [
         {
           kind: 'text',

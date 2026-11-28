@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Optimising on a constraint',
+      covers: ['1', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'The Lagrangian',
+      covers: ['2', '3', '4', 'x3', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -64,10 +66,21 @@ export default defineLesson({
           correctOptionId: 'a',
           explanation: r`$x = y = 4$ gives $xy = 16$.`,
         },
+        {
+          kind: 'example',
+          title: 'Optimising on a circle',
+          prompt: r`Maximise $3x + 4y$ subject to $x^2 + y^2 = 1$.`,
+          steps: [
+            r`Lagrange condition: $\nabla f = \lambda\nabla g$, that is $(3, 4) = \lambda(2x, 2y)$.`,
+            r`So $(x, y)$ is parallel to $(3, 4)$. On the unit circle: $(x, y) = \pm(0.6, 0.8)$.`,
+            r`The plus sign gives the maximum: $3\cdot0.6 + 4\cdot0.8 = 5 = \|(3, 4)\|$. On a circle of radius $r$ the maximum would be $5r$.`,
+          ],
+        },
       ],
     },
     {
       title: 'What λ means',
+      covers: ['5'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +107,7 @@ export default defineLesson({
     },
     {
       title: 'Where it appears in data science',
+      covers: ['6', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -108,6 +122,16 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'Candidates, not answers',
           text: r`The Lagrange equations find every point where the gradients are parallel: minima, maxima and saddle points along the constraint. Compare the values of $f$ at all candidates (or use convexity) to pick the one you want.`,
+        },
+        {
+          kind: 'example',
+          title: 'PCA as a Lagrange problem',
+          prompt: r`For a covariance matrix $\Sigma$, maximise the variance $u^\top\Sigma u$ over unit vectors, $u^\top u = 1$.`,
+          steps: [
+            r`$\nabla(u^\top\Sigma u) = 2\Sigma u$ and $\nabla(u^\top u) = 2u$, so the Lagrange condition is $\Sigma u = \lambda u$: $u$ is an eigenvector.`,
+            r`At such $u$ the objective is $u^\top\Sigma u = \lambda u^\top u = \lambda$.`,
+            r`So the maximum is the largest eigenvalue, reached at its eigenvector — the first principal component. For $\Sigma = \begin{pmatrix} 5 & 2 \\ 2 & 2 \end{pmatrix}$ that is $\lambda = 6$, along $(2, 1)/\sqrt5$.`,
+          ],
         },
       ],
     },

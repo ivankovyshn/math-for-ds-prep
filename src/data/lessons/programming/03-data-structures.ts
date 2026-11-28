@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Lists',
+      covers: ['6', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'Names and copies',
+      covers: ['3'],
       blocks: [
         {
           kind: 'text',
@@ -63,6 +65,7 @@ export default defineLesson({
     },
     {
       title: 'Dictionaries and sets',
+      covers: ['2', '5', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -89,6 +92,7 @@ export default defineLesson({
     },
     {
       title: 'Comprehensions and sorting',
+      covers: ['1', '4', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -104,6 +108,12 @@ export default defineLesson({
           variant: 'tip',
           title: 'Which structure?',
           text: r`List: order matters, duplicates allowed. Dict: look things up by a key (counts, configurations, a row of named fields). Set: fast membership tests and removing duplicates. Tuple: a fixed record such as a shape <c>(3, 4)</c>.`,
+        },
+        {
+          kind: 'code',
+          code: `names = ["a", "b", "c"]\nscores = [90, 75]\nprint(list(zip(names, scores)))\nfor i, n in enumerate(names, start=1):\n    print(i, n)`,
+          output: `[('a', 90), ('b', 75)]\n1 a\n2 b\n3 c`,
+          caption: r`<c>zip</c> stops at the shorter list; <c>enumerate</c> pairs each item with its position.`,
         },
       ],
     },

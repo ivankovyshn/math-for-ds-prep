@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Functions',
+      covers: ['2', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'for loops and range',
+      covers: ['1', '5', 'x1', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -63,6 +65,7 @@ export default defineLesson({
     },
     {
       title: 'Decisions and while loops',
+      covers: ['3', '4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -90,6 +93,7 @@ export default defineLesson({
     },
     {
       title: 'Common traps',
+      covers: ['6'],
       blocks: [
         {
           kind: 'box',
@@ -106,6 +110,12 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`Variables assigned inside a function are <i>local</i>: they disappear when the function returns and do not change variables of the same name outside.`,
+        },
+        {
+          kind: 'code',
+          code: `def add(x, items=[]):\n    items.append(x)\n    return items\n\nprint(add(1))\nprint(add(2))`,
+          output: `[1]\n[1, 2]`,
+          caption: r`The default list is created once, when the function is defined, and shared by every call. Use <c>items=None</c> and create the list inside.`,
         },
       ],
     },

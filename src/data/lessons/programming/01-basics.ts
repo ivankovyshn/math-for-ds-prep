@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Values, variables and types',
+      covers: ['x1'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'Arithmetic',
+      covers: ['1', '4', '5', '6'],
       blocks: [
         {
           kind: 'text',
@@ -47,6 +49,12 @@ export default defineLesson({
 • <c>%</c> is the remainder that goes with it: <c>a == (a // b) * b + a % b</c>, and for positive <c>b</c> the remainder is never negative.
 
 • <c>**</c> is a power and binds tighter than <c>*</c>: <c>2 * 3 ** 2</c> is 18.`,
+        },
+        {
+          kind: 'code',
+          code: `print(2 + 3 * 4 ** 2, -7 // 2, -7 % 2)\nprint(round(2.5), round(3.5), round(2.675, 2))`,
+          output: `50 -4 1\n2 4 2.67`,
+          caption: r`<c>**</c> first, then <c>*</c>, then <c>+</c>. <c>//</c> rounds down, also for negatives, and <c>%</c> matches it. <c>round</c> sends exact halves to the even neighbour, and 2.675 is stored as slightly less than 2.675.`,
         },
         {
           kind: 'quiz',
@@ -64,6 +72,7 @@ export default defineLesson({
     },
     {
       title: 'Strings',
+      covers: ['2', '3', 'x2', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -90,6 +99,7 @@ export default defineLesson({
     },
     {
       title: 'Booleans and comparisons',
+      covers: ['x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -106,6 +116,12 @@ export default defineLesson({
           variant: 'tip',
           title: 'Read code like a computer',
           text: r`The questions in this module ask what code prints. Trace it line by line, writing down each variable's value; most mistakes come from guessing instead of tracing.`,
+        },
+        {
+          kind: 'code',
+          code: `x = 5\nprint(3 < x < 10, x == 5.0, 0.1 + 0.2 == 0.3)\nprint(True and not False, 3 < x > 4)`,
+          output: `True True False\nTrue True`,
+          caption: r`Chained comparisons test each link: <c>3 < x > 4</c> means <c>3 < x and x > 4</c>.`,
         },
       ],
     },

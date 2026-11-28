@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Linear equations',
+      covers: ['1', '5', 'x1', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -29,6 +30,16 @@ export default defineLesson({
           ],
         },
         {
+          kind: 'example',
+          title: 'An inequality with a negative coefficient',
+          prompt: r`Solve $7 - 3x \ge 19$.`,
+          steps: [
+            r`Subtract 7 from both sides: $-3x \ge 12$.`,
+            r`Divide by $-3$. Dividing by a negative number flips the sign: $x \le -4$.`,
+            r`Check with $x = -5$: $7 + 15 = 22 \ge 19$. ✓ And $x = 0$ fails, as it should: $7 \ge 19$ is false.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'sm-03-q1',
           prompt: r`Solve $5x + 3 = 18$.`,
@@ -44,6 +55,7 @@ export default defineLesson({
     },
     {
       title: 'Lines and slopes',
+      covers: ['2', '3', 'x2', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -85,6 +97,7 @@ export default defineLesson({
     },
     {
       title: 'Two equations, two unknowns',
+      covers: ['4', '6', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -102,6 +115,17 @@ export default defineLesson({
             r`Add the equations: the $y$ terms cancel, $3x = 9$, so $x = 3$.`,
             r`Substitute into the second equation: $3 - y = 2$, so $y = 1$.`,
             r`Check in the first: $2\cdot3 + 1 = 7$. ✓ The lines meet at $(3, 1)$.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'From words to equations',
+          prompt: r`A café sells coffee for 3 € and cake for 5 €. One morning it sold 40 items for 150 €. How many coffees did it sell?`,
+          steps: [
+            r`Name the unknowns: $c$ coffees and $k$ cakes.`,
+            r`Number of items: $c + k = 40$. Money: $3c + 5k = 150$.`,
+            r`Multiply the first equation by 3 and subtract it from the second: $2k = 150 - 120 = 30$, so $k = 15$ and $c = 25$.`,
+            r`Check: $25 + 15 = 40$ items and $75 + 75 = 150$ €. ✓`,
           ],
         },
         { kind: 'diagram', type: 'lineCases', caption: r`Two lines meet in one point, never meet (parallel), or coincide.` },

@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Fractions',
+      covers: ['1', '3', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -50,6 +51,7 @@ export default defineLesson({
     },
     {
       title: 'Powers',
+      covers: ['2', 'x2', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -87,6 +89,7 @@ export default defineLesson({
     },
     {
       title: 'Roots and fractional powers',
+      covers: ['4', '5', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -128,6 +131,7 @@ export default defineLesson({
     },
     {
       title: 'Expanding and factoring',
+      covers: ['6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',

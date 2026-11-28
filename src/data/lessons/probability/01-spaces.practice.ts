@@ -146,12 +146,12 @@ export const practice: QuestionTemplate[] = [
           { id: 'a', label: `$${frac(binomial(rd, 2), binomial(N, 2))}$`, value: binomial(rd, 2) / binomial(N, 2) },
           { id: 'b', label: `$${frac(rd * rd, N * N)}$`, value: (rd / N) ** 2, trapExplanation: r`$\big(\frac{${rd}}{${N}}\big)^2$ assumes the first ball goes back. Without replacement the second draw has ${rd - 1} red of ${N - 1}.` },
           { id: 'c', label: `$${frac(rd, N)}$`, value: rd / N, trapExplanation: r`That is the probability for one draw only.` },
-          { id: 'd', label: `$${frac(rd - 1, N - 1)}$`, value: (rd - 1) / (N - 1), trapExplanation: r`That is the second draw given the first was red; multiply by $P(\text{first red}) = \frac{${rd}}{${N}}$.` },
+          { id: 'd', label: `$${frac(rd - 1, N - 1)}$`, value: (rd - 1) / (N - 1), trapExplanation: r`That is the chance for the second ball once a red one is already out. The first ball must be red too, which has probability $\frac{${rd}}{${N}}$.` },
         ],
         stepByStepSolution: [
-          r`$P(\text{first red}) = \frac{${rd}}{${N}}$, then $P(\text{second red} \mid \text{first red}) = \frac{${rd - 1}}{${N - 1}}$.`,
-          r`$P = \frac{${rd}}{${N}}\cdot\frac{${rd - 1}}{${N - 1}} = \frac{${rd * (rd - 1)}}{${N * (N - 1)}}$.`,
-          r`$= ${frac(binomial(rd, 2), binomial(N, 2))}$ — the same as $\binom{${rd}}{2}\big/\binom{${N}}{2}$.`,
+          r`Every pair of 2 balls out of ${N} is equally likely: $\binom{${N}}{2} = ${binomial(N, 2)}$ pairs.`,
+          r`Pairs with two red balls: $\binom{${rd}}{2} = ${binomial(rd, 2)}$.`,
+          r`$P = \frac{${binomial(rd, 2)}}{${binomial(N, 2)}} = ${frac(binomial(rd, 2), binomial(N, 2))}$. One at a time gives the same: $\frac{${rd}}{${N}}\cdot\frac{${rd - 1}}{${N - 1}}$.`,
         ],
       };
     },

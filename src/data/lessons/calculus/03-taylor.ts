@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Linear approximation',
+      covers: ['1', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -47,6 +48,7 @@ export default defineLesson({
     },
     {
       title: 'The Taylor polynomial',
+      covers: ['2', '5', '6', 'x2', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -60,6 +62,23 @@ export default defineLesson({
         },
         { kind: 'formula', tex: r`e^x = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \dots, \quad \sin x = x - \frac{x^3}{3!} + \dots, \quad \cos x = 1 - \frac{x^2}{2!} + \dots` },
         { kind: 'formula', tex: r`\ln(1 + x) = x - \frac{x^2}{2} + \frac{x^3}{3} - \dots, \qquad \frac{1}{1 - x} = 1 + x + x^2 + \dots \quad (|x| < 1)` },
+        {
+          kind: 'box',
+          variant: 'definition',
+          title: 'Higher derivatives and factorials',
+          text: r`$f^{(k)}$ is the $k$-th derivative: $f''$ is the derivative of $f'$, $f'''$ that of $f''$, and so on, with $f^{(0)} = f$. $k! = 1\cdot 2\cdots k$ with $0! = 1$: $2! = 2$, $3! = 6$, $4! = 24$.`,
+        },
+        {
+          kind: 'example',
+          title: 'Two Taylor polynomials',
+          prompt: r`(a) Use the degree-2 Taylor polynomial of $e^x$ at 0 to estimate $e^{0.2}$. (b) Expand $f(x) = x^3$ around $a = 1$.`,
+          steps: [
+            r`(a) $T_2(x) = 1 + x + \frac{x^2}{2!}$, so $e^{0.2} \approx 1 + 0.2 + 0.02 = 1.22$. The true value is $1.2214\ldots$`,
+            r`(b) Derivatives at $a = 1$: $f(1) = 1$; $f'(x) = 3x^2$ gives 3; $f''(x) = 6x$ gives 6; $f'''(x) = 6$.`,
+            r`Coefficients $\frac{f^{(k)}(1)}{k!}$: $1$, $3$, $\frac62 = 3$, $\frac66 = 1$.`,
+            r`$x^3 = 1 + 3(x - 1) + 3(x - 1)^2 + (x - 1)^3$. Check at $x = 2$: $1 + 3 + 3 + 1 = 8 = 2^3$. ✓`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'ca-03-q2',
@@ -76,6 +95,7 @@ export default defineLesson({
     },
     {
       title: 'Building series from known ones',
+      covers: ['3', '4', 'x4', 'x6'],
       blocks: [
         {
           kind: 'text',

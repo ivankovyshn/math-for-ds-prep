@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Interval estimates',
+      covers: ['1', '2', 'x1', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'What 95% means',
+      covers: ['6', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -48,6 +50,16 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'Not a probability about the mean',
           text: r`Once computed, an interval such as $[46.1, 53.9]$ either contains $\mu$ or it does not. Saying "$\mu$ is in it with probability 95%" mixes this up with a Bayesian credible interval, which needs a prior.`,
+        },
+        {
+          kind: 'example',
+          title: 'Many intervals at once',
+          prompt: r`A report shows 20 independent 95% confidence intervals. What is the probability that at least one of them misses its true value?`,
+          steps: [
+            r`Each interval covers its true value with probability 0.95, independently of the others.`,
+            r`All 20 cover: $0.95^{20} \approx 0.36$.`,
+            r`At least one misses: $1 - 0.36 = 0.64$. With many intervals, some misses are expected — a 99% level or a correction is needed to keep the overall error small.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -65,6 +77,7 @@ export default defineLesson({
     },
     {
       title: 'Width and sample size',
+      covers: ['3', '5', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -79,6 +92,16 @@ export default defineLesson({
             r`$\frac{z\sigma}{E} = \frac{1.96\cdot15}{3} = 9.8$.`,
             r`$9.8^2 = 96.04$.`,
             r`Round up: $n = 97$.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'Changing the level and the sample size',
+          prompt: r`A 95% interval for a mean has width 6. About how wide is a 99% interval from the same data, and a 95% interval from 4 times as much data?`,
+          steps: [
+            r`The width is $2z\frac{\sigma}{\sqrt n}$: proportional to $z$ and to $\frac{1}{\sqrt n}$.`,
+            r`99% instead of 95%: $z$ goes from 1.96 to 2.576, so the width becomes $6\cdot\frac{2.576}{1.96} \approx 7.9$.`,
+            r`4 times the data: $\sqrt n$ doubles, so the width halves to 3.`,
           ],
         },
         {
@@ -97,6 +120,7 @@ export default defineLesson({
     },
     {
       title: 'Unknown σ and proportions',
+      covers: ['4', 'x5'],
       blocks: [
         {
           kind: 'text',

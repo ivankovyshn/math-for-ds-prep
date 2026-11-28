@@ -33,6 +33,7 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
     },
     {
       title: 'Adding and scaling',
+      covers: ['1', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -59,6 +60,7 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
     },
     {
       title: 'Dot product, length and angle',
+      covers: ['2', '3', '4', '5', 'x3', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -108,6 +110,7 @@ The arrow from the origin to the point $(3, 2)$ <i>is</i> the vector $\mathbf{v}
     },
     {
       title: 'Linear combinations and span',
+      covers: ['6', 'x6'],
       blocks: [
         {
           kind: 'text',

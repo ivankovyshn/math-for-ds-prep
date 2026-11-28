@@ -31,6 +31,7 @@ Most first-year proofs use one of four patterns.`,
     },
     {
       title: 'Direct proof',
+      covers: ['2', 'x2', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -44,6 +45,16 @@ Most first-year proofs use one of four patterns.`,
             r`Assume $m$, $n$ odd: $m = 2a + 1$ and $n = 2b + 1$ for some integers $a$, $b$. Use different letters — $m$ and $n$ need not be equal.`,
             r`$m + n = 2a + 2b + 2 = 2(a + b + 1)$.`,
             r`$a + b + 1$ is an integer, so $m + n$ is even. $\blacksquare$`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'Working with remainders',
+          prompt: r`An integer has the form $n = 3k + 2$. What remainder does $n^2$ leave on division by 3?`,
+          steps: [
+            r`$n^2 = (3k + 2)^2 = 9k^2 + 12k + 4$.`,
+            r`Split off everything divisible by 3: $9k^2 + 12k + 3 + 1 = 3(3k^2 + 4k + 1) + 1$.`,
+            r`So $n^2$ leaves remainder 1 for <i>every</i> $k$ — which makes this a proof, not just an example.`,
           ],
         },
         {
@@ -62,6 +73,7 @@ Most first-year proofs use one of four patterns.`,
     },
     {
       title: 'Contrapositive and contradiction',
+      covers: ['1', '6', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -83,6 +95,12 @@ Most first-year proofs use one of four patterns.`,
           ],
         },
         {
+          kind: 'box',
+          variant: 'definition',
+          title: 'Divisibility',
+          text: r`$a \mid b$ ("$a$ divides $b$") means $b = a\cdot m$ for some integer $m$: $5 \mid 35$, but $5 \nmid 12$. For a prime $p$: if $p \mid a^2$, then $p \mid a$ — a prime that divides a product divides one of the factors. With $p = 2$ this is the step "$a^2$ even, so $a$ even" in the proof above; the same proof with any prime $p$ shows that $\sqrt p$ is irrational.`,
+        },
+        {
           kind: 'quiz',
           id: 'ml-04-q2',
           prompt: r`To prove "if $n^2$ is even, then $n$ is even" by contrapositive, you…`,
@@ -98,6 +116,7 @@ Most first-year proofs use one of four patterns.`,
     },
     {
       title: 'Counterexamples',
+      covers: ['3', '4', '5', 'x1', 'x6'],
       blocks: [
         {
           kind: 'text',

@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Conditioning',
+      covers: ['1', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -43,6 +44,7 @@ export default defineLesson({
     },
     {
       title: 'Multiplication rule and total probability',
+      covers: ['2', '3', 'x2', 'x4'],
       blocks: [
         { kind: 'formula', tex: r`P(A \cap B) = P(A \mid B)\,P(B), \qquad P(A) = \sum_i P(A \mid B_i)\,P(B_i)` },
         {
@@ -65,6 +67,7 @@ export default defineLesson({
     },
     {
       title: "Bayes' theorem",
+      covers: ['4', '5', 'x6'],
       blocks: [
         { kind: 'formula', tex: r`P(B \mid A) = \frac{P(A \mid B)\,P(B)}{P(A)} = \frac{P(A \mid B)\,P(B)}{P(A \mid B)P(B) + P(A \mid B^c)P(B^c)}` },
         {
@@ -98,6 +101,7 @@ export default defineLesson({
     },
     {
       title: 'Independence',
+      covers: ['6', 'x5'],
       blocks: [
         {
           kind: 'box',
@@ -116,6 +120,16 @@ export default defineLesson({
           variant: 'tip',
           title: 'Naive Bayes',
           text: r`The naive Bayes classifier computes $P(\text{class} \mid \text{features})$ with Bayes' theorem, assuming the features are independent given the class. The assumption is rarely true, yet the classifier often works well for text and spam filtering.`,
+        },
+        {
+          kind: 'example',
+          title: 'Testing independence from a table',
+          prompt: r`Of 200 users, 120 use the mobile app ($M$) and 50 bought something ($B$); 30 did both. Are $M$ and $B$ independent?`,
+          steps: [
+            r`$P(M) = \frac{120}{200} = 0.6$, $P(B) = \frac{50}{200} = 0.25$, $P(M \cap B) = \frac{30}{200} = 0.15$.`,
+            r`Independence needs $P(M \cap B) = P(M)\,P(B) = 0.6\cdot0.25 = 0.15$. ✓ They are independent.`,
+            r`Equivalently $P(B \mid M) = \frac{30}{120} = 0.25 = P(B)$: knowing $M$ does not change the chance of $B$.`,
+          ],
         },
       ],
     },

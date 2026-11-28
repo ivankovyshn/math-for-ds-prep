@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Approaching a point',
+      covers: ['2', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -50,6 +51,7 @@ The quantifiers $\forall\varepsilon\,\exists\delta$ from the logic lesson: whate
     },
     {
       title: 'Limit laws and the form 0/0',
+      covers: ['1', '4', '6', 'x1', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -70,10 +72,22 @@ The quantifiers $\forall\varepsilon\,\exists\delta$ from the logic lesson: whate
             r`Now substitute: $\frac{1}{3 + 3} = \frac16$.`,
           ],
         },
+        {
+          kind: 'example',
+          title: 'Making sin u over u appear',
+          prompt: r`Find $\lim_{x\to0}\dfrac{\sin(3x)}{2x}$.`,
+          steps: [
+            r`The known limit needs the same expression inside the sine and in the denominator: $\frac{\sin u}{u} \to 1$ as $u \to 0$.`,
+            r`With $u = 3x$: $\dfrac{\sin(3x)}{2x} = \dfrac{\sin(3x)}{3x}\cdot\dfrac{3x}{2x} = \dfrac{\sin(3x)}{3x}\cdot\dfrac32$.`,
+            r`As $x \to 0$, also $u = 3x \to 0$, so the first factor tends to 1.`,
+            r`The limit is $\frac32$. In general $\frac{\sin(kx)}{mx} \to \frac km$, sign included.`,
+          ],
+        },
       ],
     },
     {
       title: 'Limits at infinity',
+      covers: ['3', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -106,6 +120,7 @@ The quantifiers $\forall\varepsilon\,\exists\delta$ from the logic lesson: whate
     },
     {
       title: 'Continuity',
+      covers: ['5', 'x6'],
       blocks: [
         {
           kind: 'box',

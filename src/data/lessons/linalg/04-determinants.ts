@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'One number that measures stretching',
+      covers: ['1', '2', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -45,6 +46,7 @@ export default defineLesson({
     },
     {
       title: 'Determinants of 3×3 matrices',
+      covers: ['3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -88,6 +90,7 @@ export default defineLesson({
     },
     {
       title: 'Rules that save time',
+      covers: ['4', '5', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -129,6 +132,7 @@ export default defineLesson({
     },
     {
       title: 'When the determinant is zero',
+      covers: ['6', 'x2'],
       blocks: [
         {
           kind: 'box',
@@ -138,7 +142,7 @@ export default defineLesson({
 
 • $\det A = 0$;
 
-• the columns of $A$ are linearly dependent (they lie in a smaller subspace);
+• the columns of $A$ are <i>linearly dependent</i>: one of them is a combination of the others, so together they lie in a plane or a line instead of filling space (the lesson on independence and rank makes this precise);
 
 • $A\mathbf{x} = \mathbf{0}$ has a non-zero solution;
 
@@ -147,6 +151,17 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`Geometrically this is one picture: the matrix squashes space into a lower dimension, so information is lost and cannot be undone. A determinant is the quickest test for that.`,
+        },
+        {
+          kind: 'example',
+          title: 'For which t is the determinant zero?',
+          prompt: r`For which $t$ are the columns of $A = \begin{pmatrix} t & 1 & 1 \\ 1 & t & 1 \\ 1 & 1 & t \end{pmatrix}$ dependent?`,
+          steps: [
+            r`Expand along the first row: $t(t^2 - 1) - 1\cdot(t - 1) + 1\cdot(1 - t) = t^3 - 3t + 2$.`,
+            r`A cubic: look for a simple root among the divisors of the constant term, $\pm1, \pm2$. $t = 1$ gives $1 - 3 + 2 = 0$.`,
+            r`Divide by $t - 1$: $t^3 - 3t + 2 = (t - 1)(t^2 + t - 2) = (t - 1)^2(t + 2)$.`,
+            r`$\det A = 0$ exactly for $t = 1$ and $t = -2$: there the columns are dependent. (At $t = 1$ all three columns are equal.)`,
+          ],
         },
       ],
     },

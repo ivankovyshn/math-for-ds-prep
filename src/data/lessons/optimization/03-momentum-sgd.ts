@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Stochastic gradients',
+      covers: ['1', '2', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -40,6 +41,7 @@ export default defineLesson({
     },
     {
       title: 'Noise and batch size',
+      covers: ['5', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -63,6 +65,7 @@ Because of the noise, SGD with a fixed learning rate does not settle exactly at 
     },
     {
       title: 'Momentum',
+      covers: ['3', '4', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -74,6 +77,16 @@ Because of the noise, SGD with a fixed learning rate does not settle exactly at 
           text: r`Gradients that keep the same sign (along the valley) accumulate; those that flip sign (across it) cancel. With a constant gradient $g$ the velocity grows to $g(1 + \beta + \beta^2 + \dots) = \frac{g}{1 - \beta}$, so the effective step is $\frac{\eta}{1 - \beta}$: ten times larger for the common choice $\beta = 0.9$.`,
         },
         { kind: 'diagram', type: 'momentum', caption: r`On a long, narrow valley plain gradient descent (red) bounces between the walls; momentum (green) damps the zigzag and builds up speed along the valley.` },
+        {
+          kind: 'example',
+          title: 'Two momentum steps',
+          prompt: r`Minimise $f(x) = x^2$ with momentum: $v_{k+1} = \beta v_k + f'(x_k)$, $x_{k+1} = x_k - \eta v_{k+1}$, with $x_0 = 1$, $v_0 = 0$, $\beta = 0.5$, $\eta = 0.1$.`,
+          steps: [
+            r`$f'(x) = 2x$. Step 1: $v_1 = 0.5\cdot 0 + 2 = 2$, $x_1 = 1 - 0.1\cdot 2 = 0.8$.`,
+            r`Step 2: $v_2 = 0.5\cdot 2 + 2\cdot0.8 = 2.6$, $x_2 = 0.8 - 0.1\cdot 2.6 = 0.54$.`,
+            r`Plain gradient descent would be at $0.64$ after two steps: the remembered velocity carries momentum further downhill.`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'op-03-q3',
@@ -90,6 +103,7 @@ Because of the noise, SGD with a fixed learning rate does not settle exactly at 
     },
     {
       title: 'Adaptive methods: Adam',
+      covers: ['6', 'x6'],
       blocks: [
         {
           kind: 'text',

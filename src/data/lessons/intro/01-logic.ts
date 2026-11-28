@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Statements and connectives',
+      covers: ['2', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -29,10 +30,22 @@ Statements are combined with five connectives: $\neg P$ (not $P$), $P \land Q$ (
           title: 'When an implication is false',
           text: r`$P \Rightarrow Q$ is false in exactly one case: $P$ true and $Q$ false. Think of it as a promise — "if you pass the exam, I'll buy you a coffee" is broken only if you pass and get no coffee. If $P$ is false the promise is kept automatically ("vacuously true").`,
         },
+        {
+          kind: 'example',
+          title: 'When is an implication false?',
+          prompt: r`Take $P$: "$n$ is divisible by 4" and $Q$: "$n$ is even". Is $P \Rightarrow Q$ true for $n = 8$, $n = 6$ and $n = 3$?`,
+          steps: [
+            r`$n = 8$: $P$ true, $Q$ true, so $P \Rightarrow Q$ is true.`,
+            r`$n = 6$: $P$ false, $Q$ true. The implication is true: it promises nothing about numbers that are not divisible by 4.`,
+            r`$n = 3$: $P$ false, $Q$ false. Again true.`,
+            r`Only "$P$ true and $Q$ false" makes an implication false. For the same reason "if $0 > 1$, then the Moon is made of cheese" is true: its premise is false.`,
+          ],
+        },
       ],
     },
     {
       title: 'Equivalent forms',
+      covers: ['1', '5', 'x1', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -64,6 +77,7 @@ Statements are combined with five connectives: $\neg P$ (not $P$), $P \land Q$ (
     },
     {
       title: 'Quantifiers',
+      covers: ['4', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -97,6 +111,7 @@ $\exists y \in \mathbb{R}\ \forall x \in \mathbb{R}:\ y > x$ — "some number is
     },
     {
       title: 'Negating quantified statements',
+      covers: ['3', '6', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',

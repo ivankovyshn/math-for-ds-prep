@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Null hypothesis and test statistic',
+      covers: ['1', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'The p-value',
+      covers: ['3', 'x5'],
       blocks: [
         {
           kind: 'box',
@@ -65,6 +67,7 @@ export default defineLesson({
     },
     {
       title: 'Decisions and errors',
+      covers: ['2', '6', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -79,6 +82,17 @@ export default defineLesson({
           variant: 'pitfall',
           title: '"Not rejected" is not "proven"',
           text: r`A large p-value means the data are compatible with $H_0$, not that $H_0$ is true; the study may simply be too small. And $p$ is not the probability that $H_0$ is true: it is computed assuming $H_0$.`,
+        },
+        {
+          kind: 'example',
+          title: 'Computing power',
+          prompt: r`$H_0: \mu = 50$ with $\sigma = 6$ and $n = 36$. The test rejects when $\bar x > 52$. What is its power if in fact $\mu = 53$?`,
+          steps: [
+            r`Standard error: $\frac{6}{\sqrt{36}} = 1$.`,
+            r`Power is the probability of rejecting when $H_0$ is false: $P(\bar X > 52)$ computed with the <i>true</i> mean 53.`,
+            r`Standardise with the true mean: $z = \frac{52 - 53}{1} = -1$, so the power is $P(Z > -1) \approx 84\%$.`,
+            r`So the test misses this real effect about 16% of the time — that is the type II error rate $\beta$.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -96,6 +110,7 @@ export default defineLesson({
     },
     {
       title: 'A/B tests and multiple testing',
+      covers: ['4', '5', 'x2', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',

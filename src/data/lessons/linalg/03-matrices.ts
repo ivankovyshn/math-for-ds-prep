@@ -30,6 +30,7 @@ The real power appears when a matrix <i>acts</i> on a vector.`,
     },
     {
       title: 'Matrix times vector',
+      covers: ['5', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -66,6 +67,7 @@ The real power appears when a matrix <i>acts</i> on a vector.`,
     },
     {
       title: 'Matrix times matrix',
+      covers: ['1', '2', '3', 'x1', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -109,6 +111,7 @@ The real power appears when a matrix <i>acts</i> on a vector.`,
     },
     {
       title: 'Products as composition',
+      covers: ['4', '6', 'x3'],
       blocks: [
         {
           kind: 'text',

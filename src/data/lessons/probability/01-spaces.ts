@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Outcomes and events',
+      covers: ['1', 'x1', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -38,6 +39,7 @@ export default defineLesson({
     },
     {
       title: 'The rules of probability',
+      covers: ['2', 'x2'],
       blocks: [
         {
           kind: 'box',
@@ -70,6 +72,7 @@ export default defineLesson({
     },
     {
       title: 'Counting',
+      covers: ['3', '5', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -90,6 +93,16 @@ export default defineLesson({
           ],
         },
         {
+          kind: 'example',
+          title: 'Drawing without replacement',
+          prompt: r`A box holds 4 good and 2 faulty chips. Two are drawn without replacement. What is the probability that both are good?`,
+          steps: [
+            r`Every pair of 2 chips out of 6 is equally likely: $\binom62 = 15$ pairs.`,
+            r`Pairs with two good chips: $\binom42 = 6$.`,
+            r`$P = \frac{6}{15} = \frac25$. Drawing one at a time gives the same: $\frac46\cdot\frac35 = \frac{12}{30} = \frac25$ — the second draw has one good chip fewer.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'pr-01-q3',
           prompt: r`In how many ways can you choose 2 of 5 people for a committee?`,
@@ -105,6 +118,7 @@ export default defineLesson({
     },
     {
       title: 'The complement trick',
+      covers: ['4', '6', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -125,6 +139,16 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'Equally likely?',
           text: r`$P(A) = |A|/|\Omega|$ only works when every outcome really is equally likely. Sums of dice, numbers of heads, or "it either happens or it doesn't" are not uniform sample spaces.`,
+        },
+        {
+          kind: 'example',
+          title: 'Two people pick the same',
+          prompt: r`Each of 3 people picks one of 5 options at random, independently. What is the probability that at least two pick the same option?`,
+          steps: [
+            r`Complement: all three different. Ordered choices with no repeat: $5\cdot4\cdot3 = 60$ of the $5^3 = 125$ equally likely outcomes.`,
+            r`$P(\text{all different}) = \frac{60}{125} = 0.48$.`,
+            r`$P(\text{at least two the same}) = 1 - 0.48 = 0.52$ — more than half already, with only 3 people. That is the birthday problem in small.`,
+          ],
         },
       ],
     },

@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Radians',
+      covers: ['1', 'x1', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -40,6 +41,7 @@ export default defineLesson({
     },
     {
       title: 'Sine and cosine on the unit circle',
+      covers: ['2', 'x2', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -68,6 +70,7 @@ export default defineLesson({
     },
     {
       title: 'The four quadrants',
+      covers: ['3', '4', '5', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -111,10 +114,22 @@ export default defineLesson({
     },
     {
       title: 'Periodicity and symmetry',
+      covers: ['6', 'x5'],
       blocks: [
         {
           kind: 'text',
           text: r`After a full turn the point is back where it started, so sine and cosine repeat every $2\pi$: $\sin(\theta + 2\pi) = \sin\theta$. Mirroring in the $x$-axis gives $\cos(-\theta) = \cos\theta$ and $\sin(-\theta) = -\sin\theta$. Because $\sin x = \frac12$ has a solution in quadrant I <i>and</i> one in quadrant II, equations like this have two solutions in every turn: $x = \frac\pi6$ and $x = \pi - \frac\pi6 = \frac{5\pi}{6}$.`,
+        },
+        {
+          kind: 'example',
+          title: 'Two solutions and a full turn',
+          prompt: r`Solve $\cos x = \frac12$ for $0 \le x < 2\pi$, and compute $\sin 390^\circ$.`,
+          steps: [
+            r`$\cos x = \frac12$ in quadrant I: $x = \frac\pi3$ (that is $60^\circ$).`,
+            r`Cosine is also positive in quadrant IV: the mirror angle $x = 2\pi - \frac\pi3 = \frac{5\pi}{3}$.`,
+            r`Two solutions per turn: $\frac\pi3$ and $\frac{5\pi}{3}$.`,
+            r`$390^\circ = 360^\circ + 30^\circ$, a full turn plus $30^\circ$, so $\sin 390^\circ = \sin 30^\circ = \frac12$.`,
+          ],
         },
         {
           kind: 'box',

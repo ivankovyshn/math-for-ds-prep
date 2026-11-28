@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Without constraints',
+      covers: ['1', '2', 'x1', 'x2', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -28,6 +29,16 @@ export default defineLesson({
 • $\nabla f = 0$ and $H$ indefinite: saddle point.
 
 • $H$ only semidefinite: the test is inconclusive ($x^4$ and $-x^4$ both have $f'' = 0$ at 0).`,
+        },
+        {
+          kind: 'example',
+          title: 'A saddle in two variables',
+          prompt: r`The origin is a stationary point of $f(x, y) = x^2 + 4xy + y^2$. What kind?`,
+          steps: [
+            r`Hessian: $H = \begin{pmatrix} 2 & 4 \\ 4 & 2 \end{pmatrix}$.`,
+            r`$\det H = 4 - 16 = -12 < 0$: the eigenvalues have opposite signs (they are 6 and $-2$).`,
+            r`So the origin is a saddle point: along $y = x$ the function rises ($6x^2$), along $y = -x$ it falls ($-2x^2$).`,
+          ],
         },
         {
           kind: 'quiz',
@@ -45,6 +56,7 @@ export default defineLesson({
     },
     {
       title: 'Convex problems',
+      covers: ['3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -71,6 +83,7 @@ export default defineLesson({
     },
     {
       title: 'Inequality constraints: KKT',
+      covers: ['4', '5', '6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -82,6 +95,17 @@ export default defineLesson({
           text: r`The last condition, <i>complementary slackness</i>, says that $\mu = 0$ for an inactive constraint, and $\mu > 0$ is possible only on the boundary. As with Lagrange, $\mu$ measures how much the optimum would improve if the constraint were loosened.`,
         },
         { kind: 'diagram', type: 'kkt', caption: r`Minimise $(x - 3)^2$ subject to $x \le 1$. The free minimum at 3 is infeasible, so the optimum is on the boundary $x^* = 1$, with $\mu = -f'(1) = 4 > 0$.` },
+        {
+          kind: 'example',
+          title: 'Two constraints',
+          prompt: r`Minimise $(x - 3)^2 + (y + 2)^2$ subject to $x \ge 0$ and $y \ge 0$.`,
+          steps: [
+            r`Without constraints the minimum is $(3, -2)$. The constraint $x \ge 0$ holds there; $y \ge 0$ does not.`,
+            r`The function is separable, so handle each coordinate alone: $x = 3$ (constraint inactive), and $y$ as close to $-2$ as allowed: $y = 0$ (constraint active).`,
+            r`Minimiser $(3, 0)$, value $0 + 4 = 4$.`,
+            r`KKT check for $y$, writing the constraint as $h = -y \le 0$: $2(y + 2) + \mu\cdot(-1) = 0$ at $y = 0$ gives $\mu = 4 \ge 0$. ✓ For $x$ the multiplier is 0 (complementary slackness).`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'op-05-q3',

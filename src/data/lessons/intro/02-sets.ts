@@ -47,6 +47,7 @@ $A \subseteq B$ ("$A$ is a subset of $B$") means every element of $A$ is in $B$.
     },
     {
       title: 'Operations',
+      covers: ['1', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -87,6 +88,7 @@ $A \subseteq B$ ("$A$ is a subset of $B$") means every element of $A$ is in $B$.
     },
     {
       title: 'Laws and counting',
+      covers: ['3', '4', '6', 'x4', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -114,6 +116,7 @@ $A \subseteq B$ ("$A$ is a subset of $B$") means every element of $A$ is in $B$.
     },
     {
       title: 'Products and power sets',
+      covers: ['2', '5', 'x2', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -122,6 +125,16 @@ $A \subseteq B$ ("$A$ is a subset of $B$") means every element of $A$ is in $B$.
 The <i>power set</i> $\mathcal{P}(A)$ is the set of all subsets of $A$. Each element is either in a subset or not — two choices per element:`,
         },
         { kind: 'formula', tex: r`|\mathcal{P}(A)| = 2^{|A|}`, caption: r`$\mathcal{P}(\{a, b\}) = \{\varnothing, \{a\}, \{b\}, \{a, b\}\}$: $2^2 = 4$ subsets, including $\varnothing$ and $A$ itself.` },
+        {
+          kind: 'example',
+          title: 'Counting pairs and subsets',
+          prompt: r`Let $A = \{x \in \mathbb{Z} : x^2 \le 4\}$ and $B = \{\text{H}, \text{T}\}$. How many elements does $A \times B$ have, and how many subsets does $B$ have?`,
+          steps: [
+            r`First list $A$: the integers with $x^2 \le 4$ are $-2, -1, 0, 1, 2$, so $|A| = 5$.`,
+            r`$A \times B$ consists of all pairs $(a, b)$: $|A \times B| = |A|\cdot|B| = 5\cdot 2 = 10$.`,
+            r`Subsets of $B$: $\varnothing$, $\{\text{H}\}$, $\{\text{T}\}$ and $\{\text{H}, \text{T}\}$ — that is $2^2 = 4$. Each element is either in or out: two choices per element.`,
+          ],
+        },
       ],
     },
     {

@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'The likelihood',
+      covers: ['x4', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -41,6 +42,7 @@ export default defineLesson({
     },
     {
       title: 'Maximising it',
+      covers: ['1', '6', 'x1'],
       blocks: [
         {
           kind: 'box',
@@ -70,6 +72,7 @@ export default defineLesson({
     },
     {
       title: 'Common MLEs',
+      covers: ['2', '3', '4', '5', 'x2', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -88,6 +91,28 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'MLEs can be biased',
           text: r`The normal MLE of $\sigma^2$ divides by $n$, so it underestimates on average: $E[\hat\sigma^2] = \frac{n-1}{n}\sigma^2$. Maximum likelihood optimises fit to the data, not unbiasedness. Its bias vanishes as $n$ grows.`,
+        },
+        {
+          kind: 'example',
+          title: 'The MLE of a normal variance',
+          prompt: r`The data $2, 4, 9$ are modelled as i.i.d. $N(\mu, \sigma^2)$ with both parameters unknown. Find the MLEs.`,
+          steps: [
+            r`Log-likelihood: $\ell(\mu, v) = -\frac n2\ln(2\pi v) - \frac{1}{2v}\sum(x_i - \mu)^2$, writing $v = \sigma^2$.`,
+            r`$\frac{\partial\ell}{\partial\mu} = \frac1v\sum(x_i - \mu) = 0$ gives $\hat\mu = \bar x = 5$.`,
+            r`Now differentiate with respect to $v$ itself: $\frac{\partial\ell}{\partial v} = -\frac{n}{2v} + \frac{1}{2v^2}\sum(x_i - \hat\mu)^2 = 0$, so $\hat v = \frac1n\sum(x_i - \bar x)^2$.`,
+            r`$\sum(x_i - 5)^2 = 9 + 1 + 16 = 26$, so $\hat\sigma^2 = \frac{26}{3} \approx 8.67$ — divided by $n$, not $n - 1$. The MLE is biased; the sample variance $s^2 = 13$ is not.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'An MLE at the boundary',
+          prompt: r`The data $3, 7, 5$ are i.i.d. Uniform$(0, \theta)$. Find the MLE of $\theta$.`,
+          steps: [
+            r`Each point has density $\frac1\theta$ if $x_i \le \theta$ and 0 otherwise. So $L(\theta) = \theta^{-3}$ for $\theta \ge \max x_i = 7$, and $L(\theta) = 0$ for $\theta < 7$.`,
+            r`Setting a derivative to zero does not work: $\frac{d}{d\theta}\theta^{-3} = -3\theta^{-4}$ is never 0.`,
+            r`$L$ decreases as $\theta$ grows, so take the smallest allowed value: $\hat\theta = \max x_i = 7$.`,
+            r`The maximum sits on the boundary of the allowed region: any smaller $\theta$ would make the observation 7 impossible.`,
+          ],
         },
         {
           kind: 'quiz',

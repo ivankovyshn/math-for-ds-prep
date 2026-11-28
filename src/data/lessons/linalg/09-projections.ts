@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Projecting onto a line',
+      covers: ['1', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -52,6 +53,7 @@ export default defineLesson({
     },
     {
       title: 'Projection matrices',
+      covers: ['2', '4', '6', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -71,6 +73,17 @@ export default defineLesson({
 • $I - P$ projects onto the perpendicular directions: it gives the error $\mathbf{e}$.`,
         },
         {
+          kind: 'example',
+          title: 'Projecting onto a plane',
+          prompt: r`$\mathbf{u}_1 = (1, 1, 0)$ and $\mathbf{u}_2 = (1, -1, 1)$ are orthogonal. Project $\mathbf{b} = (3, 1, 4)$ onto the plane they span.`,
+          steps: [
+            r`With an <i>orthogonal</i> basis the projection onto the plane is the sum of the projections onto the two lines: $\mathbf{p} = \frac{\mathbf{b}\cdot\mathbf{u}_1}{\mathbf{u}_1\cdot\mathbf{u}_1}\mathbf{u}_1 + \frac{\mathbf{b}\cdot\mathbf{u}_2}{\mathbf{u}_2\cdot\mathbf{u}_2}\mathbf{u}_2$.`,
+            r`$\mathbf{b}\cdot\mathbf{u}_1 = 4$ and $\mathbf{u}_1\cdot\mathbf{u}_1 = 2$; $\mathbf{b}\cdot\mathbf{u}_2 = 3 - 1 + 4 = 6$ and $\mathbf{u}_2\cdot\mathbf{u}_2 = 3$.`,
+            r`$\mathbf{p} = 2\,(1, 1, 0) + 2\,(1, -1, 1) = (4, 0, 2)$.`,
+            r`Check: the error $\mathbf{b} - \mathbf{p} = (-1, 1, 2)$ is perpendicular to both: $-1 + 1 + 0 = 0$ and $-1 - 1 + 2 = 0$. ✓ For a non-orthogonal basis this shortcut fails; use $A(A^TA)^{-1}A^T$.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'la-09-q2',
           prompt: r`$P$ projects onto the line through $\mathbf{a} = (1, 2)$. What is $P\mathbf{b}$ for $\mathbf{b} = (2, -1)$?`,
@@ -86,6 +99,7 @@ export default defineLesson({
     },
     {
       title: 'Least squares',
+      covers: ['3', '5', 'x4', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',

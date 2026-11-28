@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Undoing a matrix',
+      covers: ['2', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -44,6 +45,7 @@ export default defineLesson({
     },
     {
       title: 'The 2×2 formula',
+      covers: ['1', 'x1', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -82,6 +84,7 @@ export default defineLesson({
     },
     {
       title: 'Gauss–Jordan for larger matrices',
+      covers: ['5'],
       blocks: [
         {
           kind: 'text',
@@ -91,6 +94,18 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`Why it works: row operations are themselves multiplications by matrices. If their combined effect turns $A$ into $I$, that combined matrix <i>is</i> $A^{-1}$ — and applied to $I$ it gives $A^{-1}$ itself. If a zero row appears on the left, $A$ is singular and there is no inverse.`,
+        },
+        {
+          kind: 'example',
+          title: 'A 3×3 inverse by Gauss–Jordan',
+          prompt: r`Invert $A = \begin{pmatrix} 1 & 2 & 0 \\ 0 & 1 & 3 \\ 0 & 0 & 1 \end{pmatrix}$.`,
+          steps: [
+            r`Write $(A \mid I)$. $A$ is already upper triangular with 1s on the diagonal, so only the entries above the pivots need clearing, from the bottom up.`,
+            r`$R_2 \to R_2 - 3R_3$: row 2 becomes $(0, 1, 0 \mid 0, 1, -3)$.`,
+            r`$R_1 \to R_1 - 2R_2$: row 1 becomes $(1, 0, 0 \mid 1, -2, 6)$.`,
+            r`The left half is $I$, so $A^{-1} = \begin{pmatrix} 1 & -2 & 6 \\ 0 & 1 & -3 \\ 0 & 0 & 1 \end{pmatrix}$. Note the 6: the inverse is not just the entries with flipped signs.`,
+            r`Check one entry of $AA^{-1}$: row 1 of $A$ times column 3 of $A^{-1}$ is $6 - 6 + 0 = 0$. ✓`,
+          ],
         },
         {
           kind: 'quiz',
@@ -108,6 +123,7 @@ export default defineLesson({
     },
     {
       title: 'Using the inverse',
+      covers: ['3', '4', '6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -124,6 +140,17 @@ export default defineLesson({
           variant: 'tip',
           title: 'In practice',
           text: r`Computers rarely form $A^{-1}$ explicitly; solving $A\mathbf{x} = \mathbf{b}$ by elimination is faster and more accurate. The inverse is mainly a thinking tool — and the formula above is what you use by hand.`,
+        },
+        {
+          kind: 'example',
+          title: 'Three uses of the inverse',
+          prompt: r`$A^{-1} = \begin{pmatrix} 2 & -1 \\ -1 & 1 \end{pmatrix}$. Solve $A\mathbf{x} = (3, 1)$, find $\det A$, and undo the product $AB$.`,
+          steps: [
+            r`$\mathbf{x} = A^{-1}\mathbf{b} = (2\cdot3 - 1\cdot1,\ -3 + 1) = (5, -2)$.`,
+            r`$\det(A^{-1}) = 2 - 1 = 1$, and $\det(A^{-1}) = \frac{1}{\det A}$, so $\det A = 1$.`,
+            r`$(AB)^{-1} = B^{-1}A^{-1}$: to undo "first $B$, then $A$", undo $A$ first — like taking off shoes before socks.`,
+            r`And $(A^{-1})^{-1} = A$: undoing the undo gives back the original matrix.`,
+          ],
         },
       ],
     },

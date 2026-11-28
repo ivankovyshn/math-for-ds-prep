@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Convex sets',
+      covers: ['x3'],
       blocks: [
         {
           kind: 'box',
@@ -41,6 +42,7 @@ export default defineLesson({
     },
     {
       title: 'Convex functions',
+      covers: ['2', 'x1'],
       blocks: [
         {
           kind: 'box',
@@ -69,6 +71,7 @@ export default defineLesson({
     },
     {
       title: 'Why convexity matters',
+      covers: ['1', '5', 'x2', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -101,6 +104,7 @@ export default defineLesson({
     },
     {
       title: 'Building convex functions',
+      covers: ['3', '4', '6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -122,6 +126,17 @@ Differences, products and minima of convex functions are in general <i>not</i> c
             r`The Hessian is constant: $H = \begin{pmatrix} 2 & b \\ b & 2 \end{pmatrix}$.`,
             r`It is positive semidefinite when the diagonal is non-negative and $\det H = 4 - b^2 \ge 0$.`,
             r`So $f$ is convex exactly for $|b| \le 2$; for $|b| > 2$ the origin is a saddle.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'Recognising convex functions',
+          prompt: r`Which of $e^{-x} + x^2$, $\sqrt{x^2 + 1}$ and $\sin x$ are convex on $\mathbb{R}$? And what is the minimum of $\max(-2x + 4,\ x + 1)$?`,
+          steps: [
+            r`$e^{-x}$ and $x^2$ are convex, and a sum of convex functions is convex.`,
+            r`$\sqrt{x^2 + 1}$ is the length of the vector $(x, 1)$: a norm of an affine map, hence convex. Directly: $f''(x) = (x^2 + 1)^{-3/2} > 0$.`,
+            r`$\sin x$ has $f''(x) = -\sin x$, which changes sign: not convex.`,
+            r`A maximum of convex functions is convex. Here one line falls and the other rises, so the minimum is where they cross: $-2x + 4 = x + 1$ gives $x = 1$ and the value 2.`,
           ],
         },
       ],

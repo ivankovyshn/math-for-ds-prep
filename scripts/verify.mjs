@@ -2711,6 +2711,24 @@ for (const l of LESSONS) {
     if (!d.title.trim() || !d.source.trim()) fail(l.id, '"Go deeper" link needs a title and a source');
   }
   const quizzes = l.lecture.flatMap((s) => s.blocks.filter((b) => b.kind === 'quiz'));
+  // Every question is taught by exactly one lecture section (its \`covers\`), and that section shows the move:
+  // a worked example, a quick check, or a code block with its output. The Hint links to that section.
+  {
+    const suffixes = [...l.questions, ...l.extra].map((q) => q.id.slice(l.id.length + 1));
+    const taughtBy = new Map();
+    for (const s of l.lecture) {
+      for (const c of s.covers ?? []) {
+        if (!suffixes.includes(c)) fail(l.id, `section "${s.title}" covers ${l.id}-${c}, which is not a question of this lesson`);
+        if (taughtBy.has(c)) fail(l.id, `${l.id}-${c} is covered by two sections`);
+        taughtBy.set(c, s.title);
+      }
+      if (s.covers?.length && !s.blocks.some((b) => b.kind === 'example' || b.kind === 'quiz' || (b.kind === 'code' && b.output))) {
+        fail(l.id, `section "${s.title}" teaches questions but shows no worked example, quick check or code with output`);
+      }
+    }
+    const missing = suffixes.filter((c) => !taughtBy.has(c));
+    if (missing.length) fail(l.id, `no lecture section teaches ${missing.map((c) => `${l.id}-${c}`).join(', ')} (add them to a section's covers)`);
+  }
   if (quizzes.length < 2) fail(l.id, 'a lecture needs at least 2 quick checks');
   for (const s of l.lecture) {
     if (!s.blocks.length) fail(l.id, `section "${s.title}" is empty`);

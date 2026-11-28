@@ -21,6 +21,7 @@ export default defineLesson({
     },
     {
       title: 'Partial derivatives',
+      covers: ['1', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -52,6 +53,7 @@ export default defineLesson({
     },
     {
       title: 'The gradient',
+      covers: ['2', '3', '4', 'x1', 'x3', 'x5'],
       blocks: [
         { kind: 'formula', tex: r`\nabla f = \Big(\frac{\partial f}{\partial x_1}, \dots, \frac{\partial f}{\partial x_n}\Big)` },
         {
@@ -63,6 +65,17 @@ export default defineLesson({
 • It is largest when $\mathbf{u}$ points along $\nabla f$: the gradient is the direction of steepest ascent, and $\|\nabla f\|$ is the steepest slope.
 
 • $-\nabla f$ is the direction of steepest descent; $\nabla f$ is perpendicular to the level curves.`,
+        },
+        {
+          kind: 'example',
+          title: 'Rate of change in a direction',
+          prompt: r`$f(x, y) = x^2y$ at $(1, 2)$. Find the rate of change in the direction $\mathbf{u} = (\frac35, \frac45)$, the largest rate of increase, and the direction of steepest descent.`,
+          steps: [
+            r`$\nabla f = (2xy,\ x^2) = (4, 1)$ at $(1, 2)$.`,
+            r`Directional derivative: $\nabla f\cdot\mathbf{u} = 4\cdot\frac35 + 1\cdot\frac45 = \frac{16}{5} = 3.2$. The direction must be a unit vector.`,
+            r`The largest rate is $\|\nabla f\| = \sqrt{16 + 1} = \sqrt{17} \approx 4.12$, in the direction of $\nabla f$ itself.`,
+            r`Steepest descent points the opposite way: $-\frac{\nabla f}{\|\nabla f\|} = -\frac{1}{\sqrt{17}}(4, 1)$.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -80,6 +93,7 @@ export default defineLesson({
     },
     {
       title: 'Gradient descent',
+      covers: ['5', '6', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +108,16 @@ export default defineLesson({
             r`$\nabla f = (2x, 4y) = (4, 4)$ at $(2, 1)$.`,
             r`$(2, 1) - 0.1\cdot(4, 4) = (1.6, 0.6)$.`,
             r`$f$ dropped from 6 to $2.56 + 0.72 = 3.28$.`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'A critical point',
+          prompt: r`Find the critical point of $f(x, y) = x^2 + xy + y^2 - 3x$.`,
+          steps: [
+            r`Set both partial derivatives to 0: $f_x = 2x + y - 3 = 0$ and $f_y = x + 2y = 0$.`,
+            r`From the second, $x = -2y$; substituting into the first: $-4y + y - 3 = 0$, so $y = -1$ and $x = 2$.`,
+            r`The critical point is $(2, -1)$: there $\nabla f = \mathbf{0}$, and gradient descent would stop.`,
           ],
         },
         {

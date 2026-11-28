@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Joint and marginal distributions',
+      covers: ['1', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -36,15 +37,28 @@ export default defineLesson({
     },
     {
       title: 'Independent random variables',
+      covers: ['2', 'x2', 'x4'],
       blocks: [
         {
           kind: 'text',
           text: r`$X$ and $Y$ are independent when every cell factorises: $p(x, y) = P(X = x)\,P(Y = y)$. Then $E[XY] = E[X]\,E[Y]$, and knowing $X$ tells nothing about $Y$. In the table above, $p(1, 1) = 0.4$ but $P(X = 1)P(Y = 1) = 0.5\cdot0.6 = 0.3$: dependent.`,
         },
+        {
+          kind: 'example',
+          title: 'Conditional and independent',
+          prompt: r`$p(0, 0) = 0.3$, $p(0, 1) = 0.2$, $p(1, 0) = 0.1$, $p(1, 1) = 0.4$. Find $P(Y = 1 \mid X = 1)$ and decide whether $X$ and $Y$ are independent.`,
+          steps: [
+            r`Marginal: $P(X = 1) = 0.1 + 0.4 = 0.5$.`,
+            r`$P(Y = 1 \mid X = 1) = \frac{p(1, 1)}{P(X = 1)} = \frac{0.4}{0.5} = 0.8$.`,
+            r`$P(Y = 1) = 0.2 + 0.4 = 0.6$. Independence would need $p(1, 1) = P(X = 1)\,P(Y = 1) = 0.3$, but it is 0.4: not independent.`,
+            r`For independent variables every cell is the product of the marginals, and then also $E[XY] = E[X]\,E[Y]$.`,
+          ],
+        },
       ],
     },
     {
       title: 'Covariance and correlation',
+      covers: ['3', '5', 'x3'],
       blocks: [
         { kind: 'formula', tex: r`\operatorname{Cov}(X, Y) = E\big[(X - \mu_X)(Y - \mu_Y)\big] = E[XY] - E[X]E[Y], \qquad \rho = \frac{\operatorname{Cov}(X, Y)}{\sigma_X\sigma_Y}` },
         {
@@ -74,12 +88,24 @@ export default defineLesson({
     },
     {
       title: 'Covariance matrices',
+      covers: ['4', '6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
           text: r`For a random vector $\mathbf{X} = (X_1, \dots, X_n)$, the covariance matrix has $\Sigma_{ij} = \operatorname{Cov}(X_i, X_j)$, with variances on the diagonal. It is symmetric and positive semidefinite — exactly the matrices of the spectral-decomposition lesson, and the starting point of PCA.`,
         },
         { kind: 'formula', tex: r`\operatorname{Var}(\mathbf{a}^T\mathbf{X}) = \mathbf{a}^T\Sigma\,\mathbf{a}, \qquad \operatorname{Var}(X + Y) = \operatorname{Var}X + \operatorname{Var}Y + 2\operatorname{Cov}(X, Y)` },
+        {
+          kind: 'example',
+          title: 'Variance of a combination',
+          prompt: r`$\Sigma = \begin{pmatrix} 4 & 1 \\ 1 & 9 \end{pmatrix}$ is the covariance matrix of $(X_1, X_2)$. Find $\operatorname{Var}(2X_1 - X_2)$ and the correlation of $X_1$ and $X_2$.`,
+          steps: [
+            r`With $\mathbf{a} = (2, -1)$: $\operatorname{Var}(\mathbf{a}^T\mathbf{X}) = \mathbf{a}^T\Sigma\mathbf{a}$.`,
+            r`$\Sigma\mathbf{a} = (8 - 1,\ 2 - 9) = (7, -7)$, and $\mathbf{a}\cdot(7, -7) = 14 + 7 = 21$.`,
+            r`Same by the rules: $2^2\operatorname{Var}X_1 + \operatorname{Var}X_2 - 2\cdot2\operatorname{Cov}(X_1, X_2) = 16 + 9 - 4 = 21$.`,
+            r`Correlation: $\rho = \frac{\operatorname{Cov}}{\sigma_1\sigma_2} = \frac{1}{2\cdot 3} = \frac16$.`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'pr-05-q3',

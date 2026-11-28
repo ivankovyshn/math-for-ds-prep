@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Matrix products',
+      covers: ['1', '3', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'Shapes in products',
+      covers: ['2', '6', 'x1', 'x4', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -63,6 +65,7 @@ export default defineLesson({
     },
     {
       title: 'Solving, inverting, measuring',
+      covers: ['4', '5', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',

@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Directions that survive',
+      covers: ['2', 'x2', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -51,6 +52,7 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
     },
     {
       title: 'Finding eigenvalues',
+      covers: ['1', '3', 'x1', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +96,7 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
     },
     {
       title: 'Finding eigenvectors',
+      covers: ['4'],
       blocks: [
         {
           kind: 'text',
@@ -125,6 +128,7 @@ The number $\lambda$ is the corresponding <i>eigenvalue</i>: the stretching fact
     },
     {
       title: 'Why they matter',
+      covers: ['5', '6', 'x6'],
       blocks: [
         {
           kind: 'box',
@@ -148,6 +152,27 @@ $\lambda_1 + \dots + \lambda_n = \operatorname{tr}A$ and $\lambda_1\cdots\lambda
           variant: 'pitfall',
           title: 'Not every matrix has real eigenvalues',
           text: r`A rotation by $90^\circ$ turns every direction, so it has no real eigenvector. Its characteristic equation $\lambda^2 + 1 = 0$ has only complex roots.`,
+        },
+        {
+          kind: 'example',
+          title: 'Powers through diagonalisation',
+          prompt: r`Compute $A^3$ for $A = \begin{pmatrix} 2 & 1 \\ 0 & 3 \end{pmatrix}$ using $A = PDP^{-1}$.`,
+          steps: [
+            r`$A$ is triangular, so its eigenvalues are 2 and 3. For $\lambda = 2$: $(A - 2I)\mathbf{v} = \mathbf{0}$ gives $v_2 = 0$, so $\mathbf{v} = (1, 0)$. For $\lambda = 3$: $-v_1 + v_2 = 0$, so $\mathbf{v} = (1, 1)$.`,
+            r`$P = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$ (eigenvectors as columns), $D = \operatorname{diag}(2, 3)$, $P^{-1} = \begin{pmatrix} 1 & -1 \\ 0 & 1 \end{pmatrix}$.`,
+            r`$A^3 = PD^3P^{-1} = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}\begin{pmatrix} 8 & 0 \\ 0 & 27 \end{pmatrix}\begin{pmatrix} 1 & -1 \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} 8 & 27 \\ 0 & 27 \end{pmatrix}\begin{pmatrix} 1 & -1 \\ 0 & 1 \end{pmatrix}$.`,
+            r`$A^3 = \begin{pmatrix} 8 & 19 \\ 0 & 27 \end{pmatrix}$. Check: $A^2 = \begin{pmatrix} 4 & 5 \\ 0 & 9 \end{pmatrix}$, and $A^2A$ has top-right entry $4\cdot1 + 5\cdot3 = 19$. ✓`,
+          ],
+        },
+        {
+          kind: 'example',
+          title: 'A determinant from eigenvalues',
+          prompt: r`A $2\times2$ matrix $A$ has eigenvalues 2 and 5. Find $\det A$, $\det(A^{-1})$ and $\det(3A^{-1})$.`,
+          steps: [
+            r`$\det A = 2\cdot 5 = 10$, the product of the eigenvalues.`,
+            r`$A^{-1}$ has eigenvalues $\frac12$ and $\frac15$, so $\det(A^{-1}) = \frac1{10}$.`,
+            r`$3A^{-1}$ multiplies both rows of a $2\times2$ matrix by 3: $\det(3A^{-1}) = 3^2\cdot\frac1{10} = \frac9{10}$. For an $n\times n$ matrix the factor is $3^n$.`,
+          ],
         },
       ],
     },

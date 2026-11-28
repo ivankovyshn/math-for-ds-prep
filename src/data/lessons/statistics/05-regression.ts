@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'The model and least squares',
+      covers: ['1', '2', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -38,6 +39,7 @@ export default defineLesson({
     },
     {
       title: 'The formulas',
+      covers: ['3', '4', 'x4', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -47,6 +49,17 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`So the fitted line always passes through the point of means $(\bar x, \bar y)$, and its slope is the correlation rescaled from standard deviations to the units of the data.`,
+        },
+        {
+          kind: 'example',
+          title: 'A slope by hand',
+          prompt: r`Fit a least-squares line to $(0, 1)$, $(1, 3)$, $(2, 2)$, $(3, 6)$.`,
+          steps: [
+            r`Means: $\bar x = 1.5$, $\bar y = 3$. Deviations: $x - \bar x = -1.5, -0.5, 0.5, 1.5$ and $y - \bar y = -2, 0, -1, 3$.`,
+            r`$S_{xy} = 3 + 0 - 0.5 + 4.5 = 7$ and $S_{xx} = 2.25 + 0.25 + 0.25 + 2.25 = 5$.`,
+            r`$\hat\beta_1 = \frac{S_{xy}}{S_{xx}} = 1.4$ and $\hat\beta_0 = \bar y - \hat\beta_1\bar x = 3 - 2.1 = 0.9$.`,
+            r`The line $\hat y = 0.9 + 1.4x$ passes through $(\bar x, \bar y)$, as every least-squares line does.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -64,6 +77,7 @@ export default defineLesson({
     },
     {
       title: 'How good is the fit?',
+      covers: ['5', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -73,6 +87,16 @@ export default defineLesson({
         {
           kind: 'text',
           text: r`$R^2$ is the share of the variance of $y$ explained by the line: 0 means the line is no better than predicting $\bar y$, 1 means a perfect fit. For simple regression $R^2 = r^2$, the squared correlation.`,
+        },
+        {
+          kind: 'example',
+          title: 'R² from the sums',
+          prompt: r`Find $R^2$ for the points $(1, 1)$, $(2, 3)$, $(3, 2)$.`,
+          steps: [
+            r`$\bar x = 2$, $\bar y = 2$. $S_{xx} = 1 + 0 + 1 = 2$, $S_{yy} = 1 + 1 + 0 = 2$, $S_{xy} = (-1)(-1) + 0 + (1)(0) = 1$.`,
+            r`For a line fitted by least squares, $R^2 = r^2 = \frac{S_{xy}^2}{S_{xx}S_{yy}} = \frac{1}{2\cdot 2} = 0.25$.`,
+            r`Check with $1 - \frac{\mathrm{SS}_{\text{res}}}{\mathrm{SS}_{\text{tot}}}$: the line is $\hat y = 1 + 0.5x$, with residuals $-0.5, 1, -0.5$, so $\mathrm{SS}_{\text{res}} = 1.5$ and $1 - \frac{1.5}{2} = 0.25$. ✓`,
+          ],
         },
         {
           kind: 'quiz',
@@ -90,6 +114,7 @@ export default defineLesson({
     },
     {
       title: 'Many features: the matrix form',
+      covers: ['6'],
       blocks: [
         {
           kind: 'text',
@@ -105,6 +130,17 @@ export default defineLesson({
           variant: 'pitfall',
           title: 'What a regression does not tell you',
           text: r`A slope measures association, not causation: ice-cream sales predict drownings because both rise in summer. Predictions far outside the range of the observed $x$ (extrapolation) rely on the line staying straight where there is no data. A few outliers can pull a least-squares line a long way.`,
+        },
+        {
+          kind: 'example',
+          title: 'Solving the normal equations',
+          prompt: r`Data $x = 1, 2, 3$ and $y = 2, 3, 4$, with an intercept column. Solve $X^\top X\hat\beta = X^\top y$.`,
+          steps: [
+            r`$X$ has rows $(1, x_i)$: $X^\top X = \begin{pmatrix} 3 & 6 \\ 6 & 14 \end{pmatrix}$ (count, $\sum x$; $\sum x$, $\sum x^2$) and $X^\top y = (9, 20)$ ($\sum y$, $\sum xy$).`,
+            r`$\det = 42 - 36 = 6$, so $(X^\top X)^{-1} = \frac16\begin{pmatrix} 14 & -6 \\ -6 & 3 \end{pmatrix}$.`,
+            r`$\hat\beta = \frac16(14\cdot9 - 6\cdot20,\ -6\cdot9 + 3\cdot20) = \frac16(6, 6) = (1, 1)$.`,
+            r`The fit is $\hat y = 1 + x$, which passes through all three points exactly.`,
+          ],
         },
       ],
     },

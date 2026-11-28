@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Three ways to measure a vector',
+      covers: ['1', 'x1', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -60,6 +61,7 @@ export default defineLesson({
     },
     {
       title: 'Unit vectors and orthonormal bases',
+      covers: ['2', '3', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -103,6 +105,7 @@ $\mathbf{q}_i \cdot \mathbf{q}_j = 0$ for $i \ne j$, and $\mathbf{q}_i \cdot \ma
     },
     {
       title: 'Orthogonal matrices',
+      covers: ['4', '6', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -147,6 +150,7 @@ $\mathbf{q}_i \cdot \mathbf{q}_j = 0$ for $i \ne j$, and $\mathbf{q}_i \cdot \ma
     },
     {
       title: 'Gram–Schmidt',
+      covers: ['5', 'x5'],
       blocks: [
         {
           kind: 'text',

@@ -48,6 +48,7 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
     },
     {
       title: 'A first proof',
+      covers: ['2', 'x4'],
       blocks: [
         {
           kind: 'example',
@@ -82,6 +83,7 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
     },
     {
       title: 'Sums worth knowing',
+      covers: ['1', '3', '4', 'x1', 'x2', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -107,6 +109,7 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
     },
     {
       title: 'Variations and traps',
+      covers: ['5', '6', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -119,6 +122,17 @@ then $P(n)$ is true for every $n \ge 1$. The assumption "$P(n)$ is true" inside 
           variant: 'pitfall',
           title: '"All horses have the same colour"',
           text: r`Claim: any $n$ horses have the same colour. Base $n = 1$ is true. Step: from $n + 1$ horses, remove one — the other $n$ match; remove another — those $n$ match; the overlap links them. The step silently assumes the two groups overlap, which fails for $n = 1 \to 2$: two horses, two groups of one, no overlap. The step must work for <i>every</i> $n$, including the first.`,
+        },
+        {
+          kind: 'example',
+          title: 'Finding the base case',
+          prompt: r`For which $n$ does $n! > 2^n$ hold? Prove it from that point on.`,
+          steps: [
+            r`Try small $n$: $1! = 1 < 2$, $2! = 2 < 4$, $3! = 6 < 8$, $4! = 24 > 16$. So the base case is $n_0 = 4$.`,
+            r`Step: assume $n! > 2^n$ for some $n \ge 4$. Then $(n + 1)! = (n + 1)\cdot n! > (n + 1)\cdot 2^n$.`,
+            r`Since $n + 1 \ge 2$, this is at least $2\cdot 2^n = 2^{n+1}$. ✓`,
+            r`The step must work for <i>every</i> $n$ from the base case on. The "all horses have the same colour" step needs two overlapping groups, which fails exactly at the move from 1 horse to 2.`,
+          ],
         },
       ],
     },

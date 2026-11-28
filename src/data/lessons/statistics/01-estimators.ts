@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Estimators',
+      covers: ['1', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -37,6 +38,7 @@ export default defineLesson({
     },
     {
       title: 'Bias',
+      covers: ['2', '3', '5', 'x2', 'x3'],
       blocks: [
         {
           kind: 'box',
@@ -54,6 +56,16 @@ export default defineLesson({
           text: r`Dividing by $n - 1$ instead (Bessel's correction) removes the bias. It matters for small samples; for $n = 1000$ the two versions are practically equal.`,
         },
         {
+          kind: 'example',
+          title: 'Computing a bias',
+          prompt: r`$X_1, \dots, X_4$ are i.i.d. with mean $\mu = 3$. What is the bias of $\hat\theta = \frac15(X_1 + X_2 + X_3 + X_4)$ as an estimator of $\mu$?`,
+          steps: [
+            r`Expectation is linear: $E[\hat\theta] = \frac15(\mu + \mu + \mu + \mu) = \frac45\mu = 2.4$.`,
+            r`Bias $= E[\hat\theta] - \mu = 2.4 - 3 = -0.6$.`,
+            r`Dividing by 5 instead of by the number of terms, 4, shrinks the estimate: it is biased towards 0.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'st-01-q2',
           prompt: r`What is the sample variance $s^2$ of the data $1,\ 3,\ 5$?`,
@@ -69,6 +81,7 @@ export default defineLesson({
     },
     {
       title: 'Variance and mean squared error',
+      covers: ['4', 'x4', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -97,6 +110,7 @@ export default defineLesson({
     },
     {
       title: 'Trading bias for variance',
+      covers: ['6'],
       blocks: [
         {
           kind: 'text',

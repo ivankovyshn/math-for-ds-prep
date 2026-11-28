@@ -50,6 +50,7 @@ All the information sits in the numbers, so we drop the letters and keep a table
     },
     {
       title: 'Row operations',
+      covers: ['2'],
       blocks: [
         {
           kind: 'text',
@@ -69,10 +70,21 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
           title: 'Never multiply a row by zero',
           text: r`$R_2 \to 0\cdot R_2$ turns an equation into $0 = 0$ and throws its information away. The new system has more solutions than the old one, and the step cannot be undone.`,
         },
+        {
+          kind: 'example',
+          title: 'Legal moves, and one that is not',
+          prompt: r`Start from $x + 2y = 5$, $3x + 4y = 11$. Which of these keep the solutions: swapping the rows, $R_2 \to R_2 - 3R_1$, or multiplying $R_2$ by 0?`,
+          steps: [
+            r`Swapping only reorders the equations: same solutions.`,
+            r`$R_2 - 3R_1$ gives $-2y = -4$. It follows from both equations and can be undone by adding $3R_1$ back: same solutions, here $y = 2$, $x = 1$.`,
+            r`Multiplying $R_2$ by 0 turns it into $0 = 0$. Its information is lost: every point of the line $x + 2y = 5$ would now "solve" the system. The step cannot be undone, so it is not allowed.`,
+          ],
+        },
       ],
     },
     {
       title: 'Gaussian elimination',
+      covers: ['3', 'x1', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -112,6 +124,7 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
     },
     {
       title: 'Reading the echelon form',
+      covers: ['1', '4', '5', '6', 'x2', 'x3', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -132,6 +145,17 @@ Each move can be undone (swap back, scale by $1/c$, subtract $cR_j$ again), so n
           variant: 'pitfall',
           title: 'A zero row is harmless',
           text: r`A row $(0\ 0\ 0 \mid 0)$ says $0 = 0$. It is not a contradiction — it only shows that one equation was a combination of the others.`,
+        },
+        {
+          kind: 'example',
+          title: 'A parameter that decides',
+          prompt: r`For which $k$ does $x + 2y = 3$, $2x + 4y = k$ have no solution, and for which infinitely many?`,
+          steps: [
+            r`$R_2 - 2R_1$ gives the row $(0\ 0 \mid k - 6)$.`,
+            r`If $k \ne 6$ that row says $0 = k - 6 \ne 0$: a contradiction, so there is no solution.`,
+            r`If $k = 6$ it says $0 = 0$: one real equation in two unknowns, so $y$ is free and there are infinitely many solutions.`,
+            r`Free variables = unknowns − pivots $= 2 - 1 = 1$.`,
+          ],
         },
         {
           kind: 'quiz',

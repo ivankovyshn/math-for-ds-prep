@@ -15,6 +15,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Linear independence',
+      covers: ['2', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -59,6 +60,7 @@ Otherwise they are <i>dependent</i>: some non-trivial combination gives $\mathbf
     },
     {
       title: 'Basis and dimension',
+      covers: ['6', 'x3', 'x6'],
       blocks: [
         {
           kind: 'box',
@@ -99,6 +101,7 @@ The unique coefficients are the <i>coordinates</i> of a vector in that basis. Ch
     },
     {
       title: 'Rank',
+      covers: ['1', '3', '4', '5', 'x2', 'x4', 'x5'],
       blocks: [
         {
           kind: 'box',
@@ -123,6 +126,17 @@ $\operatorname{rank}A + \dim(\text{null space}) = n$ (the number of columns).`,
           variant: 'pitfall',
           title: 'Rank is not the size',
           text: r`A $3\times4$ matrix has rank <i>at most</i> 3, but it can be less. Proportional or combined rows lower it. Always reduce before counting.`,
+        },
+        {
+          kind: 'example',
+          title: 'Rank, nullity and a determinant test',
+          prompt: r`Find the rank of $A = \begin{pmatrix} 1 & 2 & 1 \\ 2 & 4 & 3 \\ 3 & 6 & 4 \end{pmatrix}$ and the dimension of the solutions of $A\mathbf{x} = \mathbf{0}$. Then: for which $k$ are $(1, 0, 0)$, $(0, 1, 1)$ and $(1, k, 3)$ dependent?`,
+          steps: [
+            r`Eliminate: $R_2 - 2R_1 = (0, 0, 1)$ and $R_3 - 3R_1 = (0, 0, 1)$; then $R_3 - R_2 = (0, 0, 0)$.`,
+            r`Two non-zero rows remain: rank 2. The columns span a plane, a space of dimension 2.`,
+            r`Rank–nullity: $3$ columns $- 2 = 1$, so the solutions of $A\mathbf{x} = \mathbf{0}$ form a line.`,
+            r`Three vectors in $\mathbb{R}^3$ are dependent exactly when the matrix with them as columns has determinant 0: $\det\begin{pmatrix} 1 & 0 & 1 \\ 0 & 1 & k \\ 0 & 1 & 3 \end{pmatrix} = 3 - k$, which is 0 for $k = 3$.`,
+          ],
         },
         {
           kind: 'quiz',

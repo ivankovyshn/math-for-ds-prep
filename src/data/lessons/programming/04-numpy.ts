@@ -14,6 +14,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Arrays',
+      covers: ['1', 'x2', 'x3', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -41,6 +42,7 @@ export default defineLesson({
     },
     {
       title: 'Shapes',
+      covers: ['2', 'x1'],
       blocks: [
         {
           kind: 'text',
@@ -67,6 +69,7 @@ export default defineLesson({
     },
     {
       title: 'Aggregating along an axis',
+      covers: ['3', '6', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +97,7 @@ export default defineLesson({
     },
     {
       title: 'Broadcasting and masks',
+      covers: ['4', '5', 'x5'],
       blocks: [
         {
           kind: 'text',

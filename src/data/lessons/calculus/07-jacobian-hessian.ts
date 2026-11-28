@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'The Jacobian',
+      covers: ['1', '3', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -43,6 +44,7 @@ export default defineLesson({
     },
     {
       title: 'Chain rule as matrix multiplication',
+      covers: ['x6'],
       blocks: [
         { kind: 'formula', tex: r`J_{F\circ G}(\mathbf{x}) = J_F\big(G(\mathbf{x})\big)\;J_G(\mathbf{x})` },
         {
@@ -55,10 +57,21 @@ export default defineLesson({
           title: 'The Jacobian determinant',
           text: r`For $F: \mathbb{R}^n \to \mathbb{R}^n$, $|\det J_F|$ is the local factor by which $F$ scales areas (volumes). It appears in changes of variables, $dx\,dy = r\,dr\,d\theta$ for polar coordinates, and in normalising flows, which transform probability densities.`,
         },
+        {
+          kind: 'example',
+          title: 'How a map scales areas',
+          prompt: r`$F(x, y) = (2x + y,\ x + 3y)$. By what factor does $F$ scale areas?`,
+          steps: [
+            r`$J_F = \begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}$: for a linear map the Jacobian is its matrix, the same at every point.`,
+            r`$\det J_F = 6 - 1 = 5$.`,
+            r`Every small square becomes a parallelogram 5 times as large. A negative determinant would also flip orientation; its absolute value is the scale factor.`,
+          ],
+        },
       ],
     },
     {
       title: 'The Hessian',
+      covers: ['2', '6', 'x2', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -94,6 +107,7 @@ export default defineLesson({
     },
     {
       title: 'The second-derivative test',
+      covers: ['4', '5', 'x4'],
       blocks: [
         {
           kind: 'box',
@@ -128,6 +142,16 @@ In 2D: $\det H > 0$ and $f_{xx} > 0$ means minimum; $\det H > 0$, $f_{xx} < 0$ m
           variant: 'tip',
           title: "Newton's method and convexity",
           text: r`Newton's method jumps to the minimum of the local quadratic model: $\mathbf{x} \leftarrow \mathbf{x} - H^{-1}\nabla f(\mathbf{x})$. For a quadratic $f$ it lands on the minimum in one step. A function whose Hessian is positive semidefinite everywhere is <i>convex</i> — every critical point is a global minimum, the topic of the Optimization module.`,
+        },
+        {
+          kind: 'example',
+          title: 'Newton on a quadratic',
+          prompt: r`$f(\mathbf{x}) = \frac12\mathbf{x}^TA\mathbf{x} - \mathbf{b}^T\mathbf{x}$ with $A = \begin{pmatrix} 2 & 0 \\ 0 & 4 \end{pmatrix}$ and $\mathbf{b} = (2, 4)$. Take one Newton step from $\mathbf{x}_0 = (5, -3)$.`,
+          steps: [
+            r`Gradient $\nabla f = A\mathbf{x} - \mathbf{b}$, Hessian $H = A$. At $\mathbf{x}_0$: $\nabla f = (10 - 2,\ -12 - 4) = (8, -16)$.`,
+            r`Newton step: $\mathbf{x}_1 = \mathbf{x}_0 - H^{-1}\nabla f = (5, -3) - \big(\frac82,\ \frac{-16}{4}\big) = (1, 1)$.`,
+            r`That is exactly $A^{-1}\mathbf{b} = (1, 1)$, where $\nabla f = \mathbf{0}$: on a quadratic, one Newton step reaches the minimum from any start.`,
+          ],
         },
       ],
     },

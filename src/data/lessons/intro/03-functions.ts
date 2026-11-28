@@ -28,6 +28,7 @@ A function is more than a formula: the domain and codomain are part of it. $x \m
     },
     {
       title: 'Injective, surjective, bijective',
+      covers: ['2', '6', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -45,6 +46,23 @@ A function is more than a formula: the domain and codomain are part of it. $x \m
           text: r`For $f: \mathbb{R} \to \mathbb{R}$ draw horizontal lines $y = c$. Injective: every line meets the graph <i>at most</i> once. Surjective: every line meets it <i>at least</i> once. So $x^3$ is bijective, $x^2$ is neither, $e^x$ is injective but not surjective onto $\mathbb{R}$.`,
         },
         {
+          kind: 'box',
+          variant: 'definition',
+          title: 'Strictly increasing',
+          text: r`$f$ is <i>strictly increasing</i> if $x_1 < x_2$ always gives $f(x_1) < f(x_2)$, and <i>strictly decreasing</i> if it always gives $f(x_1) > f(x_2)$. Such a function never takes a value twice, so it is injective.`,
+        },
+        {
+          kind: 'example',
+          title: 'Does it take every value?',
+          prompt: r`Which of $f(x) = x^3 - x$, $g(x) = e^x$ and $h(x) = x^2$ are surjective as functions $\mathbb{R} \to \mathbb{R}$?`,
+          steps: [
+            r`A continuous function — a graph drawn without lifting the pen — that is below a level $y$ somewhere and above it somewhere else must cross it in between. This is the <i>intermediate value theorem</i>.`,
+            r`$f(x) = x^3 - x$ runs from $-\infty$ on the left to $+\infty$ on the right, so it crosses every level $y$: surjective. It is not injective: $f(-1) = f(0) = f(1) = 0$.`,
+            r`$g(x) = e^x$ is always positive: it never takes the value $-1$. Not surjective onto $\mathbb{R}$.`,
+            r`$h(x) = x^2 \ge 0$ misses every negative number: not surjective.`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'ml-03-q1',
           prompt: r`Which function $\mathbb{R} \to \mathbb{R}$ is <i>not</i> injective?`,
@@ -60,6 +78,7 @@ A function is more than a formula: the domain and codomain are part of it. $x \m
     },
     {
       title: 'Composition and inverse',
+      covers: ['1', '3', 'x1', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -84,6 +103,17 @@ A function has an <i>inverse</i> $f^{-1}: Y \to X$ with $f^{-1}(f(x)) = x$ and $
           text: r`$f^{-1}(x)$ undoes $f$; $\dfrac{1}{f(x)}$ is the reciprocal of its value. For $f(x) = 2x + 3$: $f^{-1}(x) = \frac{x - 3}{2}$, while $\frac{1}{f(x)} = \frac{1}{2x + 3}$.`,
         },
         {
+          kind: 'example',
+          title: 'Inverting a fraction',
+          prompt: r`Find the inverse of $f(x) = \dfrac{x + 1}{x - 2}$ (for $x \ne 2$).`,
+          steps: [
+            r`Write $y = \dfrac{x + 1}{x - 2}$ and solve for $x$. Multiply by $x - 2$: $y(x - 2) = x + 1$.`,
+            r`Expand and collect the $x$ terms on one side: $yx - x = 1 + 2y$, so $x(y - 1) = 2y + 1$.`,
+            r`$x = \dfrac{2y + 1}{y - 1}$. Renaming the variable: $f^{-1}(x) = \dfrac{2x + 1}{x - 1}$, for $x \ne 1$.`,
+            r`Check at one point: $f(3) = \frac41 = 4$ and $f^{-1}(4) = \frac93 = 3$. ✓`,
+          ],
+        },
+        {
           kind: 'quiz',
           id: 'ml-03-q2',
           prompt: r`Let $f(x) = x + 1$ and $g(x) = x^2$. What is $(f \circ g)(2)$?`,
@@ -99,6 +129,7 @@ A function has an <i>inverse</i> $f^{-1}: Y \to X$ with $f^{-1}(f(x)) = x$ and $
     },
     {
       title: 'Counting functions',
+      covers: ['4', '5', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -107,6 +138,22 @@ A function has an <i>inverse</i> $f^{-1}: Y \to X$ with $f^{-1}(f(x)) = x$ and $
 For an injective function each new input must avoid the outputs already used: $n$ choices, then $n - 1$, …, down to $n - k + 1$.`,
         },
         { kind: 'formula', tex: r`\#\{f: X \to Y\} = n^{k}, \qquad \#\{\text{injective } f\} = n(n-1)\cdots(n-k+1) = \frac{n!}{(n-k)!}` },
+        {
+          kind: 'box',
+          variant: 'definition',
+          title: 'Factorial',
+          text: r`$n! = n\cdot(n - 1)\cdots 2\cdot 1$ is the number of ways to put $n$ objects in order, with $0! = 1$. So $4! = 24$, and $\frac{n!}{(n - k)!} = n(n - 1)\cdots(n - k + 1)$ is the product of the first $k$ of these factors.`,
+        },
+        {
+          kind: 'example',
+          title: 'Counting injections',
+          prompt: r`How many injective functions are there from $\{1, 2\}$ to $\{a, b, c, d\}$?`,
+          steps: [
+            r`$f(1)$ can be any of the 4 letters.`,
+            r`$f(2)$ must differ from $f(1)$: 3 choices are left.`,
+            r`$4\cdot 3 = 12 = \frac{4!}{(4 - 2)!}$. Without the injectivity condition there would be $4^2 = 16$ functions.`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'ml-03-q3',

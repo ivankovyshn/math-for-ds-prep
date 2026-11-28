@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Random numbers',
+      covers: ['2', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -41,6 +42,7 @@ export default defineLesson({
     },
     {
       title: 'Monte Carlo estimates',
+      covers: ['1', '4', 'x2', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -67,6 +69,7 @@ export default defineLesson({
     },
     {
       title: 'How accurate is a simulation?',
+      covers: ['3', '5', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -88,6 +91,7 @@ export default defineLesson({
     },
     {
       title: 'Beyond probabilities',
+      covers: ['6', 'x5'],
       blocks: [
         {
           kind: 'text',
@@ -106,6 +110,17 @@ export default defineLesson({
           variant: 'tip',
           title: 'Check formulas by simulation',
           text: r`Whenever you derive a probability or an expectation, a ten-line simulation is a cheap independent check. If the two disagree by much more than the standard error, one of them is wrong.`,
+        },
+        {
+          kind: 'example',
+          title: 'Spread of a random walk, and a bootstrap sample',
+          prompt: r`(a) A walk takes 100 independent steps of $+1$ or $-1$ with equal chance. What is the standard deviation of where it ends? (b) A bootstrap sample draws 6 values with replacement from 6 data points. What is the chance that a given point is never drawn?`,
+          steps: [
+            r`(a) One step has mean 0 and variance 1. Variances of independent steps add: the end point has variance 100.`,
+            r`Standard deviation $\sqrt{100} = 10$ — it grows like $\sqrt n$, not like $n$.`,
+            r`(b) Each draw misses the point with probability $\frac56$, independently: $\big(\frac56\big)^6 \approx 0.335$.`,
+            r`For large $n$, $(1 - \frac1n)^n \to e^{-1} \approx 0.37$: about a third of the data is left out of every bootstrap sample.`,
+          ],
         },
       ],
     },

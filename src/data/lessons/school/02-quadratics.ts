@@ -11,6 +11,7 @@ export default defineLesson({
   lecture: [
     {
       title: 'Solving by factoring',
+      covers: ['1', 'x1', 'x3', 'x4'],
       blocks: [
         {
           kind: 'text',
@@ -44,6 +45,7 @@ For $x^2 + bx + c$ look for two numbers whose <i>product is $c$</i> and whose <i
     },
     {
       title: 'The quadratic formula',
+      covers: ['3'],
       blocks: [
         {
           kind: 'text',
@@ -73,6 +75,7 @@ For $x^2 + bx + c$ look for two numbers whose <i>product is $c$</i> and whose <i
     },
     {
       title: 'The discriminant',
+      covers: ['2', '5', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -110,6 +113,7 @@ For $x^2 + bx + c$ look for two numbers whose <i>product is $c$</i> and whose <i
     },
     {
       title: 'The parabola',
+      covers: ['4', '6', 'x5', 'x6'],
       blocks: [
         {
           kind: 'text',
@@ -126,6 +130,17 @@ For $x^2 + bx + c$ look for two numbers whose <i>product is $c$</i> and whose <i
           variant: 'tip',
           title: 'Where this comes back',
           text: r`Minimising a quadratic is the simplest optimisation problem: the minimum of $x^2 - 6x + 1$ is at $x = 3$. And the eigenvalues of a $2\times2$ matrix are the roots of $\lambda^2 - (\text{trace})\lambda + \det = 0$: by Vieta, they add up to the trace and multiply to the determinant.`,
+        },
+        {
+          kind: 'example',
+          title: 'Vieta without solving',
+          prompt: r`The roots of $x^2 - 5x + 3 = 0$ are $x_1$ and $x_2$. Find $x_1 + x_2$, $x_1x_2$ and $x_1^2 + x_2^2$ without computing the roots.`,
+          steps: [
+            r`Here $a = 1$, $b = -5$, $c = 3$: $x_1 + x_2 = -\frac ba = 5$ and $x_1x_2 = \frac ca = 3$.`,
+            r`Square the sum: $(x_1 + x_2)^2 = x_1^2 + 2x_1x_2 + x_2^2$.`,
+            r`So $x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1x_2 = 25 - 6 = 19$.`,
+            r`The roots themselves, $\frac{5 \pm \sqrt{13}}{2}$, were never needed.`,
+          ],
         },
         {
           kind: 'quiz',
