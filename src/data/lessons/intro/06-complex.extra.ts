@@ -1,10 +1,7 @@
 import type { QuestionTemplate } from '../../../types.ts';
 import { r } from '../define.ts';
-import { allDistinct, paren } from '../gen.ts';
+import { allDistinct, frac, paren } from '../gen.ts';
 import { TRIPLES, cx, mul } from './06-complex.practice.ts';
-
-const cos = (d: number) => Math.round(Math.cos((d * Math.PI) / 180));
-const sin = (d: number) => Math.round(Math.sin((d * Math.PI) / 180));
 
 /** Extra practice (Practice 2): gentler questions on the same ideas, with new numbers every time. */
 export const extra: QuestionTemplate[] = [
@@ -143,37 +140,29 @@ export const extra: QuestionTemplate[] = [
     },
   },
   {
-    id: 'ml-06-x6',
+    id: 'ml-06-x7',
     difficulty: 2,
-    keyConceptTag: 'Multiplying in polar form',
+    keyConceptTag: 'The reciprocal',
     correctOptionId: 'a',
     generate: (g) => {
-      // The angles add up to 90° or 270°, so the product lies on the imaginary axis.
-      const { r1, r2, t1, t2 } = g.until(
-        () => {
-          const total = g.pick([90, 270]);
-          const t1 = total === 90 ? 10 * g.int(1, 8) : 10 * g.int(10, 17);
-          return { r1: g.int(2, 4), r2: g.int(2, 4), t1, t2: total - t1 };
-        },
-        ({ r1, r2, t1, t2 }) => t1 !== t2 && t2 > 0 && t2 < 180 && r1 + r2 !== r1 * r2,
-      );
-      const s = (t1 + t2) % 360;
-      const ans = [r1 * r2 * cos(s), r1 * r2 * sin(s)];
-      const conj = [ans[0], -ans[1]];
-      const polar = (rr: number, t: number) => r`${rr}(\cos ${t}^\circ + i \sin ${t}^\circ)`;
+      const [a, b] = g.until(() => g.pick([[1, 1], [1, -1], [2, 1], [2, -1], [1, 2], [1, -2], [3, 1], [1, 3], [3, -1], [2, 3]]), ([a, b]) => allDistinct([[a, -b], [1 / a, 1 / b]]));
+      const n = a * a + b * b;
+      const fr = (re: number, im: number) => r`\dfrac{${cx(re, im)}}{${n}}`;
+      const recip = (x: number) => frac(1, x);
+      const comp = `${recip(a)} ${b < 0 ? '-' : '+'} ${Math.abs(b) === 1 ? '' : recip(Math.abs(b))}i`;
       return {
-        params: { r1, r2, t1, t2 },
-        promptText: r`Let $z = ${polar(r1, t1)}$ and $w = ${polar(r2, t2)}$. What is $zw$?`,
+        params: { a, b },
+        promptText: r`What is $\dfrac{1}{${cx(a, b)}}$?`,
         options: [
-          { id: 'a', label: `$${cx(ans[0], ans[1])}$`, value: ans },
-          { id: 'b', label: `$${r1 * r2}$`, value: [r1 * r2, 0], trapExplanation: r`The moduli multiply to ${r1 * r2}, but the angles add to $${t1 + t2}^\circ$, which is not on the positive real axis.` },
-          { id: 'c', label: `$${cx((r1 + r2) * cos(s), (r1 + r2) * sin(s))}$`, value: [(r1 + r2) * cos(s), (r1 + r2) * sin(s)], trapExplanation: r`Moduli multiply, they do not add: $${r1} \cdot ${r2} = ${r1 * r2}$.` },
-          { id: 'd', label: `$${cx(conj[0], conj[1])}$`, value: conj, trapExplanation: r`That is the point at angle $-${s}^\circ$. Both angles are positive, so their sum $${s}^\circ$ is too.` },
+          { id: 'a', label: `$${fr(a, -b)}$`, value: [a / n, -b / n] },
+          { id: 'b', label: `$${cx(a, -b)}$`, value: [a, -b], trapExplanation: r`Multiplying the top by the conjugate also multiplies the bottom: $(${cx(a, b)})(${cx(a, -b)}) = ${n}$, which still has to be divided out.` },
+          { id: 'c', label: `$${comp}$`, value: [1 / a, 1 / b], trapExplanation: r`$\frac{1}{a + bi}$ is not $\frac1a + \frac1b i$: a fraction cannot be split over a sum in the denominator.` },
+          { id: 'd', label: `$${fr(a, b)}$`, value: [a / n, b / n], trapExplanation: r`The numerator is the conjugate $${cx(a, -b)}$, not the number itself: the imaginary part changes sign.` },
         ],
         stepByStepSolution: [
-          r`In polar form: multiply the moduli and add the angles.`,
-          r`$|zw| = ${r1} \cdot ${r2} = ${r1 * r2}$, $\arg(zw) = ${t1}^\circ + ${t2}^\circ = ${t1 + t2}^\circ$.`,
-          r`$${polar(r1 * r2, t1 + t2)} = ${cx(ans[0], ans[1])}$.`,
+          r`Multiply top and bottom by the conjugate of the denominator, $${cx(a, -b)}$.`,
+          r`Bottom: $(${cx(a, b)})(${cx(a, -b)}) = ${a * a} + ${b * b} = ${n}$. Top: $${cx(a, -b)}$.`,
+          r`$\dfrac{1}{${cx(a, b)}} = ${fr(a, -b)}$.`,
         ],
       };
     },

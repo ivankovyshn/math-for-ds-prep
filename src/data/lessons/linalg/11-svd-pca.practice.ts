@@ -60,38 +60,6 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'la-11-2',
-    difficulty: 1,
-    keyConceptTag: 'Explained variance',
-    correctOptionId: 'a',
-    generate: (g) => {
-      const S = g.pick([20, 25, 50, 100]);
-      const ls = g.until(
-        () => {
-          const three = [g.int(1, S), g.int(1, S), g.int(1, S)];
-          return desc([...three, S - three[0] - three[1] - three[2]]);
-        },
-        (ls) => ls[3] > 0 && new Set(ls).size === 4 && allDistinct([ls[0] + ls[1], ls[0], ls[2] + ls[3], S / 2]),
-      );
-      const pct = (x: number) => (100 * x) / S;
-      return {
-        params: { ls },
-        promptText: r`The covariance matrix of a centred dataset with 4 features has eigenvalues $${ls.join(', ')}$. What share of the total variance do the first two principal components explain?`,
-        options: [
-          { id: 'a', label: r`$${pct(ls[0] + ls[1])}\%$`, value: pct(ls[0] + ls[1]) },
-          { id: 'b', label: r`$${pct(ls[0])}\%$`, value: pct(ls[0]), trapExplanation: r`That is PC1 alone. Add PC2's share, $\frac{${ls[1]}}{${S}}$.` },
-          { id: 'c', label: r`$${pct(ls[2] + ls[3])}\%$`, value: pct(ls[2] + ls[3]), trapExplanation: r`That is the share left out: the last two components.` },
-          { id: 'd', label: r`$50\%$`, value: 50, trapExplanation: r`Two of four components do not explain half the variance: each carries its own eigenvalue's share.` },
-        ],
-        stepByStepSolution: [
-          r`Total variance $= \lambda_1 + \dots + \lambda_4 = ${ls.join(' + ')} = ${S}$.`,
-          r`The first two components carry $${ls[0]} + ${ls[1]} = ${ls[0] + ls[1]}$.`,
-          r`Share: $\frac{${ls[0] + ls[1]}}{${S}} = ${pct(ls[0] + ls[1])}\%$.`,
-        ],
-      };
-    },
-  },
-  {
     id: 'la-11-3',
     difficulty: 2,
     keyConceptTag: 'Singular values from AᵀA',
@@ -182,34 +150,60 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'la-11-6',
-    difficulty: 3,
-    keyConceptTag: 'Explained variance from a covariance matrix',
+    id: 'la-11-7',
+    difficulty: 1,
+    keyConceptTag: 'Frobenius norm from singular values',
     correctOptionId: 'a',
     generate: (g) => {
-      const { A: C, l1, l2 } = g.until(
-        () => symFrom(g, [[1, 1], [1, -1], [1, 2], [2, 1], [1, -2], [2, -1]], [1, 2], [1, 2, 3, 4]),
-        ({ A, l1, l2 }) => {
-          const t = l1 + l2;
-          return A.flat().every((x) => Math.abs(x) <= 12) && allDistinct([l1 / t, Math.max(A[0][0], A[1][1]) / t, l2 / t, l1 / l2]);
-        },
-      );
-      const t = l1 + l2;
-      const d = l1 * l2;
-      const top = Math.max(C[0][0], C[1][1]);
+      const [a, b, c] = g.pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [7, 24, 25], [9, 12, 15]]);
       return {
-        params: { C },
-        promptText: r`A centred dataset with two features has covariance matrix $C = ${pm(C)}$. What share of the total variance does the first principal component explain?`,
+        params: { s: [b, a] },
+        promptText: r`A matrix $A$ has singular values $${b}$ and $${a}$. What is $\|A\|_F$?`,
         options: [
-          { id: 'a', label: share(l1, t), value: l1 / t },
-          { id: 'b', label: share(top, t), value: top / t, trapExplanation: r`${top} is the variance of the more spread-out original feature. PC1 is a mix of both features and captures more: the largest eigenvalue, ${l1}.` },
-          { id: 'c', label: share(l2, t), value: l2 / t, trapExplanation: r`That is PC2, the direction with the <i>smallest</i> variance.` },
-          { id: 'd', label: `$${frac(l1, l2)}$`, value: l1 / l2, trapExplanation: r`$\frac{\lambda_1}{\lambda_2}$ compares PC1 with PC2. The share divides by the total, $\lambda_1 + \lambda_2 = ${t}$.` },
+          { id: 'a', label: `$${c}$`, value: c },
+          { id: 'b', label: `$${a + b}$`, value: a + b, trapExplanation: r`$\|A\|_F^2$ is the sum of the <i>squared</i> singular values; the root comes at the end.` },
+          { id: 'c', label: `$${b}$`, value: b, trapExplanation: r`That is $\sigma_1 = \|A\|_2$, the spectral norm. The Frobenius norm uses all singular values.` },
+          { id: 'd', label: `$${c * c}$`, value: c * c, trapExplanation: r`That is $\|A\|_F^2$; take the square root.` },
         ],
         stepByStepSolution: [
-          r`Total variance $= \operatorname{tr}C = ${t}$; $\det C = ${d}$.`,
-          r`Eigenvalues: $${charPoly(t, d)} = 0$ gives $\lambda_1 = ${l1}$, $\lambda_2 = ${l2}$.`,
-          r`PC1 explains $\frac{\lambda_1}{\lambda_1 + \lambda_2} = \frac{${l1}}{${t}}$: ${share(l1, t)}.`,
+          r`$\|A\|_F^2 = \sigma_1^2 + \sigma_2^2$, the same as the sum of the squared entries.`,
+          r`$${b}^2 + ${a}^2 = ${b * b} + ${a * a} = ${c * c}$.`,
+          r`$\|A\|_F = \sqrt{${c * c}} = ${c}$.`,
+        ],
+      };
+    },
+  },
+  {
+    id: 'la-11-8',
+    difficulty: 3,
+    keyConceptTag: 'Singular values of a symmetric matrix',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const { A, l1, l2 } = g.until(
+        () => symFrom(g),
+        ({ A, l1, l2 }) =>
+          l1 * l2 < 0 && l1 + l2 !== 0 && A.flat().every((x) => Math.abs(x) <= 9) &&
+          allDistinct([desc([Math.abs(l1), Math.abs(l2)]), desc([l1, l2]), desc([l1 * l1, l2 * l2]), desc([Math.abs(A[0][0]), Math.abs(A[1][1])])]),
+      );
+      const sv = desc([Math.abs(l1), Math.abs(l2)]);
+      const ev = desc([l1, l2]);
+      const sq = desc([l1 * l1, l2 * l2]);
+      const dg = desc([Math.abs(A[0][0]), Math.abs(A[1][1])]);
+      const t = A[0][0] + A[1][1];
+      const d = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+      return {
+        params: { A },
+        promptText: r`$A = ${pm(A)}$ is symmetric. What are its singular values?`,
+        options: [
+          { id: 'a', label: listTex(sv), value: sv },
+          { id: 'b', label: listTex(ev), value: ev, trapExplanation: r`Those are the eigenvalues. Singular values are never negative: for a symmetric matrix they are $|\lambda|$.` },
+          { id: 'c', label: listTex(sq), value: sq, trapExplanation: r`Those are the eigenvalues of $A^TA = A^2$. Singular values are their square roots.` },
+          { id: 'd', label: listTex(dg), value: dg, trapExplanation: r`The diagonal entries give the singular values only for a diagonal matrix. Here the off-diagonal ${A[0][1]} matters.` },
+        ],
+        stepByStepSolution: [
+          r`$A$ is symmetric, so $A^TA = A^2$ has eigenvalues $\lambda^2$, and the singular values are $|\lambda|$.`,
+          r`Eigenvalues of $A$: trace $${t}$, determinant $${d}$, so $\lambda^2 ${t < 0 ? '+' : '-'} ${Math.abs(t)}\lambda ${d < 0 ? '-' : '+'} ${Math.abs(d)} = 0$ gives $\lambda = ${ev[0]}$ and $\lambda = ${ev[1]}$.`,
+          r`Singular values: $${sv[0]}$ and $${sv[1]}$.`,
         ],
       };
     },

@@ -1,9 +1,6 @@
 import type { QuestionTemplate } from '../../../types.ts';
 import { r } from '../define.ts';
-import { allDistinct, coef, frac, paren, poly } from '../gen.ts';
-
-/** Sigmoid values with small denominators (1/2 is left out: there p(1 − p) = p²). */
-const PROBS = [[1, 4], [3, 4], [1, 5], [4, 5], [1, 3], [2, 3], [1, 10], [9, 10], [2, 5], [3, 5]];
+import { allDistinct, coef, dec, frac, paren, poly } from '../gen.ts';
 
 export const practice: QuestionTemplate[] = [
   {
@@ -77,114 +74,115 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'ca-02-3',
+    id: 'ca-02-7',
     difficulty: 2,
-    keyConceptTag: 'The product rule',
+    keyConceptTag: 'The table of derivatives',
     correctOptionId: 'a',
     generate: (g) => {
-      const { p, q, k } = g.until(
-        () => ({ p: g.nonzero(-5, 5), q: g.nonzero(-5, 5), k: g.nonzero(-3, 3) }),
-        ({ p, q, k }) => allDistinct([p + q * k, p * k, p, q * k]),
-      );
+      const a = g.nonzero(-5, 5);
+      const b = g.nonzero(-5, 5);
+      const eT = (k: number, c: number) => `${coef(k)}e${c === 0 ? '' : ` ${c < 0 ? '-' : '+'} ${Math.abs(c)}`}`;
       return {
-        params: { p, q, k },
-        promptText: r`Find $f'(0)$ for $f(x) = (${poly([q, p])})\,e^{${coef(k)}x}$.`,
+        params: { a, b },
+        promptText: r`Find $f'(1)$ for $f(x) = ${coef(a)}e^x ${b < 0 ? '-' : '+'} ${coef(Math.abs(b))}\ln x$.`,
         options: [
-          { id: 'a', label: `$${p + q * k}$`, value: p + q * k },
-          { id: 'b', label: `$${p * k}$`, value: p * k, trapExplanation: r`$(uv)' \ne u'v'$. The product rule is $u'v + uv'$.` },
-          { id: 'c', label: `$${p}$`, value: p, trapExplanation: r`That is only $u'v$. The second term $uv' = (${poly([q, p])})\cdot ${k}e^{${coef(k)}x}$ gives $${q * k}$ at $x = 0$.` },
-          { id: 'd', label: `$${q * k}$`, value: q * k, trapExplanation: r`That is only $uv'$; add $u'v = ${p}\cdot e^0 = ${p}$.` },
+          { id: 'a', label: `$${eT(a, b)}$`, value: a * Math.E + b },
+          { id: 'b', label: `$${eT(a, 0)}$`, value: a * Math.E, trapExplanation: r`$\ln 1 = 0$ is the value of $\ln x$ at 1. Its derivative $\frac1x$ is $1$ there, so that term contributes $${b}$.` },
+          { id: 'c', label: `$${a + b}$`, value: a + b, trapExplanation: r`The power rule is for $x^n$. $(e^x)' = e^x$, which is $e$ at $x = 1$, not 1.` },
+          { id: 'd', label: `$${eT(a, -b)}$`, value: a * Math.E - b, trapExplanation: r`$(\ln x)' = +\frac1x$; the minus sign belongs to $(\cos x)' = -\sin x$.` },
         ],
         stepByStepSolution: [
-          r`$u = ${poly([q, p])}$, $u' = ${p}$; $v = e^{${coef(k)}x}$, $v' = ${k}e^{${coef(k)}x}$ (chain rule).`,
-          r`$f'(x) = ${p}e^{${coef(k)}x} + (${poly([q, p])})\cdot${paren(k)}e^{${coef(k)}x}$.`,
-          r`At $x = 0$, $e^0 = 1$: $f'(0) = ${p} + ${paren(q)}\cdot${paren(k)} = ${p + q * k}$.`,
+          r`From the table: $(e^x)' = e^x$ and $(\ln x)' = \frac1x$.`,
+          r`$f'(x) = ${coef(a)}e^x ${b < 0 ? '-' : '+'} \frac{${Math.abs(b)}}{x}$.`,
+          r`$f'(1) = ${eT(a, b)} \approx ${dec(Math.round((a * Math.E + b) * 100) / 100)}$.`,
         ],
       };
     },
   },
   {
-    id: 'ca-02-4',
+    id: 'ca-02-8',
     difficulty: 2,
-    keyConceptTag: 'The chain rule',
+    keyConceptTag: 'Velocity is the derivative',
     correctOptionId: 'a',
     generate: (g) => {
-      const { p, q, n, a } = g.until(
-        () => ({ p: g.pick([-3, -2, 2, 3]), q: g.int(-4, 4), n: g.int(2, 4), a: g.int(-2, 2) }),
-        ({ p, q, n, a }) => {
-          const u = p * a + q;
-          return u !== 0 && Math.abs(u) <= 3 && allDistinct([n * p * u ** (n - 1), n * u ** (n - 1), u ** n, n * p * u ** n]);
+      const { p, q, t0 } = g.until(
+        () => ({ p: g.nonzero(-5, 5), q: g.nonzero(-9, 9), t0: g.int(1, 4) }),
+        ({ p, q, t0 }) => allDistinct([2 * p * t0 + q, p * t0 + q, p * t0 * t0 + q * t0, 2 * p * t0]),
+      );
+      const v = 2 * p * t0 + q;
+      return {
+        params: { p, q, t0 },
+        promptText: r`A particle moves along a line; its position at time $t$ is $s(t) = ${poly([0, q, p], 't')}$. What is its velocity at $t = ${t0}$?`,
+        options: [
+          { id: 'a', label: `$${v}$`, value: v },
+          { id: 'b', label: `$${p * t0 + q}$`, value: p * t0 + q, trapExplanation: r`That is the average velocity $\frac{s(${t0}) - s(0)}{${t0}}$ over the whole interval: the slope of a secant, not of the tangent.` },
+          { id: 'c', label: `$${p * t0 * t0 + q * t0}$`, value: p * t0 * t0 + q * t0, trapExplanation: r`That is the position $s(${t0})$. Velocity is its rate of change, $s'(${t0})$.` },
+          { id: 'd', label: `$${2 * p * t0}$`, value: 2 * p * t0, trapExplanation: r`The term $${coef(q)}t$ has derivative $${q}$; it was dropped.` },
+        ],
+        stepByStepSolution: [
+          r`Velocity is the derivative of position: $v(t) = s'(t)$.`,
+          r`$s'(t) = ${poly([q, 2 * p], 't')}$.`,
+          r`$s'(${t0}) = ${2 * p}\cdot${t0} ${q < 0 ? '-' : '+'} ${Math.abs(q)} = ${v}$.`,
+        ],
+      };
+    },
+  },
+  {
+    id: 'ca-02-9',
+    difficulty: 3,
+    keyConceptTag: 'A tangent with a given slope',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const { x0, k, c, m } = g.until(
+        () => ({ x0: g.nonzero(-3, 3), k: 2 * g.nonzero(-3, 3), c: g.int(-5, 5), m: g.int(-6, 6) }),
+        ({ x0, k, c, m }) => {
+          const b = k - 2 * x0;
+          return allDistinct([x0, x0 - k / 2, 2 * x0]) && k * x0 + m !== x0 * x0 + b * x0 + c;
         },
       );
-      const u = p * a + q;
+      const b = k - 2 * x0;
+      const f = (x: number) => x * x + b * x + c;
+      const v = -b / 2;
+      const pt = (x: number, y: number) => `$(${x}, ${y})$`;
       return {
-        params: { p, q, n, a },
-        promptText: r`Find $f'(${a})$ for $f(x) = (${poly([q, p])})^{${n}}$.`,
+        params: { b, c, k },
+        promptText: r`At which point of the curve $y = ${poly([c, b, 1])}$ is the tangent parallel to the line $y = ${poly([m, k])}$?`,
         options: [
-          { id: 'a', label: `$${n * p * u ** (n - 1)}$`, value: n * p * u ** (n - 1) },
-          { id: 'b', label: `$${n * u ** (n - 1)}$`, value: n * u ** (n - 1), trapExplanation: r`The chain rule multiplies by the derivative of the inside, $(${poly([q, p])})' = ${p}$.` },
-          { id: 'c', label: `$${u ** n}$`, value: u ** n, trapExplanation: r`That is $f(${a})$, the value, not the derivative.` },
-          { id: 'd', label: `$${n * p * u ** n}$`, value: n * p * u ** n, trapExplanation: r`The power drops by one: $(u^{${n}})' = ${n}u^{${n - 1}}\,u'$.` },
+          { id: 'a', label: pt(x0, f(x0)), value: [x0, f(x0)] },
+          { id: 'b', label: pt(x0, k * x0 + m), value: [x0, k * x0 + m], trapExplanation: r`$x = ${x0}$ is right, but the point must lie on the curve: its height is $f(${x0}) = ${f(x0)}$, not the line's height.` },
+          { id: 'c', label: pt(v, f(v)), value: [v, f(v)], trapExplanation: r`At $x = ${v}$ the derivative is 0: that is the vertex, where the tangent is horizontal. We need slope $${k}$.` },
+          { id: 'd', label: pt(2 * x0, f(2 * x0)), value: [2 * x0, f(2 * x0)], trapExplanation: r`$f'(x) = ${poly([b, 2])} = ${k}$ gives $2x = ${2 * x0}$; divide by 2 as well.` },
         ],
         stepByStepSolution: [
-          r`Outer $u^{${n}}$, inner $u = ${poly([q, p])}$ with $u' = ${p}$: $f'(x) = ${n}(${poly([q, p])})^{${n - 1}}\cdot${paren(p)}$.`,
-          r`At $x = ${a}$: $u = ${u}$.`,
-          r`$f'(${a}) = ${n}\cdot${paren(u)}^{${n - 1}}\cdot${paren(p)} = ${n * p * u ** (n - 1)}$.`,
+          r`Parallel lines have equal slopes, so the tangent needs slope $${k}$: solve $f'(x) = ${k}$.`,
+          r`$f'(x) = ${poly([b, 2])} = ${k}$ gives $x = ${x0}$.`,
+          r`The point is on the curve: $y = f(${x0}) = ${f(x0)}$, so it is $(${x0}, ${f(x0)})$.`,
         ],
       };
     },
   },
   {
-    id: 'ca-02-5',
+    id: 'ca-02-10',
     difficulty: 3,
-    keyConceptTag: 'Finding a local minimum',
+    keyConceptTag: 'Where a cubic decreases',
     correctOptionId: 'a',
     generate: (g) => {
-      const { r1, r2, c0 } = g.until(
-        () => ({ r1: g.int(-4, 3), r2: g.int(-3, 4), c0: g.int(-5, 5) }),
-        ({ r1, r2 }) => r1 < r2 && (r1 + r2) % 2 === 0 && allDistinct([r2, r1, (r1 + r2) / 2, -r2]),
-      );
-      const B = (-3 * (r1 + r2)) / 2;
-      const C = 3 * r1 * r2;
-      const cs = [c0, C, B, 1];
+      const a = g.int(1, 4);
+      const c = g.int(-6, 6);
+      const cs = [c, -3 * a * a, 0, 1];
       return {
-        params: { cs },
-        promptText: r`At which $x$ does $f(x) = ${poly(cs)}$ have a local minimum?`,
+        params: { cs, a },
+        promptText: r`On which set is $f(x) = ${poly(cs)}$ decreasing?`,
         options: [
-          { id: 'a', label: `$x = ${r2}$`, value: r2 },
-          { id: 'b', label: `$x = ${r1}$`, value: r1, trapExplanation: r`$f'(${r1}) = 0$ too, but $f''(${r1}) = ${6 * r1 + 2 * B} < 0$: that is a local <i>maximum</i>.` },
-          { id: 'c', label: `$x = ${(r1 + r2) / 2}$`, value: (r1 + r2) / 2, trapExplanation: r`There $f''(x) = 0$: the inflection point, where the curve switches from bending down to bending up.` },
-          { id: 'd', label: `$x = ${-r2}$`, value: -r2, trapExplanation: r`Sign slip when reading the root off a factor: $x - ${paren(r2)} = 0$ gives $x = ${r2}$.` },
+          { id: 'a', label: `$${-a} < x < ${a}$` },
+          { id: 'b', label: `$x < ${-a}$ or $x > ${a}$`, trapExplanation: r`There $f'(x) > 0$: both brackets of $3(x - ${a})(x + ${a})$ have the same sign, so $f$ increases.` },
+          { id: 'c', label: `$x < ${a}$`, trapExplanation: r`$f'$ has two zeros, $\pm ${a}$. For $x < ${-a}$ both brackets of $3(x - ${a})(x + ${a})$ are negative, so $f' > 0$ there.` },
+          { id: 'd', label: `$0 < x < ${a}$`, trapExplanation: r`$f$ also decreases for negative $x$ down to $${-a}$: for example $f'(${dec(-a / 2)}) = ${dec(3 * (a / 2) ** 2 - 3 * a * a)} < 0$.` },
         ],
         stepByStepSolution: [
-          r`$f'(x) = ${poly([C, 2 * B, 3])} = 3(${poly([-r1, 1])})(${poly([-r2, 1])})$: critical points $x = ${r1}$ and $x = ${r2}$.`,
-          r`$f''(x) = ${poly([2 * B, 6])}$: $f''(${r1}) = ${6 * r1 + 2 * B}$ and $f''(${r2}) = ${6 * r2 + 2 * B}$.`,
-          r`$f''(${r2}) > 0$, so the local minimum is at $x = ${r2}$.`,
-        ],
-      };
-    },
-  },
-  {
-    id: 'ca-02-6',
-    difficulty: 3,
-    keyConceptTag: 'Derivative of the sigmoid',
-    correctOptionId: 'a',
-    generate: (g) => {
-      const [pn, pd] = g.pick(PROBS);
-      const qn = pd - pn;
-      return {
-        params: { pn, pd },
-        promptText: r`The sigmoid $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ satisfies $\sigma(x_0) = ${frac(pn, pd)}$. What is $\sigma'(x_0)$?`,
-        options: [
-          { id: 'a', label: `$${frac(pn * qn, pd * pd)}$`, value: (pn * qn) / (pd * pd) },
-          { id: 'b', label: `$${frac(pn, pd)}$`, value: pn / pd, trapExplanation: r`Only $e^x$ is its own derivative. For the sigmoid $\sigma' = \sigma(1 - \sigma)$.` },
-          { id: 'c', label: `$${frac(qn, pd)}$`, value: qn / pd, trapExplanation: r`That is $1 - \sigma(x_0)$, only one of the two factors of $\sigma'$.` },
-          { id: 'd', label: `$${frac(pn * pn, pd * pd)}$`, value: (pn * pn) / (pd * pd), trapExplanation: r`$\sigma^2$ comes from the quotient rule, but the full derivative simplifies to $\sigma(1 - \sigma)$.` },
-        ],
-        stepByStepSolution: [
-          r`$\sigma'(x) = \dfrac{e^{-x}}{(1 + e^{-x})^2} = \dfrac{1}{1 + e^{-x}}\cdot\dfrac{e^{-x}}{1 + e^{-x}} = \sigma(x)\big(1 - \sigma(x)\big)$.`,
-          r`$\sigma(x_0) = ${frac(pn, pd)}$ and $1 - \sigma(x_0) = ${frac(qn, pd)}$.`,
-          r`$\sigma'(x_0) = ${frac(pn, pd)}\cdot${frac(qn, pd)} = ${frac(pn * qn, pd * pd)}$.`,
+          r`$f'(x) = ${poly([-3 * a * a, 0, 3])} = 3(x - ${a})(x + ${a})$.`,
+          r`Between $${-a}$ and $${a}$ the brackets have opposite signs, so $f' < 0$; outside they have the same sign, so $f' > 0$.`,
+          r`$f$ decreases exactly on $${-a} < x < ${a}$.`,
         ],
       };
     },

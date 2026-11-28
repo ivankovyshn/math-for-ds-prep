@@ -111,60 +111,68 @@ export const extra: QuestionTemplate[] = [
     },
   },
   {
-    id: 'la-11-x5',
-    difficulty: 2,
-    keyConceptTag: 'The first principal component',
+    id: 'la-11-x7',
+    difficulty: 1,
+    keyConceptTag: 'Error of a low-rank approximation',
     correctOptionId: 'a',
     generate: (g) => {
-      const { A: C, v, w, l1, l2 } = g.until(
-        () => symFrom(g, [[1, 2], [2, 1], [1, -2], [2, -1], [1, 3], [3, 1], [1, -3], [3, -1]], [1, 2], [1, 2, 3]),
-        ({ A }) => A.flat().every((x) => Math.abs(x) <= 12),
+      const { s, k } = g.until(
+        () => ({ s: desc([g.int(9, 14), g.int(5, 8), g.int(2, 4), 1]), k: g.int(1, 2) }),
+        ({ s, k }) => {
+          const dropped = s.slice(k);
+          return new Set(s).size === 4 && allDistinct([s[k], s[k - 1], Math.sqrt(dropped.reduce((t, x) => t + x * x, 0)), dropped.reduce((t, x) => t + x, 0)]);
+        },
       );
-      const sg = g.pick([1, -1]);
-      const a = v.map((x) => sg * x);
-      const axis = C[0][0] >= C[1][1] ? [1, 0] : [0, 1];
-      const swapped = [v[1], v[0]];
+      const dropped = s.slice(k);
+      const sq = dropped.reduce((t, x) => t + x * x, 0);
+      const sum = dropped.reduce((t, x) => t + x, 0);
       return {
-        params: { C, a, b: w, c: axis, d: swapped },
-        promptText: r`A centred dataset has covariance matrix $C = ${pm(C)}$. Which vector points along its first principal component?`,
+        params: { s, k },
+        promptText: r`$A$ has singular values $${s.join(', ')}$, and $A_${k}$ is its best rank-${k} approximation. What is $\|A - A_${k}\|_2$?`,
         options: [
-          { id: 'a', label: `$${vec(a)}$` },
-          { id: 'b', label: `$${vec(w)}$`, trapExplanation: r`$C${vec(w)} = ${l2}\cdot${vec(w)}$: that is PC2, the direction of <i>least</i> variance.` },
-          { id: 'c', label: `$${vec(axis)}$`, trapExplanation: r`That is the feature with the larger variance (${Math.max(C[0][0], C[1][1])}). With non-zero covariance, PC1 is a mix of both features.` },
-          { id: 'd', label: `$${vec(swapped)}$`, trapExplanation: r`$C${vec(swapped)} = (${C[0][0] * swapped[0] + C[0][1] * swapped[1]}, ${C[1][0] * swapped[0] + C[1][1] * swapped[1]})$ is not a multiple of $${vec(swapped)}$: not an eigenvector.` },
+          { id: 'a', label: `$${s[k]}$`, value: s[k] },
+          { id: 'b', label: `$${s[k - 1]}$`, value: s[k - 1], trapExplanation: r`$\sigma_${k} = ${s[k - 1]}$ is the last singular value that $A_${k}$ keeps. The error starts with the first one it drops.` },
+          { id: 'c', label: `$${sqrtTex(sq)}$`, value: Math.sqrt(sq), trapExplanation: r`That is the Frobenius error $\sqrt{${dropped.map((x) => `${x}^2`).join(' + ')}}$. In the 2-norm only the largest dropped value counts.` },
+          { id: 'd', label: `$${sum}$`, value: sum, trapExplanation: r`Dropped singular values do not add up: $\|A - A_k\|_2$ is the largest stretch of the error, which is the largest dropped value.` },
         ],
         stepByStepSolution: [
-          r`PC1 is the eigenvector of $C$ with the largest eigenvalue.`,
-          r`$C${vec(a)} = (${C[0][0] * a[0] + C[0][1] * a[1]}, ${C[1][0] * a[0] + C[1][1] * a[1]}) = ${l1}\cdot${vec(a)}$ and $C${vec(w)} = ${l2}\cdot${vec(w)}$.`,
-          r`$${l1} > ${l2}$, so PC1 points along $${vec(a)}$ (the sign does not matter).`,
+          r`$A - A_${k}$ consists of the dropped terms, with singular values $${dropped.join(', ')}$.`,
+          r`The 2-norm of a matrix is its largest singular value.`,
+          r`$\|A - A_${k}\|_2 = \sigma_${k + 1} = ${s[k]}$.`,
         ],
       };
     },
   },
   {
-    id: 'la-11-x6',
+    id: 'la-11-x8',
     difficulty: 2,
-    keyConceptTag: 'Explained variance from singular values',
+    keyConceptTag: 'Squared singular values add up to the squared entries',
     correctOptionId: 'a',
     generate: (g) => {
-      const [s1, s2] = g.until(
-        () => desc([g.int(1, 6), g.int(1, 6)]),
-        ([p, q]) => p > q && allDistinct([(p * p) / (p * p + q * q), p / (p + q), (q * q) / (p * p + q * q), (p * p) / (q * q)]),
+      const A = g.until(
+        () => [[g.int(-4, 4), g.int(-4, 4)], [g.int(-4, 4), g.int(-4, 4)]],
+        (A) => {
+          const f = A.flat();
+          const d = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+          return d !== 0 && allDistinct([f.reduce((t, x) => t + x * x, 0), Math.abs(d), f.reduce((t, x) => t + x, 0), (A[0][0] + A[1][1]) ** 2]);
+        },
       );
-      const tot = s1 * s1 + s2 * s2;
+      const f = A.flat();
+      const ss = f.reduce((t, x) => t + x * x, 0);
+      const d = A[0][0] * A[1][1] - A[0][1] * A[1][0];
       return {
-        params: { s: [s1, s2] },
-        promptText: r`The centred data matrix $X$ (two features) has singular values $${s1}$ and $${s2}$. What share of the variance does PC1 explain?`,
+        params: { A },
+        promptText: r`Without computing them, find $\sigma_1^2 + \sigma_2^2$ for $A = ${pm(A)}$.`,
         options: [
-          { id: 'a', label: share(s1 * s1, tot), value: (s1 * s1) / tot },
-          { id: 'b', label: share(s1, s1 + s2), value: s1 / (s1 + s2), trapExplanation: r`Variance goes with $\sigma_i^2$, not $\sigma_i$: $\lambda_i = \frac{\sigma_i^2}{n - 1}$.` },
-          { id: 'c', label: share(s2 * s2, tot), value: (s2 * s2) / tot, trapExplanation: r`That is PC2's share, from the smaller singular value.` },
-          { id: 'd', label: `$${frac(s1 * s1, s2 * s2)}$`, value: (s1 * s1) / (s2 * s2), trapExplanation: r`That compares PC1 with PC2. A share divides by the total $\sigma_1^2 + \sigma_2^2 = ${tot}$.` },
+          { id: 'a', label: `$${ss}$`, value: ss },
+          { id: 'b', label: `$${Math.abs(d)}$`, value: Math.abs(d), trapExplanation: r`$|\det A| = ${Math.abs(d)}$ is the <i>product</i> $\sigma_1\sigma_2$, not the sum of squares.` },
+          { id: 'c', label: `$${f.reduce((t, x) => t + x, 0)}$`, value: f.reduce((t, x) => t + x, 0), trapExplanation: r`The entries must be squared before adding: $\sum a_{ij}^2$.` },
+          { id: 'd', label: `$${(A[0][0] + A[1][1]) ** 2}$`, value: (A[0][0] + A[1][1]) ** 2, trapExplanation: r`The trace is about eigenvalues, not singular values. $\sigma_1^2 + \sigma_2^2 = \|A\|_F^2$, the sum of all squared entries.` },
         ],
         stepByStepSolution: [
-          r`The variance along PC $i$ is $\lambda_i = \frac{\sigma_i^2}{n - 1}$; the factor $\frac{1}{n-1}$ cancels in a share.`,
-          r`$\sigma_1^2 = ${s1 * s1}$, $\sigma_2^2 = ${s2 * s2}$, total ${tot}.`,
-          r`PC1: $\frac{${s1 * s1}}{${tot}}$, i.e. ${share(s1 * s1, tot)}.`,
+          r`$\sigma_1^2 + \sigma_2^2 = \|A\|_F^2 = \sum a_{ij}^2$.`,
+          r`$${f.map((x) => (x < 0 ? `(${x})^2` : `${x}^2`)).join(' + ')}$.`,
+          r`$= ${ss}$.`,
         ],
       };
     },

@@ -4,6 +4,7 @@ import l03 from './03-functions.ts';
 import l04 from './04-proofs.ts';
 import l05 from './05-induction.ts';
 import l06 from './06-complex.ts';
+import l07 from './07-polar.ts';
 
 /** Mathematical Language, in path order. */
-export const intro = [l01, l02, l03, l04, l05, l06];
+export const intro = [l01, l02, l03, l04, l05, l06, l07];

@@ -9,6 +9,7 @@ import l08 from './08-norms.ts';
 import l09 from './09-projections.ts';
 import l10 from './10-spectral.ts';
 import l11 from './11-svd-pca.ts';
+import l12 from './12-pca.ts';
 
 /** Linear Algebra, in path order. */
-export const linalg = [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11];
+export const linalg = [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12];

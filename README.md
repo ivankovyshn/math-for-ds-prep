@@ -9,8 +9,12 @@ Runs entirely in the browser. No account, no server, no API keys.
 ## What is inside
 
 - **Modules** — School Maths Toolkit (Module 0), Mathematical Language, Linear Algebra, Calculus & Analysis,
-  Probability, Statistics, Optimization, Programming Foundations: 51 lessons in all (5, 6, 11, 7, 6, 5, 5 and 6).
+  Probability, Statistics, Optimization, Programming Foundations: 56 lessons in all (5, 7, 12, 9, 7, 5, 5 and 6).
   A module without lessons would show its `planned` titles as "coming soon".
+- **Split lessons** — five topics that were too much for one lecture are taught in two lessons each: complex
+  arithmetic / polar form and roots, the derivative / differentiation rules and extrema, the integral / integration
+  techniques, discrete / continuous distributions, SVD / PCA. Saved progress is upgraded once: a learner who passed
+  the original lesson keeps both halves, and saved mistakes follow the questions that moved (`src/data/renamed.ts`).
 - **Module 0, School Maths Toolkit** — fractions and powers, quadratic equations, lines and 2×2 systems,
   exponentials and logarithms, trigonometry. Its lessons are all open from the start (`freeOrder`), and lectures
   that rely on them show "Uses school maths" links at the top (`src/data/prereqs.ts`).

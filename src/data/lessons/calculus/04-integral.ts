@@ -6,11 +6,16 @@ export default defineLesson({
   id: 'ca-04',
   moduleId: 'calculus',
   title: 'The integral',
-  blurb: 'Accumulated area, and the theorem that links it to derivatives',
+  blurb: 'Area, antiderivatives and the fundamental theorem of calculus',
   minutes: 8,
+  deeper: [
+    { title: 'Integration and the fundamental theorem of calculus', url: 'https://www.3blue1brown.com/lessons/integration', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Computing definite integrals', url: 'https://tutorial.math.lamar.edu/Classes/CalcI/ComputingDefiniteIntegrals.aspx', source: "Paul's Online Math Notes (Lamar University) · notes with many worked examples" },
+  ],
   lecture: [
     {
       title: 'Area as a limit of sums',
+      covers: ['x3'],
       blocks: [
         {
           kind: 'text',
@@ -34,6 +39,7 @@ export default defineLesson({
     },
     {
       title: 'Antiderivatives',
+      covers: ['2', 'x2'],
       blocks: [
         {
           kind: 'text',
@@ -41,6 +47,17 @@ export default defineLesson({
         },
         { kind: 'formula', tex: r`\int x^n\,dx = \frac{x^{n+1}}{n + 1} + C \ (n \ne -1), \quad \int \frac{dx}{x} = \ln|x| + C, \quad \int e^{kx}dx = \frac{e^{kx}}{k} + C` },
         { kind: 'formula', tex: r`\int \sin x\,dx = -\cos x + C, \qquad \int \cos x\,dx = \sin x + C` },
+        {
+          kind: 'example',
+          title: 'Three antiderivatives, each checked',
+          prompt: r`Find $\int 8x^3\,dx$, $\int e^{3x}\,dx$ and $\int \frac4x\,dx$.`,
+          steps: [
+            r`$\int 8x^3\,dx = 8\cdot\frac{x^4}{4} + C = 2x^4 + C$. Check: $(2x^4)' = 8x^3$. ✓`,
+            r`$\int e^{3x}\,dx = \frac13 e^{3x} + C$. Check: $\big(\frac13 e^{3x}\big)' = \frac13\cdot 3e^{3x} = e^{3x}$. ✓ The chain rule's factor 3 has to be divided out.`,
+            r`$\int \frac4x\,dx = 4\ln|x| + C$. Check: $(4\ln x)' = \frac4x$. ✓`,
+            r`Raise the exponent, then divide by the new exponent; for $e^{kx}$ divide by $k$. Differentiating the answer is always a quick check.`,
+          ],
+        },
         {
           kind: 'quiz',
           id: 'ca-04-q2',
@@ -57,6 +74,7 @@ export default defineLesson({
     },
     {
       title: 'The fundamental theorem',
+      covers: ['1', '3', '8', 'x1', 'x4', 'x5'],
       blocks: [
         {
           kind: 'box',
@@ -79,8 +97,15 @@ And conversely, $\frac{d}{dx}\int_a^x f(t)\,dt = f(x)$: accumulating and differe
           ],
         },
         {
-          kind: 'text',
-          text: r`The integral is a <i>signed</i> area: parts of the graph below the $x$-axis count negatively. $\int_{-1}^{1} x\,dx = 0$, although the shaded region is not empty.`,
+          kind: 'example',
+          title: 'A rate adds up to a total',
+          prompt: r`Water flows into a tank at $r(t) = 2t + 3$ litres per minute. How much flows in between $t = 1$ and $t = 4$? And if $V(x) = \int_0^x r(t)\,dt$, what is $V'(2)$?`,
+          steps: [
+            r`The integral of a rate is the total change: $\int_1^4 (2t + 3)\,dt$.`,
+            r`Antiderivative $t^2 + 3t$: $(16 + 12) - (1 + 3) = 24$ litres.`,
+            r`Not $r(4) - r(1) = 6$: that is how much the <i>rate</i> changed, not how much water arrived.`,
+            r`Second half of the theorem: $V'(x) = r(x)$, so $V'(2) = r(2) = 7$ — no integration needed.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -97,23 +122,26 @@ And conversely, $\frac{d}{dx}\int_a^x f(t)\,dt = f(x)$: accumulating and differe
       ],
     },
     {
-      title: 'Techniques and uses',
+      title: 'Signed area and average value',
+      covers: ['4', '7', 'x6'],
       blocks: [
         {
           kind: 'text',
-          text: r`<i>Substitution</i> is the chain rule backwards: if the integrand has the form $f(g(x))\,g'(x)$, set $u = g(x)$. For example $\int 2x\,e^{x^2}dx = \int e^u\,du = e^{x^2} + C$. <i>Integration by parts</i>, $\int u\,dv = uv - \int v\,du$, is the product rule backwards.`,
+          text: r`The integral is a <i>signed</i> area: parts of the graph below the $x$-axis count negatively. $\int_{-1}^{1} x\,dx = 0$, although the region between the graph and the axis is not empty. For the <i>total</i> area, split the interval where $f$ changes sign and add the pieces as positive numbers.
+
+The <i>average value</i> of $f$ on $[a, b]$ is the height of the rectangle with the same area:`,
         },
+        { kind: 'formula', tex: r`\bar f = \frac{1}{b - a}\int_a^b f(x)\,dx` },
         {
-          kind: 'box',
-          variant: 'tip',
-          title: 'Integrals in probability',
-          text: r`A probability density $p(x)$ has $\int p(x)\,dx = 1$; probabilities are areas, $P(a \le X \le b) = \int_a^b p(x)\,dx$; and the mean is $E[X] = \int x\,p(x)\,dx$. The average value of $f$ on $[a, b]$ is $\frac{1}{b - a}\int_a^b f(x)\,dx$.`,
-        },
-        {
-          kind: 'box',
-          variant: 'pitfall',
-          title: 'Watch for blow-ups',
-          text: r`$\int_{-1}^{1}\frac{dx}{x^2}$ is not $\big[-\frac1x\big]_{-1}^{1} = -2$: the integrand is infinite at 0 and the area there is unbounded. The fundamental theorem needs $f$ continuous on the whole interval.`,
+          kind: 'example',
+          title: 'Signed, total and average',
+          prompt: r`For $f(x) = x - 1$ on $[0, 3]$, find the integral, the total area between the graph and the axis, and the average value.`,
+          steps: [
+            r`Integral: $\big[\frac{x^2}{2} - x\big]_0^3 = \frac92 - 3 = \frac32$.`,
+            r`$f$ is negative on $[0, 1]$ and positive on $[1, 3]$. Pieces: $\int_0^1 (x - 1)\,dx = -\frac12$ and $\int_1^3 (x - 1)\,dx = 2$.`,
+            r`Total area $= \frac12 + 2 = \frac52$; the signed integral $\frac32$ is smaller because the part below the axis was subtracted.`,
+            r`Average value $= \frac{1}{3 - 0}\cdot\frac32 = \frac12$.`,
+          ],
         },
       ],
     },
@@ -124,13 +152,13 @@ And conversely, $\frac{d}{dx}\int_a^x f(t)\,dt = f(x)$: accumulating and differe
           kind: 'text',
           text: r`• $\int_a^b f\,dx$ = limit of Riemann sums = signed area.
 
-• Antiderivative: $F' = f$; $\int x^n dx = \frac{x^{n+1}}{n+1} + C$.
+• Antiderivative: $F' = f$; $\int x^n dx = \frac{x^{n+1}}{n+1} + C$, $\int e^{kx}dx = \frac{e^{kx}}{k} + C$.
 
-• $\int_a^b f(x)\,dx = F(b) - F(a)$, and $\frac{d}{dx}\int_a^x f = f(x)$.
+• $\int_a^b f(x)\,dx = F(b) - F(a)$: the integral of a rate is the total change. And $\frac{d}{dx}\int_a^x f = f(x)$.
 
-• Substitution reverses the chain rule.
+• Total area: split where $f$ changes sign. Average value: $\frac{1}{b - a}\int_a^b f$.
 
-• Densities integrate to 1; $E[X] = \int x\,p(x)\,dx$.`,
+Next lesson: substitution, integration by parts, infinite intervals and probability densities.`,
         },
       ],
     },

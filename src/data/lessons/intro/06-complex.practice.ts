@@ -1,6 +1,6 @@
 import type { QuestionTemplate } from '../../../types.ts';
 import { r } from '../define.ts';
-import { allDistinct, frac, paren, shuffle } from '../gen.ts';
+import { allDistinct, frac, paren, poly } from '../gen.ts';
 
 /** A real number that is an integer or a fraction with a small denominator, as TeX. */
 const num = (x: number) => {
@@ -18,16 +18,6 @@ export function cx(a: number, b: number) {
 export const mul = ([a, b]: number[], [c, d]: number[]) => [a * c - b * d, a * d + b * c];
 /** Pythagorean triples for moduli. */
 export const TRIPLES = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 6, 10], [12, 5, 13], [4, 3, 5]];
-
-/**
- * Points with "nice" arguments: radius factor k times (±1, ±√3), (±√3, ±1) or (±1, ±1).
- * Each gives the TeX of the real and imaginary parts and the exact angle.
- */
-const NICE = [
-  { re: '1', im: '\\sqrt3', x: 1, y: Math.sqrt(3), deg: 60 },
-  { re: '\\sqrt3', im: '1', x: Math.sqrt(3), y: 1, deg: 30 },
-  { re: '1', im: '1', x: 1, y: 1, deg: 45 },
-];
 
 export const practice: QuestionTemplate[] = [
   {
@@ -131,100 +121,91 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'ml-06-4',
+    id: 'ml-06-7',
     difficulty: 2,
-    keyConceptTag: 'Argument and quadrants',
+    keyConceptTag: 'Powers of i',
     correctOptionId: 'a',
     generate: (g) => {
-      const P = g.pick(NICE);
-      const k = g.pick([1, 2]);
-      const up = g.pick([true, false]); // 2nd quadrant (up) or 3rd quadrant (down); the real part is negative
-      const theta = up ? 180 - P.deg : -(180 - P.deg);
-      const atanDeg = up ? -P.deg : P.deg;
-      const mirror = up ? P.deg : -P.deg;
-      const kk = (s: string) => (k === 1 ? s : s === '1' ? '2' : `2${s}`);
-      const label = `-${kk(P.re)} ${up ? '+' : '-'} ${kk(P.im) === '1' ? '' : kk(P.im)}i`;
+      const n = g.int(10, 99);
+      const k = n % 4;
+      const LAB = ['1', 'i', '-1', '-i'];
+      const VAL = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+      const wrong = [0, 1, 2, 3].filter((j) => j !== k);
       return {
-        params: { re: -k * P.x, im: (up ? 1 : -1) * k * P.y },
-        promptText: r`What is the argument of $z = ${label}$ (in degrees, between $-180^\circ$ and $180^\circ$)?`,
+        params: { n },
+        promptText: r`Compute $i^{${n}}$.`,
         options: [
-          { id: 'a', label: r`$${theta}^\circ$`, value: theta },
-          { id: 'b', label: r`$${atanDeg}^\circ$`, value: atanDeg, trapExplanation: r`$\arctan(b/a)$ gives $${atanDeg}^\circ$, which points into the wrong quadrant. $z$ has a negative real part, so the angle is shifted by $180^\circ$.` },
-          { id: 'c', label: r`$${mirror}^\circ$`, value: mirror, trapExplanation: r`$${mirror}^\circ$ is the direction of $${kk(P.re)} ${up ? '+' : '-'} ${kk(P.im) === '1' ? '' : kk(P.im)}i$. The real part here is negative.` },
-          { id: 'd', label: r`$${-theta}^\circ$`, value: -theta, trapExplanation: r`$${-theta}^\circ$ is the argument of the conjugate $\bar z$: the sign of the imaginary part decides the sign of the angle.` },
+          { id: 'a', label: `$${LAB[k]}$`, value: VAL[k] },
+          ...wrong.map((j, i) => ({
+            id: 'bcd'[i],
+            label: `$${LAB[j]}$`,
+            value: VAL[j],
+            trapExplanation: j === 1 && k === 3
+              ? r`$i^3 = i^2\cdot i = -i$, not $i$: the remainder of ${n} divided by 4 is ${k}.`
+              : r`$${LAB[j]}$ is $i^{${j}}$, for exponents that leave remainder ${j} after division by 4. ${n} leaves remainder ${k}.`,
+          })),
         ],
         stepByStepSolution: [
-          r`$|z| = ${k * 2 === 2 && P.deg === 45 ? '\\sqrt2' : P.deg === 45 ? '2\\sqrt2' : `${2 * k}`}$; the real part is negative and the imaginary part is ${up ? 'positive' : 'negative'}.`,
-          r`So $z$ lies in the ${up ? '2nd' : '3rd'} quadrant, at angle $${P.deg}^\circ$ from the negative real axis.`,
-          r`$\varphi = ${theta}^\circ$.`,
+          r`Powers of $i$ repeat every 4 steps, so only the remainder of the exponent divided by 4 matters.`,
+          r`$${n} = 4\cdot ${(n - k) / 4} + ${k}$, so $i^{${n}} = (i^4)^{${(n - k) / 4}}\cdot i^{${k}} = i^{${k}}$.`,
+          r`$i^{${k}} = ${LAB[k]}$.`,
         ],
       };
     },
   },
   {
-    id: 'ml-06-5',
+    id: 'ml-06-8',
     difficulty: 3,
-    keyConceptTag: "De Moivre's theorem",
+    keyConceptTag: 'Complex roots of a quadratic',
     correctOptionId: 'a',
     generate: (g) => {
-      const { z, n } = g.until(
-        () => ({ z: g.pick([[1, 1], [1, -1], [-1, 1], [-1, -1]]), n: g.pick([4, 6, 8, 10, 12]) }),
-        ({ z, n }) => {
-          let p = [1, 0];
-          for (let i = 0; i < n; i++) p = mul(p, z);
-          return allDistinct([p, p.map((v) => v * 2 ** (n / 2)), p.map((v) => -v), [-p[1], p[0]]]);
-        },
-      );
-      let p = [1, 0];
-      for (let i = 0; i < n; i++) p = mul(p, z);
-      const arg = Math.atan2(z[1], z[0]) * (180 / Math.PI);
-      const big = p.map((v) => v * 2 ** (n / 2));
-      const rot = [-p[1], p[0]];
+      const p = g.nonzero(-4, 4);
+      const q = g.int(1, 4);
+      const c = p * p + q * q;
+      const pm = (re: number, im: number) => `${re} \\pm ${im === 1 ? '' : im}i`;
       return {
-        params: { z, n },
-        promptText: r`Compute $(${cx(z[0], z[1])})^{${n}}$.`,
+        params: { b: -2 * p, c },
+        promptText: r`Solve $${poly([c, -2 * p, 1], 'z')} = 0$.`,
         options: [
-          { id: 'a', label: `$${cx(p[0], p[1])}$`, value: p },
-          { id: 'b', label: `$${cx(big[0], big[1])}$`, value: big, trapExplanation: r`$2^{${n}}$ uses modulus 2, but $|${cx(z[0], z[1])}| = \sqrt2$. So the modulus of the power is $(\sqrt2)^{${n}} = ${2 ** (n / 2)}$.` },
-          { id: 'c', label: `$${cx(-p[0], -p[1])}$`, value: p.map((v) => -v), trapExplanation: r`$${n}\cdot ${arg}^\circ = ${n * arg}^\circ$; reduce it modulo $360^\circ$ carefully — the sign is wrong here.` },
-          { id: 'd', label: `$${cx(rot[0], rot[1])}$`, value: rot, trapExplanation: r`That is the answer turned by an extra $90^\circ$. The angle of the power is exactly $${n}\cdot ${arg}^\circ$.` },
+          { id: 'a', label: `$z = ${pm(p, q)}$`, value: [p, q] },
+          { id: 'b', label: `$z = ${pm(-p, q)}$`, value: [-p, q], trapExplanation: r`The real part is $-\frac{b}{2a} = -\frac{${-2 * p}}{2} = ${p}$: the sign of $b$ has to be flipped.` },
+          { id: 'c', label: `$z = ${pm(p, 2 * q)}$`, value: [p, 2 * q], trapExplanation: r`$\sqrt{D} = ${2 * q}i$ must still be divided by $2a = 2$, like the $-b$ part.` },
+          { id: 'd', label: 'No solutions: the discriminant is negative', trapExplanation: r`No <i>real</i> solutions. Among complex numbers $\sqrt{${-4 * q * q}} = ${2 * q}i$ exists, so there are two roots.` },
         ],
         stepByStepSolution: [
-          r`$${cx(z[0], z[1])} = \sqrt2\,e^{i\cdot${arg}^\circ}$.`,
-          r`De Moivre: modulus $(\sqrt2)^{${n}} = ${2 ** (n / 2)}$, angle $${n}\cdot ${arg}^\circ = ${n * arg}^\circ$.`,
-          r`Reducing the angle modulo $360^\circ$ gives $${cx(p[0], p[1])}$.`,
+          r`$D = ${paren(-2 * p)}^2 - 4\cdot ${c} = ${4 * p * p} - ${4 * c} = ${-4 * q * q}$.`,
+          r`$\sqrt{${-4 * q * q}} = ${2 * q}i$, because $(${2 * q}i)^2 = ${-4 * q * q}$.`,
+          r`$z = \frac{${2 * p} \pm ${2 * q}i}{2} = ${pm(p, q)}$: a conjugate pair.`,
         ],
       };
     },
   },
   {
-    id: 'ml-06-6',
+    id: 'ml-06-9',
     difficulty: 3,
-    keyConceptTag: 'Complex roots',
+    keyConceptTag: 'Conjugate pairs of roots',
     correctOptionId: 'a',
     generate: (g) => {
-      const m = g.pick([1, 2, 3]);
-      const k = g.int(0, 3);
-      const coef = m === 2 ? '\\sqrt2' : m === 1 ? '\\tfrac{\\sqrt2}{2}' : '\\tfrac{3\\sqrt2}{2}';
-      const [sx, sy] = [[1, 1], [-1, 1], [-1, -1], [1, -1]][k];
-      const root = `${sx < 0 ? '-' : ''}${coef} ${sy < 0 ? '-' : '+'} ${coef}\\,i`;
-      const angle = 45 + 90 * k;
-      const fake = shuffle(g, [`${m === 1 ? '' : m}i`, `-${m}`, `${m}`]);
-      const whyOf = (s: string) =>
-        s.endsWith('i') ? r`$(${s})^4 = ${m ** 4}i^4 = ${m ** 4}$, not $-${m ** 4}$. Its argument $90^\circ$ times 4 is $360^\circ$.`
-        : s.startsWith('-') ? r`An even power of a real number is non-negative: $(${s})^4 = ${m ** 4}$.`
-        : r`$${s}^4 = ${m ** 4}$. No real number solves $z^4 = -${m ** 4}$.`;
+      const p = g.nonzero(-4, 4);
+      const q = g.nonzero(-4, 4);
+      const right = [p * p + q * q, -2 * p, 1];
+      const sign = [p * p + q * q, 2 * p, 1];
+      const minus = [p * p - q * q, -2 * p, 1];
+      const half = [p * p + q * q, -p, 1];
+      const P = (cs: number[]) => `$${poly(cs, 'z')}$`;
       return {
-        params: { m, k },
-        promptText: r`Which number is a solution of $z^4 = -${m ** 4}$?`,
+        params: { p, q },
+        promptText: r`A quadratic $z^2 + bz + c$ with real coefficients $b$ and $c$ has the root $z = ${cx(p, q)}$. Which quadratic is it?`,
         options: [
-          { id: 'a', label: `$${root}$` },
-          ...fake.map((s, i) => ({ id: 'bcd'[i], label: `$${s}$`, trapExplanation: whyOf(s) })),
+          { id: 'a', label: P(right), value: right },
+          { id: 'b', label: P(sign), value: sign, trapExplanation: r`$(z - z_1)(z - z_2) = z^2 - (z_1 + z_2)z + z_1z_2$: the sum of the roots, $${2 * p}$, enters with a minus.` },
+          { id: 'c', label: P(minus), value: minus, trapExplanation: r`$(${cx(p, q)})(${cx(p, -q)}) = ${p * p} - (${cx(0, q)})^2 = ${p * p} + ${q * q}$: $i^2 = -1$ turns the minus into a plus.` },
+          { id: 'd', label: P(half), value: half, trapExplanation: r`The two roots $${cx(p, q)}$ and $${cx(p, -q)}$ add up to $${2 * p}$, not $${p}$.` },
         ],
         stepByStepSolution: [
-          r`$-${m ** 4} = ${m ** 4}e^{i\cdot180^\circ}$. Roots: modulus $\sqrt[4]{${m ** 4}} = ${m}$, arguments $45^\circ + j\cdot90^\circ$.`,
-          r`For $j = ${k}$: $${m === 1 ? '' : m}e^{i\cdot${angle}^\circ} = ${root}$.`,
-          r`Check: its square has argument $${2 * angle}^\circ$, i.e. it is $\pm ${m * m}i$, and $(\pm ${m * m}i)^2 = -${m ** 4}$. ✓`,
+          r`Real coefficients: the conjugate $${cx(p, -q)}$ is the other root.`,
+          r`Sum of the roots: $${2 * p}$. Product: $(${cx(p, q)})(${cx(p, -q)}) = ${p * p} + ${q * q} = ${p * p + q * q}$.`,
+          r`$z^2 - (\text{sum})\,z + \text{product} = ${poly(right, 'z')}$.`,
         ],
       };
     },

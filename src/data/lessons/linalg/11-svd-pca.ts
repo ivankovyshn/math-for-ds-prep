@@ -5,12 +5,17 @@ import { practice } from './11-svd-pca.practice.ts';
 export default defineLesson({
   id: 'la-11',
   moduleId: 'linalg',
-  title: 'SVD and PCA',
+  title: 'The singular value decomposition',
   blurb: 'Every matrix is a rotation, a stretch and a rotation',
   minutes: 8,
+  deeper: [
+    { title: 'Singular value decomposition', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/singular-value-decomposition/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+    { title: 'Singular value decomposition', url: 'https://www.statlect.com/matrix-algebra/singular-value-decomposition', source: 'StatLect · free textbook page with proofs and exercises' },
+  ],
   lecture: [
     {
       title: 'The singular value decomposition',
+      covers: ['1', 'x1', 'x3'],
       blocks: [
         {
           kind: 'text',
@@ -28,7 +33,9 @@ with $U$ ($m\times m$) and $V$ ($n\times n$) orthogonal and $\Sigma$ ($m\times n
         },
         {
           kind: 'text',
-          text: r`Read it from right to left: $V^T$ rotates, $\Sigma$ stretches along the axes, $U$ rotates again. The unit circle becomes an ellipse with semi-axes $\sigma_1$ and $\sigma_2$. The columns $\mathbf{v}_i$ of $V$ are mapped to $A\mathbf{v}_i = \sigma_i\mathbf{u}_i$.`,
+          text: r`Read it from right to left: $V^T$ rotates, $\Sigma$ stretches along the axes, $U$ rotates again. The unit circle becomes an ellipse with semi-axes $\sigma_1$ and $\sigma_2$, so the largest stretch of any unit vector is $\sigma_1$. The columns $\mathbf{v}_i$ of $V$ are mapped to $A\mathbf{v}_i = \sigma_i\mathbf{u}_i$.
+
+For a diagonal matrix there is nothing to rotate: the singular values are the absolute values of the diagonal entries, sorted. A negative sign is a flip, which goes into $U$.`,
         },
         { kind: 'diagram', type: 'svd', caption: r`$A$ maps the perpendicular unit vectors $\mathbf{v}_1, \mathbf{v}_2$ onto the perpendicular semi-axes $\sigma_1\mathbf{u}_1, \sigma_2\mathbf{u}_2$ of an ellipse.` },
         {
@@ -47,10 +54,11 @@ with $U$ ($m\times m$) and $V$ ($n\times n$) orthogonal and $\Sigma$ ($m\times n
     },
     {
       title: 'Computing singular values',
+      covers: ['3', '5', '7', '8', 'x2', 'x4', 'x8'],
       blocks: [
         {
           kind: 'text',
-          text: r`$A^TA = V\Sigma^TU^TU\Sigma V^T = V(\Sigma^T\Sigma)V^T$ is symmetric, so the spectral theorem applies: the eigenvalues of $A^TA$ are $\sigma_i^2$ and its eigenvectors are the $\mathbf{v}_i$.`,
+          text: r`$A^TA = V\Sigma^TU^TU\Sigma V^T = V(\Sigma^T\Sigma)V^T$ is symmetric, so the spectral theorem applies: the eigenvalues of $A^TA$ are $\sigma_i^2$ and its eigenvectors are the $\mathbf{v}_i$. Entry $(i, j)$ of $A^TA$ is column $i$ of $A$ dotted with column $j$.`,
         },
         { kind: 'formula', tex: r`\sigma_i = \sqrt{\lambda_i(A^TA)}, \qquad \mathbf{u}_i = \frac{A\mathbf{v}_i}{\sigma_i}` },
         {
@@ -71,7 +79,20 @@ with $U$ ($m\times m$) and $V$ ($n\times n$) orthogonal and $\Sigma$ ($m\times n
 
 • $\sigma_1 = \max_{\|\mathbf{x}\| = 1}\|A\mathbf{x}\|$: the largest stretch ($\|A\|_2$).
 
-• $\|A\|_F^2 = \sum a_{ij}^2 = \sigma_1^2 + \sigma_2^2 + \dots$`,
+• $\|A\|_F^2 = \sum a_{ij}^2 = \sigma_1^2 + \sigma_2^2 + \dots$ — the sum of squared entries, not of the entries.
+
+• For a square matrix, $\sigma_1\sigma_2\cdots\sigma_n = |\det A|$.`,
+        },
+        {
+          kind: 'example',
+          title: 'Two shortcuts',
+          prompt: r`Find the singular values of the rank-one matrix $B = \begin{pmatrix} 1 & 2 \\ 2 & 4 \end{pmatrix}$ and of the symmetric $S = \begin{pmatrix} 1 & 2 \\ 2 & -2 \end{pmatrix}$.`,
+          steps: [
+            r`$B$: the second row is twice the first, so the rank is 1 and $\sigma_2 = 0$.`,
+            r`Then $\sigma_1^2 = \|B\|_F^2 = 1 + 4 + 4 + 16 = 25$, so $\sigma_1 = 5$.`,
+            r`$S$ is symmetric: $S^TS = S^2$ has eigenvalues $\lambda^2$, so the singular values are $|\lambda|$.`,
+            r`Eigenvalues of $S$: trace $-1$, determinant $-6$, so $\lambda = 2$ and $\lambda = -3$. Singular values: $3$ and $2$ — never negative.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -89,6 +110,7 @@ with $U$ ($m\times m$) and $V$ ($n\times n$) orthogonal and $\Sigma$ ($m\times n
     },
     {
       title: 'Low-rank approximation',
+      covers: ['4', 'x7'],
       blocks: [
         {
           kind: 'text',
@@ -104,47 +126,31 @@ with $U$ ($m\times m$) and $V$ ($n\times n$) orthogonal and $\Sigma$ ($m\times n
 $\|A - A_k\|_2 = \sigma_{k+1}$ and $\|A - A_k\|_F = \sqrt{\sigma_{k+1}^2 + \sigma_{k+2}^2 + \dots}$`,
         },
         {
-          kind: 'text',
-          text: r`When the singular values decay fast, a few terms hold almost everything. This is behind image compression, recommender systems (a ratings matrix is close to low rank) and noise removal.`,
-        },
-      ],
-    },
-    {
-      title: 'Principal component analysis',
-      blocks: [
-        {
-          kind: 'text',
-          text: r`Take data $X$ with $n$ rows (samples) and $d$ columns (features), each column <i>centred</i> to mean 0. Its covariance matrix $C = \frac{1}{n-1}X^TX$ is symmetric and positive semidefinite. The <i>principal components</i> are the eigenvectors of $C$ — equivalently, the right singular vectors of $X$. The variance along PC $i$ is $\lambda_i = \frac{\sigma_i^2}{n - 1}$.`,
-        },
-        { kind: 'diagram', type: 'pca', caption: r`PC1 points along the direction of largest spread; PC2 is perpendicular to it. Keeping only PC1 turns 2D data into 1D with little loss.` },
-        { kind: 'formula', tex: r`\text{share of variance explained by PC}_i = \frac{\lambda_i}{\lambda_1 + \dots + \lambda_d} = \frac{\sigma_i^2}{\sigma_1^2 + \dots + \sigma_d^2}` },
-        {
           kind: 'example',
-          title: 'Two features',
-          prompt: r`Centred data has covariance $C = \begin{pmatrix} 5 & 2 \\ 2 & 2 \end{pmatrix}$. How much variance does PC1 explain?`,
+          title: 'Errors of a rank-1 approximation',
+          prompt: r`$A$ has singular values $10$, $6$ and $3$. How far is $A_1$ from $A$, in both norms?`,
           steps: [
-            r`Eigenvalues of $C$: trace 7, determinant 6, so $\lambda_1 = 6$ (direction $(2, 1)$) and $\lambda_2 = 1$ (direction $(-1, 2)$).`,
-            r`Total variance $= \operatorname{tr}C = 7$.`,
-            r`PC1 explains $\frac{6}{7} \approx 86\%$. Projecting onto $(2, 1)/\sqrt5$ keeps 86% of the variance with half the numbers.`,
+            r`$A - A_1 = 6\,\mathbf{u}_2\mathbf{v}_2^T + 3\,\mathbf{u}_3\mathbf{v}_3^T$: exactly the terms that were dropped.`,
+            r`Spectral norm: the largest dropped singular value, $\|A - A_1\|_2 = 6$.`,
+            r`Frobenius norm: $\sqrt{6^2 + 3^2} = \sqrt{45} \approx 6.7$ — the dropped values are squared and added, not just added.`,
+            r`$A_1$ keeps $\frac{100}{100 + 36 + 9} \approx 69\%$ of $\|A\|_F^2$.`,
           ],
+        },
+        {
+          kind: 'text',
+          text: r`When the singular values decay fast, a few terms hold almost everything. This is behind image compression, recommender systems (a ratings matrix is close to low rank) and noise removal. The next lesson applies the same idea to data: principal component analysis.`,
         },
         {
           kind: 'quiz',
           id: 'la-11-q3',
-          prompt: r`The covariance matrix of some data has eigenvalues $8$, $1.5$ and $0.5$. What share of the variance does PC1 explain?`,
+          prompt: r`$A$ has singular values $5$, $3$ and $1$. What is $\|A - A_1\|_2$?`,
           options: [
-            { id: 'a', label: '$80\\%$', value: 80 },
-            { id: 'b', label: r`$33\%$`, value: 100 / 3, trapExplanation: r`The components do not share the variance equally: PC1 carries $\frac{8}{10}$ of it.` },
-            { id: 'c', label: r`$94\%$`, value: (8 / 8.5) * 100, trapExplanation: r`$\frac{8}{8.5}$ leaves out the last eigenvalue: the total is $8 + 1.5 + 0.5 = 10$.` },
+            { id: 'a', label: '$3$', value: 3 },
+            { id: 'b', label: '$1$', value: 1, trapExplanation: r`$\sigma_3 = 1$ is the error of $A_2$. $A_1$ also drops $\sigma_2 = 3$.` },
+            { id: 'c', label: r`$\sqrt{10}$`, value: Math.sqrt(10), trapExplanation: r`That is the Frobenius error $\sqrt{3^2 + 1^2}$. The spectral norm takes only the largest dropped value.` },
           ],
           correctOptionId: 'a',
-          explanation: r`$\frac{8}{8 + 1.5 + 0.5} = \frac{8}{10} = 80\%$.`,
-        },
-        {
-          kind: 'box',
-          variant: 'pitfall',
-          title: 'Centre and scale first',
-          text: r`Without centring, PC1 just points at the mean of the data. And if features are in different units (metres and grams), the one with the biggest numbers dominates: standardise the columns first unless the units are comparable.`,
+          explanation: r`$\|A - A_k\|_2 = \sigma_{k+1}$; for $k = 1$ that is $\sigma_2 = 3$.`,
         },
       ],
     },
@@ -155,13 +161,11 @@ $\|A - A_k\|_2 = \sigma_{k+1}$ and $\|A - A_k\|_F = \sqrt{\sigma_{k+1}^2 + \sigm
           kind: 'text',
           text: r`• Any matrix: $A = U\Sigma V^T$, with $\sigma_1 \ge \sigma_2 \ge \dots \ge 0$.
 
-• $\sigma_i = \sqrt{\lambda_i(A^TA)}$; rank = number of non-zero $\sigma_i$; $\|A\|_2 = \sigma_1$.
+• $\sigma_i = \sqrt{\lambda_i(A^TA)}$; for a symmetric matrix $\sigma_i = |\lambda_i|$; for a diagonal one, $|d_i|$.
 
-• Best rank-$k$ approximation: keep the first $k$ terms; Frobenius error $\sqrt{\sigma_{k+1}^2 + \dots}$.
+• Rank = number of non-zero $\sigma_i$; $\|A\|_2 = \sigma_1$; $\|A\|_F^2 = \sum\sigma_i^2 = \sum a_{ij}^2$.
 
-• PCA: eigenvectors of the covariance of centred data = right singular vectors of $X$.
-
-• PC $i$ explains $\lambda_i / \sum\lambda_j$ of the variance.`,
+• Best rank-$k$ approximation: keep the first $k$ terms. Errors: $\sigma_{k+1}$ in the 2-norm, $\sqrt{\sigma_{k+1}^2 + \dots}$ in the Frobenius norm.`,
         },
       ],
     },

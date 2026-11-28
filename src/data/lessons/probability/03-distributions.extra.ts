@@ -112,54 +112,51 @@ export const extra: QuestionTemplate[] = [
     },
   },
   {
-    id: 'pr-03-x5',
-    difficulty: 2,
-    keyConceptTag: 'The uniform distribution',
+    id: 'pr-03-x7',
+    difficulty: 1,
+    keyConceptTag: 'At least one: the complement',
     correctOptionId: 'a',
     generate: (g) => {
-      const { a, b, c, d } = g.until(
-        () => {
-          const a = g.int(0, 4);
-          const b = a + g.int(4, 10);
-          const c = g.int(a, b - 1);
-          return { a, b, c, d: g.int(c + 1, b) };
-        },
-        ({ a, b, c, d }) => allDistinct([(d - c) / (b - a), 1 / (b - a), d - c, (d - c) / b]),
-      );
+      const n = g.int(2, 5);
+      const N = 2 ** n;
       return {
-        params: { a, b, c, d },
-        promptText: r`$X \sim \text{Uniform}(${a}, ${b})$. What is $P(${c} \le X \le ${d})$?`,
+        params: { n },
+        promptText: r`A fair coin is tossed ${n} times. What is the probability of at least one head?`,
         options: [
-          { id: 'a', label: `$${frac(d - c, b - a)}$`, value: (d - c) / (b - a) },
-          { id: 'b', label: `$${frac(1, b - a)}$`, value: 1 / (b - a), trapExplanation: r`That is the height of the density; multiply by the length ${d - c}.` },
-          { id: 'c', label: `$${d - c}$`, value: d - c, trapExplanation: r`A length is not a probability: divide by the total length ${b - a}.` },
-          { id: 'd', label: `$${frac(d - c, b)}$`, value: (d - c) / b, trapExplanation: r`The range is $[${a}, ${b}]$, of length ${b - a}, not ${b}.` },
+          { id: 'a', label: `$${frac(N - 1, N)}$`, value: (N - 1) / N },
+          { id: 'b', label: `$${frac(n, 2)}$`, value: n / 2, trapExplanation: r`Adding $\frac12$ for each toss counts the outcomes with several heads more than once${n > 2 ? ' — and gives more than 1' : ''}. Use the complement "no heads".` },
+          { id: 'c', label: `$${frac(1, N)}$`, value: 1 / N, trapExplanation: r`That is the probability of no heads at all. Subtract it from 1.` },
+          { id: 'd', label: `$${frac(n, N)}$`, value: n / N, trapExplanation: r`That is exactly one head. "At least one" also includes 2, 3, … heads.` },
         ],
         stepByStepSolution: [
-          r`For a uniform variable, probability = length / total length.`,
-          r`$\frac{${d} - ${c}}{${b} - ${a}} = \frac{${d - c}}{${b - a}}$.`,
-          r`$= ${frac(d - c, b - a)}$.`,
+          r`The complement of "at least one head" is "no heads".`,
+          r`$P(\text{no heads}) = \big(\frac12\big)^{${n}} = \frac{1}{${N}}$.`,
+          r`$P(\text{at least one}) = 1 - \frac{1}{${N}} = ${frac(N - 1, N)}$.`,
         ],
       };
     },
   },
   {
-    id: 'pr-03-x6',
+    id: 'pr-03-x8',
     difficulty: 2,
-    keyConceptTag: 'The 68–95–99.7 rule',
+    keyConceptTag: 'Poisson: add the cases',
     correctOptionId: 'a',
     generate: (g) => {
-      const c = g.pick(RULE_CASES.filter((x) => Number.isFinite(x.lo) && Number.isFinite(x.hi)));
-      const m = g.pick([20, 50, 100, 250]);
-      const s = g.pick([3, 5, 10, 25]);
+      const lam = g.int(2, 5);
+      const E = Math.exp(-lam);
       return {
-        params: { m, s, lo: c.lo, hi: c.hi },
-        promptText: r`$X \sim N(${m}, ${s}^2)$. Approximately what is $${ruleQuestion(c, m, s)}$?`,
-        options: ruleOptions(c),
+        params: { lam },
+        promptText: r`Typos per page follow a Poisson distribution with mean ${lam}. What is the probability that a page has at most one typo?`,
+        options: [
+          { id: 'a', label: `$${1 + lam}e^{-${lam}} ${approx((1 + lam) * E)}$`, value: (1 + lam) * E },
+          { id: 'b', label: `$e^{-${lam}} ${approx(E)}$`, value: E, trapExplanation: r`That is only $P(X = 0)$. "At most one" adds $P(X = 1) = ${lam}e^{-${lam}}$.` },
+          { id: 'c', label: `$${lam}e^{-${lam}} ${approx(lam * E)}$`, value: lam * E, trapExplanation: r`That is only $P(X = 1)$. "At most one" also includes no typos.` },
+          { id: 'd', label: `$1 - ${1 + lam}e^{-${lam}} ${approx(1 - (1 + lam) * E)}$`, value: 1 - (1 + lam) * E, trapExplanation: r`That is $P(X \ge 2)$, the complement.` },
+        ],
         stepByStepSolution: [
-          r`$${m + c.lo * s}$ and $${m + c.hi * s}$ are $\mu \pm ${c.hi === 1 ? '' : c.hi}\sigma$.`,
-          r`The rule: about 68% within $1\sigma$, 95% within $2\sigma$, 99.7% within $3\sigma$.`,
-          r`So about ${c.ans}%.`,
+          r`$P(X \le 1) = P(X = 0) + P(X = 1)$.`,
+          r`$= e^{-${lam}}\frac{${lam}^0}{0!} + e^{-${lam}}\frac{${lam}^1}{1!} = e^{-${lam}} + ${lam}e^{-${lam}}$.`,
+          r`$= ${1 + lam}e^{-${lam}} ${approx((1 + lam) * E)}$.`,
         ],
       };
     },

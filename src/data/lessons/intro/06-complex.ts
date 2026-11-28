@@ -5,32 +5,33 @@ import { practice } from './06-complex.practice.ts';
 export default defineLesson({
   id: 'ml-06',
   moduleId: 'intro',
-  title: 'Complex numbers',
-  blurb: 'Arithmetic, the complex plane, polar form, roots',
+  title: 'Complex arithmetic',
+  blurb: 'The number i, conjugates, division and complex roots of quadratics',
   minutes: 8,
+  deeper: [
+    { title: 'Complex Number Primer: arithmetic', url: 'https://tutorial.math.lamar.edu/Extras/ComplexPrimer/Arithmetic.aspx', source: "Paul's Online Math Notes (Lamar University) · notes with many worked examples" },
+  ],
   lecture: [
     {
       title: 'The number i',
+      covers: ['7'],
       blocks: [
         {
           kind: 'text',
           text: r`The equation $x^2 = -1$ has no real solution. Complex numbers add one new number $i$ with $i^2 = -1$, and everything else follows from the usual rules of algebra.
 
-A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part) and $b = \operatorname{Im} z$ (imaginary part). Add and multiply like polynomials in $i$, replacing $i^2$ by $-1$:`,
-        },
-        { kind: 'formula', tex: r`(a + bi)(c + di) = (ac - bd) + (ad + bc)\,i` },
-        {
-          kind: 'text',
-          text: r`The <i>conjugate</i> of $z = a + bi$ is $\bar z = a - bi$, and $z\bar z = a^2 + b^2$ is a non-negative real number. That is the trick for division: multiply top and bottom by the conjugate of the denominator.`,
+A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part) and $b = \operatorname{Im} z$ (imaginary part). Real numbers are the ones with $b = 0$.
+
+Powers of $i$ go round in a cycle of four: $i^1 = i$, $i^2 = -1$, $i^3 = i^2\cdot i = -i$, $i^4 = (i^2)^2 = 1$, and then $i^5 = i$ again.`,
         },
         {
           kind: 'example',
-          title: 'Division',
-          prompt: r`Compute $\dfrac{3 + 2i}{1 - i}$.`,
+          title: 'A high power of i',
+          prompt: r`Compute $i^{27}$.`,
           steps: [
-            r`Multiply by $\frac{1 + i}{1 + i}$: the denominator becomes $(1 - i)(1 + i) = 1 + 1 = 2$.`,
-            r`Numerator: $(3 + 2i)(1 + i) = 3 + 3i + 2i + 2i^2 = 1 + 5i$.`,
-            r`Result: $\dfrac{1 + 5i}{2} = \tfrac12 + \tfrac52 i$.`,
+            r`The cycle has length 4, so only the remainder of 27 divided by 4 matters: $27 = 4\cdot 6 + 3$.`,
+            r`$i^{27} = (i^4)^6\cdot i^3 = 1^6\cdot i^3$.`,
+            r`$i^3 = -i$, so $i^{27} = -i$.`,
           ],
         },
         {
@@ -48,23 +49,79 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
       ],
     },
     {
-      title: 'The complex plane',
+      title: 'Adding, multiplying, conjugating',
+      covers: ['1', 'x1', 'x2', 'x3', 'x5'],
       blocks: [
         {
           kind: 'text',
-          text: r`Draw $z = a + bi$ as the point $(a, b)$. Then a complex number has a length and a direction:
-
-• the <i>modulus</i> $|z| = \sqrt{a^2 + b^2}$ (distance from 0);
-
-• the <i>argument</i> $\arg z = \varphi$, the angle from the positive real axis.`,
+          text: r`Add real parts to real parts and imaginary parts to imaginary parts. Multiply like two brackets in algebra, then replace $i^2$ by $-1$:`,
         },
-        { kind: 'diagram', type: 'complexPlane' },
-        { kind: 'formula', tex: r`z = r(\cos\varphi + i\sin\varphi) = r\,e^{i\varphi}, \qquad r = |z|`, caption: r`Polar form. The notation $e^{i\varphi}$ comes from Euler's formula $e^{i\varphi} = \cos\varphi + i\sin\varphi$.` },
+        { kind: 'formula', tex: r`(a + bi)(c + di) = (ac - bd) + (ad + bc)\,i` },
         {
           kind: 'box',
-          variant: 'pitfall',
-          title: 'Mind the quadrant',
-          text: r`$\tan\varphi = b/a$ does not determine $\varphi$ on its own: $1 + i$ and $-1 - i$ have the same ratio but opposite directions. Always check which quadrant the point is in.`,
+          variant: 'definition',
+          title: 'Conjugate',
+          text: r`The <i>conjugate</i> of $z = a + bi$ is $\bar z = a - bi$: the same number with the sign of the imaginary part flipped. Their product is always a non-negative real number: $z\bar z = a^2 - (bi)^2 = a^2 + b^2$.`,
+        },
+        {
+          kind: 'example',
+          title: 'The four operations on one pair',
+          prompt: r`Let $z = 3 - 2i$ and $w = 1 + 4i$. Compute $z + w$, $zw$, $\bar z$ and $z\bar z$.`,
+          steps: [
+            r`Sum: $(3 + 1) + (-2 + 4)i = 4 + 2i$.`,
+            r`Product: $3\cdot1 + 3\cdot4i - 2i\cdot1 - 2i\cdot4i = 3 + 12i - 2i - 8i^2$.`,
+            r`$-8i^2 = +8$, so $zw = 11 + 10i$.`,
+            r`Conjugate: $\bar z = 3 + 2i$. Then $z\bar z = 3^2 + 2^2 = 13$, a real number.`,
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Division',
+      covers: ['3', 'x7'],
+      blocks: [
+        {
+          kind: 'text',
+          text: r`Dividing by $c + di$ is not done part by part. The trick is the conjugate: multiply top and bottom by $\overline{c + di} = c - di$. The denominator becomes the real number $c^2 + d^2$, and dividing by a real number is easy.`,
+        },
+        {
+          kind: 'example',
+          title: 'Division',
+          prompt: r`Compute $\dfrac{3 + 2i}{1 - i}$.`,
+          steps: [
+            r`Multiply by $\frac{1 + i}{1 + i}$: the denominator becomes $(1 - i)(1 + i) = 1 + 1 = 2$.`,
+            r`Numerator: $(3 + 2i)(1 + i) = 3 + 3i + 2i + 2i^2 = 1 + 5i$.`,
+            r`Result: $\dfrac{1 + 5i}{2} = \tfrac12 + \tfrac52 i$.`,
+          ],
+        },
+        {
+          kind: 'box',
+          variant: 'tip',
+          title: 'The reciprocal',
+          text: r`With top 1 the same trick gives a formula: $\dfrac{1}{a + bi} = \dfrac{a - bi}{a^2 + b^2}$. For example $\dfrac{1}{2 + i} = \dfrac{2 - i}{5}$. It is not $\frac1a + \frac1b i$.`,
+        },
+      ],
+    },
+    {
+      title: 'The complex plane',
+      covers: ['2', 'x4'],
+      blocks: [
+        {
+          kind: 'text',
+          text: r`Draw $z = a + bi$ as the point $(a, b)$: the horizontal axis is the real axis, the vertical one the imaginary axis. Adding complex numbers is adding vectors, and the conjugate $\bar z$ is the mirror image in the real axis.
+
+The <i>modulus</i> $|z| = \sqrt{a^2 + b^2}$ is the distance from 0, by Pythagoras. Note that $|z|^2 = z\bar z$.`,
+        },
+        { kind: 'diagram', type: 'complexPlane', caption: r`The angle $\varphi$ is the subject of the next lesson.` },
+        {
+          kind: 'example',
+          title: 'A modulus',
+          prompt: r`Find $|-5 + 12i|$.`,
+          steps: [
+            r`$a = -5$, $b = 12$: the point $(-5, 12)$.`,
+            r`$|z| = \sqrt{(-5)^2 + 12^2} = \sqrt{25 + 144} = \sqrt{169}$.`,
+            r`$|z| = 13$. The sign of $a$ does not matter: it is squared.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -81,38 +138,40 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
       ],
     },
     {
-      title: 'Multiplying in polar form',
+      title: 'Quadratic equations',
+      covers: ['8', '9'],
       blocks: [
         {
           kind: 'text',
-          text: r`In polar form multiplication becomes simple: <i>moduli multiply, arguments add</i>. Geometrically, multiplying by $z$ scales by $|z|$ and rotates by $\arg z$ — multiplying by $i$ is a $90^\circ$ rotation.`,
+          text: r`The quadratic formula $z = \frac{-b \pm \sqrt{D}}{2a}$, $D = b^2 - 4ac$, works for a negative discriminant too: $\sqrt{D} = i\sqrt{-D}$, because $(i\sqrt{-D})^2 = -(-D) = D$. Where school algebra said "no solutions", there are two complex ones.`,
         },
-        { kind: 'formula', tex: r`r_1e^{i\varphi_1}\cdot r_2e^{i\varphi_2} = r_1r_2\,e^{i(\varphi_1 + \varphi_2)}, \qquad \big(re^{i\varphi}\big)^{n} = r^{n}e^{in\varphi}`, caption: "The second formula is De Moivre's theorem." },
         {
           kind: 'example',
-          title: 'A high power',
-          prompt: r`Compute $(1 + i)^8$.`,
+          title: 'Two complex roots',
+          prompt: r`Solve $z^2 - 4z + 13 = 0$.`,
           steps: [
-            r`$|1 + i| = \sqrt2$, $\arg(1 + i) = 45^\circ$.`,
-            r`$(1 + i)^8$ has modulus $(\sqrt2)^8 = 16$ and argument $8\cdot45^\circ = 360^\circ$.`,
-            r`An angle of $360^\circ$ points along the positive real axis: $(1 + i)^8 = 16$.`,
+            r`$D = (-4)^2 - 4\cdot13 = 16 - 52 = -36$.`,
+            r`$\sqrt{-36} = 6i$, since $(6i)^2 = -36$.`,
+            r`$z = \frac{4 \pm 6i}{2} = 2 \pm 3i$.`,
+            r`Check $z = 2 + 3i$: $z^2 = 4 + 12i - 9 = -5 + 12i$; $-4z = -8 - 12i$; sum with 13: $0$. ✓`,
           ],
         },
-      ],
-    },
-    {
-      title: 'Roots and polynomials',
-      blocks: [
-        {
-          kind: 'text',
-          text: r`Solving $z^n = w$ reverses the rule: take the $n$-th root of the modulus and divide the argument by $n$ — but the argument is only known up to multiples of $360^\circ$, which gives $n$ different answers, evenly spaced on a circle.`,
-        },
-        { kind: 'diagram', type: 'rootsOfUnity', caption: r`The six solutions of $z^6 = 1$: $e^{ik\cdot 60^\circ}$ for $k = 0, \dots, 5$.` },
         {
           kind: 'box',
           variant: 'theorem',
           title: 'Fundamental theorem of algebra',
           text: r`Every polynomial of degree $n \ge 1$ with complex coefficients has exactly $n$ complex roots, counted with multiplicity. If the coefficients are real, non-real roots come in conjugate pairs $z$, $\bar z$.`,
+        },
+        {
+          kind: 'example',
+          title: 'From a root back to the equation',
+          prompt: r`A quadratic $z^2 + bz + c$ with real $b$, $c$ has the root $1 + 2i$. Find it.`,
+          steps: [
+            r`Real coefficients: the conjugate $1 - 2i$ is the other root.`,
+            r`$(z - z_1)(z - z_2) = z^2 - (z_1 + z_2)z + z_1z_2$.`,
+            r`Sum $z_1 + z_2 = 2$; product $(1 + 2i)(1 - 2i) = 1 + 4 = 5$.`,
+            r`The quadratic is $z^2 - 2z + 5$.`,
+          ],
         },
         {
           kind: 'quiz',
@@ -133,13 +192,17 @@ A complex number is $z = a + bi$ with real $a = \operatorname{Re} z$ (real part)
       blocks: [
         {
           kind: 'text',
-          text: r`• $i^2 = -1$; $z = a + bi$; divide by multiplying with the conjugate.
+          text: r`• $i^2 = -1$; powers of $i$ repeat every 4: $i, -1, -i, 1$.
 
-• $|z| = \sqrt{a^2 + b^2}$; $\arg z$ = angle, check the quadrant.
+• $z = a + bi$: add part by part, multiply like brackets, replace $i^2$ by $-1$.
 
-• $z = re^{i\varphi}$: multiply ⇒ moduli multiply, arguments add; $(re^{i\varphi})^n = r^ne^{in\varphi}$.
+• Conjugate $\bar z = a - bi$; $z\bar z = a^2 + b^2 = |z|^2$. Divide by multiplying top and bottom with the conjugate of the denominator.
 
-• $z^n = w$ has $n$ roots on a circle; degree-$n$ polynomials have $n$ complex roots.`,
+• $z$ is the point $(a, b)$; $|z| = \sqrt{a^2 + b^2}$.
+
+• A negative discriminant gives two conjugate roots: $\sqrt{D} = i\sqrt{-D}$.
+
+Next lesson: the angle of a complex number, and why it makes powers and roots easy.`,
         },
       ],
     },

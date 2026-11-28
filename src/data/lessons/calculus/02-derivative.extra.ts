@@ -1,6 +1,6 @@
 import type { QuestionTemplate } from '../../../types.ts';
 import { r } from '../define.ts';
-import { allDistinct, frac, paren, poly } from '../gen.ts';
+import { allDistinct, coef, frac, paren, poly } from '../gen.ts';
 
 /** Extra practice (Practice 2): gentler questions on the same ideas, with new numbers every time. */
 export const extra: QuestionTemplate[] = [
@@ -88,37 +88,6 @@ export const extra: QuestionTemplate[] = [
     },
   },
   {
-    id: 'ca-02-x4',
-    difficulty: 2,
-    keyConceptTag: 'Derivative of the logarithm',
-    correctOptionId: 'a',
-    generate: (g) => {
-      const { p, q, a } = g.until(
-        () => ({ p: g.pick([-3, -2, 2, 3, 4]), q: g.int(-3, 9), a: g.int(-2, 3) }),
-        ({ p, q, a }) => {
-          const u = p * a + q;
-          return u > 0 && allDistinct([p / u, 1 / u, p, u / p]);
-        },
-      );
-      const u = p * a + q;
-      return {
-        params: { p, q, a },
-        promptText: r`Find $f'(${a})$ for $f(x) = \ln(${poly([q, p])})$.`,
-        options: [
-          { id: 'a', label: `$${frac(p, u)}$`, value: p / u },
-          { id: 'b', label: `$${frac(1, u)}$`, value: 1 / u, trapExplanation: r`Chain rule: multiply $\frac1u$ by the derivative of the inside, ${p}.` },
-          { id: 'c', label: `$${p}$`, value: p, trapExplanation: r`That is only the inner derivative. The outer one, $\frac{1}{u}$, contributes $\frac{1}{${u}}$.` },
-          { id: 'd', label: `$${frac(u, p)}$`, value: u / p, trapExplanation: r`Upside down: $(\ln u)' = \frac{u'}{u}$.` },
-        ],
-        stepByStepSolution: [
-          r`$(\ln u)' = \dfrac{u'}{u}$ with $u = ${poly([q, p])}$, $u' = ${p}$.`,
-          r`At $x = ${a}$: $u = ${u}$.`,
-          r`$f'(${a}) = ${frac(p, u)}$.`,
-        ],
-      };
-    },
-  },
-  {
     id: 'ca-02-x5',
     difficulty: 2,
     keyConceptTag: 'Slope of the tangent',
@@ -167,6 +136,30 @@ export const extra: QuestionTemplate[] = [
           r`$f'(x) = ${poly([-2 * s, 2])} = 2(x - ${paren(s)})$.`,
           r`$f'(x) < 0$ exactly when $x < ${s}$.`,
           r`So $f$ decreases on $x < ${s}$ and increases on $x > ${s}$ (the vertex of the parabola).`,
+        ],
+      };
+    },
+  },
+  {
+    id: 'ca-02-x7',
+    difficulty: 1,
+    keyConceptTag: 'Derivatives of sine and cosine',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const [a, b] = g.until(() => [g.nonzero(-6, 6), g.nonzero(-6, 6)], ([a, b]) => allDistinct([a, b, -a, a - b]));
+      return {
+        params: { a, b },
+        promptText: r`Find $f'(0)$ for $f(x) = ${coef(a)}\sin x ${b < 0 ? '-' : '+'} ${coef(Math.abs(b))}\cos x$.`,
+        options: [
+          { id: 'a', label: `$${a}$`, value: a },
+          { id: 'b', label: `$${b}$`, value: b, trapExplanation: r`That is $f(0)$, since $\sin 0 = 0$ and $\cos 0 = 1$. The question asks for the slope.` },
+          { id: 'c', label: `$${-a}$`, value: -a, trapExplanation: r`$(\sin x)' = +\cos x$; the minus sign belongs to the derivative of $\cos x$.` },
+          { id: 'd', label: `$${a - b}$`, value: a - b, trapExplanation: r`$(\cos x)' = -\sin x$, not $-\cos x$, and $\sin 0 = 0$: the cosine term contributes nothing at 0.` },
+        ],
+        stepByStepSolution: [
+          r`$(\sin x)' = \cos x$ and $(\cos x)' = -\sin x$.`,
+          r`$f'(x) = ${coef(a)}\cos x ${b < 0 ? '+' : '-'} ${coef(Math.abs(b))}\sin x$.`,
+          r`$f'(0) = ${a}\cdot 1 ${b < 0 ? '+' : '-'} ${Math.abs(b)}\cdot 0 = ${a}$.`,
         ],
       };
     },

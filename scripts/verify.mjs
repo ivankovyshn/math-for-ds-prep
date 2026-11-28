@@ -12,6 +12,7 @@ import katex from 'katex';
 import { ALL_QUESTIONS as QUESTIONS, LESSONS } from '../src/data/questions.ts';
 import { variantOf } from '../src/lib/variants.ts';
 import { PREREQS } from '../src/data/prereqs.ts';
+import { RENAMED_QUESTIONS, SPLIT_LESSONS } from '../src/data/renamed.ts';
 
 // ---------- numeric helpers ----------
 const EPS = 1e-9;
@@ -142,6 +143,8 @@ const cdiv = ([a, b], [c, d]) => {
 };
 const cpow = (z, n) => (n === 0 ? [1, 0] : cmul(z, cpow(z, n - 1)));
 const cabs = ([a, b]) => Math.hypot(a, b);
+/** r·e^{iθ} with θ in degrees, as [re, im]. */
+const polarDeg = (rr, d) => [rr * Math.cos((d * Math.PI) / 180), rr * Math.sin((d * Math.PI) / 180)];
 const round = (v) => v.map((x) => Math.round(x * 1e9) / 1e9 + 0);
 /** Simple maps of the plane, from their geometric meaning (same order as PLANE_MAPS in la-03). */
 const PLANE = [
@@ -924,9 +927,21 @@ Object.assign(checks, {
   'ml-06-1': ({ z, w }) => cmul(z, w),
   'ml-06-2': ({ z }) => cabs(z),
   'ml-06-3': ({ z, w }) => cdiv(z, w),
-  'ml-06-4': ({ re, im }) => Math.round(deg(Math.atan2(im, re)) * 1e9) / 1e9,
-  'ml-06-5': ({ z, n }) => round(cpow(z, n)),
-  'ml-06-6': ({ m, k }) => {
+  'ml-06-7': ({ n }) => round(cpow([0, 1], n)),
+  // A negative discriminant: the roots are re ± im·i (option d, "no solutions", has no value).
+  'ml-06-8': ({ b, c }, q) => { const z = quadRoots(1, b, c); return Array.isArray(z) ? { id: 'none' } : pickByValue(q, [z.re, z.im]); },
+  // The quadratic through z and its conjugate: z² − (z + z̄)z + z·z̄, as coefficients from the constant up.
+  'ml-06-9': ({ p, q }) => { const prod = cmul([p, q], [p, -q]); return [prod[0], -(p + p), 1]; },
+  'ml-06-x7': ({ a, b }) => cdiv([1, 0], [a, b]),
+  'ml-07-q1': () => deg(Math.atan2(3, -3)),
+  'ml-07-q2': () => round([Math.cos(Math.PI), Math.sin(Math.PI)]),
+  'ml-07-q3': () => { const p = cpow(polarDeg(2, 30), 3); return [Math.round(cabs(p) * 1e9) / 1e9, Math.round(deg(Math.atan2(p[1], p[0])) * 1e9) / 1e9]; },
+  'ml-07-1': ({ R, t }) => round(polarDeg(R, t)),
+  'ml-07-2': ({ a, b }) => cmul([0, 1], [a, b]),
+  'ml-07-3': ({ re, im }) => Math.round(deg(Math.atan2(im, re)) * 1e9) / 1e9,
+  'ml-07-4': ({ R, t }) => round(polarDeg(R, t)),
+  'ml-07-5': ({ z, n }) => round(cpow(z, n)),
+  'ml-07-6': ({ m, k }) => {
     const isRoot = (z) => () => {
       const w = cpow(z, 4);
       return Math.abs(w[0] + m ** 4) < 1e-9 && Math.abs(w[1]) < 1e-9;
@@ -944,10 +959,16 @@ Object.assign(checks, {
     if (Math.abs(p[1]) > 1e-12) throw new Error('z times its conjugate must be real');
     return p[0];
   },
-  'ml-06-x6': ({ r1, r2, t1, t2 }) => {
-    const polar = (rr, d) => [rr * Math.cos((d * Math.PI) / 180), rr * Math.sin((d * Math.PI) / 180)];
-    return round(cmul(polar(r1, t1), polar(r2, t2)));
-  },
+  // Roots of z^n = w (w ≠ 0): a degree-n polynomial, counted by the fundamental theorem of algebra.
+  'ml-07-x1': ({ n }) => n,
+  // Exponential form [modulus, angle]: recompute from the product of the actual numbers.
+  'ml-07-x2': ({ r1, r2, t1, t2 }) => { const p = cmul(polarDeg(r1, t1), polarDeg(r2, t2)); return [Math.round(cabs(p) * 1e9) / 1e9, Math.round(deg(Math.atan2(p[1], p[0])) * 1e9) / 1e9]; },
+  'ml-07-x3': ({ r1, r2, t1, t2 }) => round(cmul(polarDeg(r1, t1), polarDeg(r2, t2))),
+  // The angle n·t stays below 180°, so atan2 returns it directly.
+  'ml-07-x4': ({ R, n, t }) => { const p = cpow(polarDeg(R, t), n); return [Math.round(cabs(p) * 1e9) / 1e9, Math.round(deg(Math.atan2(p[1], p[0])) * 1e9) / 1e9]; },
+  'ml-07-x5': ({ re, im }) => Math.round(deg(Math.atan2(im, re)) * 1e9) / 1e9,
+  // Neighbouring roots of unity: the angle between e^{2πi/n} and 1.
+  'ml-07-x6': ({ n }) => { const w = polarDeg(1, 360 / n); return Math.round(deg(Math.atan2(w[1], w[0])) * 1e9) / 1e9; },
 });
 
 // la-08 · norms and orthogonality
@@ -1114,16 +1135,31 @@ function symEig(S) {
 const svals = (A) => symEig(mul(T(A), A)).map((l) => Math.sqrt(Math.max(0, l)));
 const diagM = (d, rows = d.length, cols = d.length) => Array.from({ length: rows }, (_, i) => Array.from({ length: cols }, (_, j) => (i === j ? d[i] ?? 0 : 0)));
 const frob = (A) => Math.sqrt(flat(A).reduce((s, x) => s + x * x, 0));
+/** Sample covariance of two lists (each centred on its own mean here, so it also works on raw data). */
+const sampleCov = (x, y) => {
+  const mx = x.reduce((s, v) => s + v, 0) / x.length;
+  const my = y.reduce((s, v) => s + v, 0) / y.length;
+  return x.reduce((s, v, i) => s + (v - mx) * (y[i] - my), 0) / (x.length - 1);
+};
 const minus = (A, B) => A.map((row, i) => row.map((x, j) => x - B[i][j]));
 Object.assign(checks, {
   'la-11-q1': () => svals([[2, 0], [0, -3]]),
   'la-11-q2': () => rank(diagM([7, 2, 0])),
-  'la-11-q3': () => {
+  'la-11-q3': () => svals(minus(diagM([5, 3, 1]), diagM([5, 0, 0])))[0],
+  'la-12-q1': () => sampleCov([3, -1, -2], [3, -1, -2]),
+  'la-12-q2': () => {
     const ev = symEig(mul(mul(Q3, diagM([8, 1.5, 0.5])), T(Q3)));
     return (100 * ev[0]) / ev.reduce((s, x) => s + x, 0);
   },
+  // PC1 of diag(100, 0.0001): which axis is the top eigenvector?
+  'la-12-q3': () => {
+    const C = diagM([100, 1e-4]);
+    const top = symEig(C)[0];
+    const pc1 = (v) => () => isEigvec(C, v) && Math.abs(dot(mulVec(C, v), v) / dot(v, v) - top) < EPS;
+    return pickId({ a: pc1([1, 0]), b: pc1([0, 1]), c: pc1([1, 1]) });
+  },
   'la-11-1': ({ A }) => svals(A),
-  'la-11-2': ({ ls }) => {
+  'la-12-2': ({ ls }) => {
     const ev = symEig(diagM(ls));
     return (100 * (ev[0] + ev[1])) / ev.reduce((s, x) => s + x, 0);
   },
@@ -1135,7 +1171,7 @@ Object.assign(checks, {
     return frob(minus(A, scale(s[0], q.map((x) => q.map((y) => x * y)))));
   },
   'la-11-5': ({ A }) => svals(A),
-  'la-11-6': ({ C }) => {
+  'la-12-6': ({ C }) => {
     const ev = symEig(C);
     return ev[0] / (ev[0] + ev[1]);
   },
@@ -1148,12 +1184,32 @@ Object.assign(checks, {
     return { v: best, tol: 1e-4 };
   },
   'la-11-x4': ({ M }) => symEig(M).map(Math.sqrt),
-  'la-11-x5': (p) => {
+  'la-11-7': ({ s }) => frob(mul(mul(rot(0.7), diagM(s)), T(rot(0.2)))),
+  'la-11-8': ({ A }) => svals(A),
+  'la-11-x7': ({ s, k }) => svals(minus(diagM(s), diagM(s.map((x, i) => (i < k ? x : 0)))))[0],
+  'la-11-x8': ({ A }) => svals(A).reduce((t, x) => t + x * x, 0),
+  'la-12-1': ({ C }) => symEig(C).reduce((t, x) => t + x, 0),
+  'la-12-3': ({ x, y }) => sampleCov(x, y),
+  // The coordinate of x along the unit vector in the direction u.
+  'la-12-4': ({ u, xs }) => dot(xs, u) / norm(u),
+  'la-12-5': ({ ls }) => {
+    const ev = symEig(diagM(ls));
+    const tot = ev.reduce((t, x) => t + x, 0);
+    let cum = 0;
+    for (let k = 0; k < ev.length; k++) if ((cum += ev[k]) >= 0.9 * tot) return k + 1;
+    return ev.length;
+  },
+  'la-12-x1': ({ ls }) => Math.sqrt(symEig(diagM(ls))[0]),
+  'la-12-x4': ({ vs }) => { const m = vs.reduce((t, x) => t + x, 0) / vs.length; return vs.map((v) => v - m); },
+  'la-12-x5': ({ x }) => sampleCov(x, x),
+  // The eigenvalue of C other than l1.
+  'la-12-x6': ({ A, l1 }) => { const ev = symEig(A); return Math.abs(ev[0] - l1) < 1e-9 ? ev[1] : ev[0]; },
+  'la-12-x2': (p) => {
     const top = symEig(p.C)[0];
     const isPC1 = (v) => () => isEigvec(p.C, v) && Math.abs(dot(mulVec(p.C, v), v) / dot(v, v) - top) < EPS;
     return pickId({ a: isPC1(p.a), b: isPC1(p.b), c: isPC1(p.c), d: isPC1(p.d) });
   },
-  'la-11-x6': ({ s }) => {
+  'la-12-x3': ({ s }) => {
     // Centred data with orthogonal columns of these lengths, then its covariance matrix.
     const c1 = [1, -1, 0].map((x) => x / Math.sqrt(2));
     const c2 = [1, 1, -2].map((x) => x / Math.sqrt(6));
@@ -1193,6 +1249,8 @@ const integral = (f, a, b, n = 2000) => {
   return (s * h) / 3;
 };
 const near = (v, tol = 1e-5) => ({ v, tol });
+/** The option whose value is within tol of v (for questions where one option, such as "It diverges", has no value). */
+const pickNear = (q, v, tol = 1e-6) => ({ id: q.options.find((o) => typeof o.value === 'number' && Math.abs(o.value - v) < tol)?.id ?? 'none' });
 
 // ca-01 · limits and continuity
 Object.assign(checks, {
@@ -1230,6 +1288,19 @@ const localMinima = (f, lo = -10, hi = 10, step = 1e-3) => {
   }
   return out;
 };
+/** Coefficients (constant first) of the derivative of a polynomial. */
+const polyD = (cs) => cs.slice(1).map((c, i) => c * (i + 1));
+/** A zero of fn on [lo, hi], whichever way fn crosses it. */
+const root = (fn, lo, hi) => (fn(lo) < 0 ? bisect(fn, lo, hi) : bisect((x) => -fn(x), lo, hi));
+/** Does f' have the given sign exactly where pred holds? Scanned on [-8, 8], skipping points where f' ≈ 0. */
+const slopeSignOn = (f, pred, sign) => () => {
+  for (let x = -8; x <= 8; x += 0.01) {
+    const d = D1(f, x);
+    if (Math.abs(d) < 1e-3) continue;
+    if ((Math.sign(d) === sign) !== pred(x)) return false;
+  }
+  return true;
+};
 /** Is f decreasing exactly on {x : dir·(x − bound) > 0}? Probed at a few points on each side. */
 const decreasingOn = (f, [dir, bound]) => () =>
   [0.3, 1, 3].every((t) => D1(f, bound + dir * t) < 0 && D1(f, bound - dir * t) > 0);
@@ -1239,27 +1310,72 @@ Object.assign(checks, {
     return (f(3) - f(1)) / (3 - 1);
   },
   'ca-02-q2': () => D1(P([7, -5, 0, 2]), 1),
-  'ca-02-q3': () => D1((x) => x * Math.exp(x), 0),
+  // f' = 2x − 6, so f = x² − 6x (+ any constant).
+  'ca-02-q3': () => {
+    const f = (x) => x * x - 6 * x;
+    return pickId({ a: slopeSignOn(f, (x) => x > 3, 1), b: slopeSignOn(f, (x) => x < 3, 1), c: slopeSignOn(f, (x) => x > 6, 1) });
+  },
   'ca-02-1': ({ cs, a }) => D1(P(cs), a),
   'ca-02-2': ({ cs, a }) => {
     const m = D1(P(cs), a);
     return [P(cs)(a) - m * a, m];
   },
-  'ca-02-3': ({ p, q, k }) => D1((x) => (p * x + q) * Math.exp(k * x), 0),
-  'ca-02-4': ({ p, q, n, a }) => D1((x) => (p * x + q) ** n, a),
-  'ca-02-5': ({ cs }) => {
+  'ca-02-7': ({ a, b }) => D1((x) => a * Math.exp(x) + b * Math.log(x), 1),
+  'ca-02-8': ({ p, q, t0 }) => D1((t) => p * t * t + q * t, t0),
+  // The point of the curve where the slope equals the line's slope k.
+  'ca-02-9': ({ b, c, k }) => {
+    const f = P([c, b, 1]);
+    const x = root((t) => D1(f, t) - k, -60, 60);
+    return { v: [x, f(x)], tol: 1e-6 };
+  },
+  'ca-02-10': ({ cs, a }) => {
+    const f = P(cs);
+    return pickId({
+      a: slopeSignOn(f, (x) => -a < x && x < a, -1),
+      b: slopeSignOn(f, (x) => x < -a || x > a, -1),
+      c: slopeSignOn(f, (x) => x < a, -1),
+      d: slopeSignOn(f, (x) => 0 < x && x < a, -1),
+    });
+  },
+  'ca-02b-q1': () => D1((x) => (2 * x + 1) ** 3, 0),
+  'ca-02b-q2': () => D1((x) => x * Math.exp(x), 0),
+  'ca-02b-q3': () => P(polyD(polyD([0, 0, 0, 0, 1])))(1),
+  'ca-02b-1': ({ cs, x0 }) => P(polyD(polyD(cs)))(x0),
+  'ca-02b-2': ({ c, k }) => D1((x) => c * Math.exp(k * x), 0),
+  'ca-02b-3': ({ p, q, k }) => D1((x) => (p * x + q) * Math.exp(k * x), 0),
+  'ca-02b-4': ({ p, q, n, a }) => D1((x) => (p * x + q) ** n, a),
+  'ca-02b-5': ({ cs }) => {
     const mins = localMinima(P(cs));
     if (mins.length !== 1) throw new Error(`expected one local minimum, got ${mins.length}`);
     return { v: mins[0], tol: 2e-3 };
   },
-  'ca-02-6': ({ pn, pd }) => {
+  'ca-02b-6': ({ pn, pd }) => {
     const p = pn / pd;
     return D1(sigmoid, Math.log(p / (1 - p)));
   },
   'ca-02-x1': ({ cs, a }) => D1(P(cs), a),
   'ca-02-x2': ({ cs }) => [D1(P(cs), 0), D1(P(cs), 1) - D1(P(cs), 0)],
   'ca-02-x3': ({ cs, a, b }) => (P(cs)(b) - P(cs)(a)) / (b - a),
-  'ca-02-x4': ({ p, q, a }) => D1((x) => Math.log(p * x + q), a),
+  'ca-02-x7': ({ a, b }) => D1((x) => a * Math.sin(x) + b * Math.cos(x), 0),
+  // g is any function with g(1) = p and g'(1) = q; a line through (1, p) with slope q will do.
+  'ca-02b-x1': ({ p, q }) => D1((x) => x ** 3 * (p + q * (x - 1)), 1),
+  'ca-02b-x2': ({ p, q, a }) => D1((x) => Math.log(p * x + q), a),
+  // [coefficient, exponent] of the second derivative of c·x^n.
+  'ca-02b-x3': ({ c, n }) => {
+    const cs = Array(n + 1).fill(0);
+    cs[n] = c;
+    const d = polyD(polyD(cs));
+    const e = d.findIndex((v) => v !== 0);
+    return [d[e], e];
+  },
+  // [+1 for a minimum / −1 for a maximum, where].
+  'ca-02b-x4': ({ cs }) => {
+    const f = P(cs);
+    const x = root((t) => D1(f, t), -60, 60);
+    return { v: [Math.sign(Dn(f, x, 2)), x], tol: 1e-6 };
+  },
+  'ca-02b-x5': ({ a, b }) => D1((x) => (x + a) / (x + b), 0),
+  'ca-02b-x6': ({ n, a }) => D1((x) => (x * x + a) ** n, 1),
   'ca-02-x5': ({ cs, a }) => D1(P(cs), a),
   'ca-02-x6': (p) => pickId(Object.fromEntries(['a', 'b', 'c', 'd'].map((id) => [id, decreasingOn(P(p.cs), p[id])]))),
 });
@@ -1305,8 +1421,63 @@ Object.assign(checks, {
   },
   'ca-04-3': ({ cs, a, b }) => integral(P(cs), a, b),
   'ca-04-4': ({ cs, a, b }) => integral(P(cs), a, b),
-  'ca-04-5': ({ c, m, n }) => integral((x) => 2 * x * (x * x + m) ** n, 0, c),
-  'ca-04-6': ({ n }) => integral((x) => x * (n + 1) * x ** n, 0, 1),
+  'ca-04-7': ({ a, b }) => near(integral((x) => Math.abs(x - a), 0, b, 20000), 1e-4),
+  'ca-04-8': ({ p, q, t1, t2 }) => integral(P([q, p]), t1, t2),
+  'ca-04b-q1': () => {
+    const f = (x) => Math.cos(3 * x);
+    return pickId({ a: isAntiderivative((x) => Math.sin(3 * x) / 3, f), b: isAntiderivative((x) => 3 * Math.sin(3 * x), f), c: isAntiderivative((x) => -Math.sin(3 * x) / 3, f) });
+  },
+  'ca-04b-q2': () => {
+    const f = (x) => x * Math.cos(x);
+    return pickId({
+      a: isAntiderivative((x) => x * Math.sin(x) + Math.cos(x), f),
+      b: isAntiderivative((x) => x * Math.sin(x) - Math.cos(x), f),
+      c: isAntiderivative((x) => ((x * x) / 2) * Math.sin(x), f),
+    });
+  },
+  // ∫_1^∞ x^(-3) dx = ∫_0^1 t dt after x = 1/t.
+  'ca-04b-q3': (_, q) => pickNear(q, integral((t) => t, 0, 1)),
+  'ca-04b-1': ({ k, fnId }) => {
+    const [f, F] = fnId === 0 ? [Math.cos, Math.sin] : [Math.sin, (u) => -Math.cos(u)];
+    const g = (x) => f(k * x);
+    // Labels: a = F/k, b = k·F, c = −F/k, d = F (each evaluated at kx).
+    return pickId({
+      a: isAntiderivative((x) => F(k * x) / k, g),
+      b: isAntiderivative((x) => k * F(k * x), g),
+      c: isAntiderivative((x) => -F(k * x) / k, g),
+      d: isAntiderivative((x) => F(k * x), g),
+    });
+  },
+  'ca-04b-2': ({ k }, q) => pickNear(q, integral((x) => Math.exp(-k * x), 0, 40 / k)),
+  'ca-04b-3': ({ k }) => {
+    const f = (x) => x * Math.exp(k * x);
+    const E = (x) => Math.exp(k * x);
+    return pickId({
+      a: isAntiderivative((x) => (x / k) * E(x) - E(x) / (k * k), f),
+      b: isAntiderivative((x) => (x / k) * E(x), f),
+      c: isAntiderivative((x) => ((x * x) / (2 * k)) * E(x), f),
+      d: isAntiderivative((x) => (x / k) * E(x) + E(x) / (k * k), f),
+    });
+  },
+  'ca-04b-4': ({ n, d }) => integral((x) => (n + 1) * x ** n, 0, 1 / d),
+  'ca-04b-5': ({ c, m, n }) => integral((x) => 2 * x * (x * x + m) ** n, 0, c),
+  'ca-04b-6': ({ n }) => integral((x) => x * (n + 1) * x ** n, 0, 1),
+  'ca-04b-x1': ({ c, n }) => {
+    const f = (x) => 2 * x * (x * x + c) ** n;
+    const U = (x) => x * x + c;
+    return pickId({
+      a: isAntiderivative((x) => U(x) ** (n + 1) / (n + 1), f),
+      b: isAntiderivative((x) => U(x) ** (n + 1), f),
+      c: isAntiderivative((x) => (x * x * U(x) ** (n + 1)) / (n + 1), f),
+      d: isAntiderivative((x) => 2 * n * x * U(x) ** (n - 1), f),
+    });
+  },
+  // ∫_1^∞ x^(-p) dx = ∫_0^1 t^(p-2) dt after x = 1/t.
+  'ca-04b-x2': ({ p }, q) => pickNear(q, integral((t) => t ** (p - 2), 0, 1)),
+  'ca-04b-x3': ({ c }) => integral((x) => x * Math.exp(x), 0, c),
+  'ca-04b-x4': ({ n }) => 1 / integral((x) => x ** n, 0, 1),
+  'ca-04b-x5': ({ l, a }) => near(integral((x) => 2 * x * Math.exp(x * x), l, a, 20000), 1e-3),
+  'ca-04b-x6': ({ lam, t }) => 1 - integral((x) => lam * Math.exp(-lam * x), 0, t),
   'ca-04-x1': ({ cs, a, b }) => integral(P(cs), a, b),
   'ca-04-x2': ({ k }) => {
     const f = (x) => Math.exp(k * x);
@@ -1546,22 +1717,48 @@ const trialsProb = (n, pn, pd, k) => prob(tuples(range(0, pd - 1), n), (t) => t.
 /** Uniform(a, b) by a fine grid of equally likely points. */
 const uniformProb = (a, b, c, d) => prob(range(0, 99999).map((i) => a + ((i + 0.5) * (b - a)) / 1e5), (x) => x >= c && x <= d);
 const pctNear = (v) => ({ v: 100 * v, tol: 1.2 });
+/** P(sum of t independent Poisson(λ) counts = k), by adding over every split of k into t parts. */
+const poissonSum = (lam, t, k) => {
+  if (t === 1) return poissonLimit(lam, k);
+  let s = 0;
+  for (let j = 0; j <= k; j++) s += poissonLimit(lam, j) * poissonSum(lam, t - 1, k - j);
+  return s;
+};
 Object.assign(checks, {
   'pr-03-q1': () => prob(tuples(['H', 'T'], 3), (t) => t.filter((x) => x === 'H').length >= 2),
   'pr-03-q2': () => trialsProb(4, 1, 2, 2),
-  'pr-03-q3': () => pctNear(normalProb(100, 15, 85, 115)),
+  'pr-03-q3': () => rel(poissonLimit(3, 0), 1e-4),
+  'pr-03b-q1': () => 1 / integral(() => 1, 0, 0.5),
+  'pr-03b-q2': () => near(integral((x) => Math.exp(-x), 2, 60), 1e-6),
+  'pr-03b-q3': () => pctNear(normalProb(100, 15, 85, 115)),
   'pr-03-1': ({ ps, k }) => prob(ps.flatMap((p, x) => Array(p).fill(x)), (x) => x <= k),
   'pr-03-2': ({ n, pn, pd, k }) => trialsProb(n, pn, pd, k),
   'pr-03-3': ({ lam, k }) => rel(poissonLimit(lam, k), 1e-4),
-  'pr-03-4': ({ lam, t }) => integral((x) => lam * Math.exp(-lam * x), t, t + 60 / lam, 4000),
-  'pr-03-5': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
-  'pr-03-6': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
+  // At least one correct among n guesses with d options each, by listing every answer sheet (option 0 is right).
+  'pr-03-7': ({ n, d }) => prob(tuples(range(0, d - 1), n), (t) => t.some((x) => x === 0)),
+  // The count over t minutes is a sum of t independent one-minute Poisson counts.
+  'pr-03-8': ({ lam, t, k }) => rel(poissonSum(lam, t, k), 1e-4),
+  'pr-03-9': ({ n }) => prob(tuples(['H', 'T'], n), (s) => s.filter((x) => x === 'H').length >= 2),
+  'pr-03b-1': ({ a, b }) => 1 / integral(() => 1, a, b),
+  // The density is F' = 2x; integrate it over the interval.
+  'pr-03b-2': ({ a, b }) => near(integral((x) => D1((t) => t * t, x), a, b), 1e-6),
+  'pr-03b-3': ({ m, t }) => near(integral((x) => Math.exp(-x / m) / m, 0, t), 1e-6),
+  'pr-03b-4': ({ lam, t }) => integral((x) => lam * Math.exp(-lam * x), t, t + 60 / lam, 4000),
+  'pr-03b-5': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+  'pr-03b-6': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
   'pr-03-x1': ({ ps }) => prob(ps.flatMap((p, x) => Array(p).fill(x)), (x) => x === 3),
   'pr-03-x2': ({ n, pn, pd, k }) => trialsProb(n, pn, pd, k),
   'pr-03-x3': ({ k, n }) => prob(range(1, n), (x) => x <= k),
   'pr-03-x4': ({ lam, k }) => rel(poissonLimit(lam, k), 1e-4),
-  'pr-03-x5': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
-  'pr-03-x6': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+  'pr-03-x7': ({ n }) => prob(tuples(['H', 'T'], n), (s) => s.includes('H')),
+  'pr-03-x8': ({ lam }) => rel(poissonLimit(lam, 0) + poissonLimit(lam, 1), 1e-4),
+  'pr-03b-x1': ({ a, b, c }) => integral(() => 1 / (b - a), c, c),
+  'pr-03b-x2': ({ mu, s, x }) => (x - mu) / s,
+  'pr-03b-x3': ({ a, b, c, d }) => near(uniformProb(a, b, c, d), 1e-3),
+  'pr-03b-x4': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+  'pr-03b-x5': ({ m, s, lo, hi }) => pctNear(normalProb(m, s, m + lo * s, m + hi * s)),
+  // Mean of the exponential density, in minutes.
+  'pr-03b-x6': ({ lam }) => near(60 * integral((x) => x * lam * Math.exp(-lam * x), 0, 60 / lam, 4000), 1e-6),
 });
 
 // pr-04 · expectation and variance, from explicit distributions [value, probability]
@@ -2537,6 +2734,17 @@ for (const l of LESSONS) {
 for (const [id, reqs] of Object.entries(PREREQS)) {
   if (!lessonIds.has(id)) fail(`prereqs ${id}`, 'no such lesson');
   for (const r of reqs) if (!lessonIds.has(r)) fail(`prereqs ${id}`, `unknown prerequisite ${r}`);
+}
+
+for (const [from, to] of Object.entries(SPLIT_LESSONS)) {
+  if (!lessonIds.has(from) || !lessonIds.has(to)) fail(`split ${from} -> ${to}`, 'both halves must be lessons');
+}
+{
+  const ids = new Set(QUESTIONS.map((q) => q.id));
+  for (const [from, to] of Object.entries(RENAMED_QUESTIONS)) {
+    if (ids.has(from)) fail(`renamed ${from}`, 'the old id is still in use: a saved mistake would jump to another question');
+    if (!ids.has(to)) fail(`renamed ${from}`, `no question ${to}`);
+  }
 }
 
 // Questions

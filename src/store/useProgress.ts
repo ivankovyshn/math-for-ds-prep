@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MistakeEntry } from '../types.ts';
+import { RENAMED_QUESTIONS, SPLIT_LESSONS } from '../data/renamed.ts';
 
 /**
  * Everything that describes a learner. This is the only state that is persisted.
@@ -60,6 +61,25 @@ const yesterday = () => {
   d.setDate(d.getDate() - 1);
   return localDate(d);
 };
+
+/**
+ * Version 4 split five overloaded lessons in two. A learner who passed (or read) the original lesson keeps both
+ * halves, so nothing they unlocked is locked again; saved mistakes follow questions that moved to the new half.
+ */
+export function upgradeSplitLessons(d: ProgressData): ProgressData {
+  const completedNodes = { ...d.completedNodes };
+  const lecturesRead = { ...d.lecturesRead };
+  const extraUnlocked = { ...d.extraUnlocked };
+  for (const [from, to] of Object.entries(SPLIT_LESSONS)) {
+    const done = completedNodes[`lesson:${from}`];
+    if (done && !completedNodes[`lesson:${to}`]) completedNodes[`lesson:${to}`] = done;
+    if (lecturesRead[from] && !lecturesRead[to]) lecturesRead[to] = lecturesRead[from];
+    if (extraUnlocked[from] && !extraUnlocked[to]) extraUnlocked[to] = extraUnlocked[from];
+  }
+  const mistakes: Record<string, MistakeEntry> = {};
+  for (const [id, m] of Object.entries(d.mistakes)) mistakes[RENAMED_QUESTIONS[id] ?? id] = m;
+  return { ...d, completedNodes, lecturesRead, extraUnlocked, mistakes };
+}
 
 /** Correct answers in a row (in Review) needed to clear a mistake. */
 export const REVIEW_CLEAR_STREAK = 2;
@@ -123,21 +143,27 @@ export const useProgress = create<ProgressData & ProgressActions>()(
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
       // Files exported before v3 may still carry exam results; only known fields are taken.
-      importData: ({ xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme }) =>
-        set({ ...initial, xp, streakCount, lastActiveDate, completedNodes, lecturesRead: lecturesRead ?? {}, extraUnlocked: extraUnlocked ?? {}, mistakes, theme: theme ?? 'dark' }),
+      // Files exported before the lesson split (no `schema`, or below 4) are upgraded like saved progress.
+      importData: (data) => {
+        const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme } = data;
+        const clean = { ...initial, xp, streakCount, lastActiveDate, completedNodes, lecturesRead: lecturesRead ?? {}, extraUnlocked: extraUnlocked ?? {}, mistakes, theme: theme ?? 'dark' };
+        set(((data as { schema?: number }).schema ?? 3) < 4 ? upgradeSplitLessons(clean) : clean);
+      },
 
       reset: () => set((s) => ({ ...initial, theme: s.theme })),
     }),
     {
       name: 'mathds-progress',
-      version: 3,
+      version: 4,
       // v1 was the entrance-exam trainer: its questions are gone, so only XP, streak and theme carry over.
       migrate: (persisted, version) => {
         const old = (persisted ?? {}) as Partial<ProgressData>;
         if (version < 2) return { ...initial, xp: old.xp ?? 0, streakCount: old.streakCount ?? 0, lastActiveDate: old.lastActiveDate ?? null, theme: old.theme ?? 'dark' };
         // v3 retired the exam simulator: its results are dropped.
         const { examResults: _dropped, ...rest } = old as Partial<ProgressData> & { examResults?: unknown };
-        return { ...initial, ...rest };
+        const data = { ...initial, ...rest };
+        // v4 split five lessons in two.
+        return version < 4 ? upgradeSplitLessons(data) : data;
       },
     },
   ),
@@ -149,9 +175,12 @@ export function currentStreak(s: Pick<ProgressData, 'streakCount' | 'lastActiveD
   return s.lastActiveDate === localDate() || s.lastActiveDate === yesterday() ? s.streakCount : 0;
 }
 
-export function exportProgress(): ProgressData {
+/** The saved-progress layout an export file follows (see importData). */
+export const PROGRESS_SCHEMA = 4;
+
+export function exportProgress(): ProgressData & { schema: number } {
   const { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme } = useProgress.getState();
-  return { xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme };
+  return { schema: PROGRESS_SCHEMA, xp, streakCount, lastActiveDate, completedNodes, lecturesRead, extraUnlocked, mistakes, theme };
 }
 
 export function isProgressData(x: unknown): x is ProgressData {

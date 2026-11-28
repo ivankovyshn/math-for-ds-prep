@@ -157,88 +157,88 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'pr-03-4',
+    id: 'pr-03-7',
     difficulty: 2,
-    keyConceptTag: 'The exponential distribution',
+    keyConceptTag: 'At least one: the complement',
     correctOptionId: 'a',
     generate: (g) => {
-      const lam = g.pick([0.5, 2, 3]);
-      const t = g.int(1, 3);
-      const lt = lam * t;
-      const v = [Math.exp(-lt), 1 - Math.exp(-lt), lam * Math.exp(-lt), Math.exp(-t / lam)];
+      const { n, d } = g.until(
+        () => ({ n: g.int(2, 4), d: g.int(3, 6) }),
+        ({ n, d }) => allDistinct([1 - ((d - 1) / d) ** n, n / d, 1 - 1 / d ** n, ((d - 1) / d) ** n].map((x) => Math.round(x * 1e9))),
+      );
+      const N = d ** n;
+      const none = (d - 1) ** n;
       return {
-        params: { lam, t },
-        promptText: r`The time $X$ (in minutes) until the next bus is exponential with rate $\lambda = ${lam}$ per minute. What is $P(X > ${t})$?`,
+        params: { n, d },
+        promptText: r`A quiz question has ${d} options, and you guess at random. You guess on ${n} questions. What is the probability of at least one correct guess?`,
         options: [
-          { id: 'a', label: `$e^{-${dec(lt)}} ${approx(v[0])}$`, value: v[0] },
-          { id: 'b', label: `$1 - e^{-${dec(lt)}} ${approx(v[1])}$`, value: v[1], trapExplanation: r`That is $P(X \le ${t})$, the CDF. "Longer than ${t}" is the complement.` },
-          { id: 'c', label: `$${dec(lam)}e^{-${dec(lt)}} ${approx(v[2])}$`, value: v[2], trapExplanation: r`That is the density $f(${t})$. A probability is an area: $\int_{${t}}^{\infty}\lambda e^{-\lambda x}dx$.` },
-          { id: 'd', label: `$e^{-${dec(t / lam)}} ${approx(v[3])}$`, value: v[3], trapExplanation: r`That treats ${lam} as the mean waiting time. With rate $\lambda$, the mean is $\frac1\lambda = ${dec(1 / lam)}$.` },
+          { id: 'a', label: `$${frac(N - none, N)}$`, value: (N - none) / N },
+          { id: 'b', label: `$${frac(n, d)}$`, value: n / d, trapExplanation: r`Adding $\frac{1}{${d}}$ ${n} times counts the outcomes with several correct guesses more than once. Use the complement "none correct".` },
+          { id: 'c', label: `$${frac(N - 1, N)}$`, value: (N - 1) / N, trapExplanation: r`$1 - \big(\frac{1}{${d}}\big)^{${n}}$ subtracts "all correct". The complement of "at least one correct" is "none correct".` },
+          { id: 'd', label: `$${frac(none, N)}$`, value: none / N, trapExplanation: r`That is $P(\text{none correct}) = \big(\frac{${d - 1}}{${d}}\big)^{${n}}$; subtract it from 1.` },
         ],
         stepByStepSolution: [
-          r`$P(X > t) = \int_t^\infty \lambda e^{-\lambda x}\,dx = e^{-\lambda t}$.`,
-          r`$\lambda t = ${dec(lam)}\cdot${t} = ${dec(lt)}$.`,
-          r`$P(X > ${t}) = e^{-${dec(lt)}} ${approx(v[0])}$.`,
+          r`The complement of "at least one correct" is "none correct".`,
+          r`$P(\text{none}) = \big(\frac{${d - 1}}{${d}}\big)^{${n}} = ${frac(none, N)}$, because the guesses are independent.`,
+          r`$P(\text{at least one}) = 1 - ${frac(none, N)} = ${frac(N - none, N)}$.`,
         ],
       };
     },
   },
   {
-    id: 'pr-03-5',
+    id: 'pr-03-8',
     difficulty: 3,
-    keyConceptTag: 'The 68–95–99.7 rule',
+    keyConceptTag: 'Poisson: scale the rate to the window',
     correctOptionId: 'a',
     generate: (g) => {
-      const c = g.pick(RULE_CASES);
-      const m = g.pick([50, 60, 70, 100, 170, 500]);
-      const s = g.pick([2, 4, 5, 10, 15, 20]);
-      return {
-        params: { m, s, lo: c.lo === -Infinity ? -1e9 : c.lo, hi: c.hi === Infinity ? 1e9 : c.hi },
-        promptText: r`$X \sim N(${m}, ${s}^2)$. Approximately what is $${ruleQuestion(c, m, s)}$?`,
-        options: ruleOptions(c),
-        stepByStepSolution: [
-          r`Standardise: ${[c.lo, c.hi].filter((z) => Number.isFinite(z)).map((z) => `$${m + z * s}$ is $\\mu ${z < 0 ? '-' : '+'} ${Math.abs(z) === 1 ? '' : Math.abs(z)}\\sigma$`).join(' and ')}.`,
-          r`Within $1\sigma$: 68%, so each tail beyond $1\sigma$ holds 16%; within $2\sigma$: 95%, so each tail beyond $2\sigma$ holds 2.5%.`,
-          r`So the probability is about ${c.ans}%.`,
-        ],
-      };
-    },
-  },
-  {
-    id: 'pr-03-6',
-    difficulty: 3,
-    keyConceptTag: 'The uniform distribution',
-    correctOptionId: 'a',
-    generate: (g) => {
-      const { a, b, c, d } = g.until(
-        () => {
-          const a = g.int(0, 5);
-          const b = a + g.int(4, 10);
-          const left = g.next() < 0.5;
-          const c = left ? a - g.int(1, 3) : g.int(a + 1, b - 1);
-          const d = left ? g.int(a + 1, b - 1) : b + g.int(1, 3);
-          return { a, b, c, d };
-        },
-        ({ a, b, c, d }) => {
-          const ov = Math.min(d, b) - Math.max(c, a);
-          return allDistinct([ov / (b - a), (d - c) / (b - a), 1 / (b - a), (d - c) / b]);
+      const { lam, t, k } = g.until(
+        () => ({ lam: g.int(1, 2), t: g.int(2, 3), k: g.int(2, 3) }),
+        ({ lam, t, k }) => {
+          const P = (m: number) => (Math.exp(-m) * m ** k) / factorial(k);
+          return allDistinct([P(lam * t), P(lam), t * P(lam), Math.exp(-lam * t) * (lam * t) ** k].map((x) => Math.round(x * 1e9)));
         },
       );
-      const lo = Math.max(c, a);
-      const hi = Math.min(d, b);
+      const mu = lam * t;
+      const P = (m: number) => (Math.exp(-m) * m ** k) / factorial(k);
+      const term = (m: number) => `${frac(m ** k, factorial(k))}e^{-${m}}`;
       return {
-        params: { a, b, c, d },
-        promptText: r`$X \sim \text{Uniform}(${a}, ${b})$. What is $P(${c} \le X \le ${d})$?`,
+        params: { lam, t, k },
+        promptText: r`Messages arrive at ${lam} per minute on average (a Poisson stream). What is the probability of exactly ${k} messages in ${t} minutes?`,
         options: [
-          { id: 'a', label: `$${frac(hi - lo, b - a)}$`, value: (hi - lo) / (b - a) },
-          { id: 'b', label: `$${frac(d - c, b - a)}$`, value: (d - c) / (b - a), trapExplanation: r`$X$ never leaves $[${a}, ${b}]$: only the part of $[${c}, ${d}]$ inside it counts.` },
-          { id: 'c', label: `$${frac(1, b - a)}$`, value: 1 / (b - a), trapExplanation: r`$\frac{1}{${b - a}}$ is the height of the density, not an area.` },
-          { id: 'd', label: `$${frac(d - c, b)}$`, value: (d - c) / b, trapExplanation: r`Divide by the length of the whole range, $${b} - ${a} = ${b - a}$, and use only the overlap.` },
+          { id: 'a', label: `$${term(mu)} ${approx(P(mu))}$`, value: P(mu) },
+          { id: 'b', label: `$${term(lam)} ${approx(P(lam))}$`, value: P(lam), trapExplanation: r`That uses the one-minute average $\lambda = ${lam}$. Over ${t} minutes the average count is $${lam}\cdot${t} = ${mu}$.` },
+          { id: 'c', label: `$${t}\\cdot ${term(lam)} ${approx(t * P(lam))}$`, value: t * P(lam), trapExplanation: r`The ${k} messages can be spread over the ${t} minutes in many ways, so multiplying a one-minute probability by ${t} does not work. Use one Poisson with $\lambda = ${mu}$.` },
+          { id: 'd', label: `$${mu ** k}e^{-${mu}} ${approx(Math.exp(-mu) * mu ** k)}$`, value: Math.exp(-mu) * mu ** k, trapExplanation: r`The $k!$ in the denominator is missing: $\frac{${mu}^{${k}}}{${k}!}$.` },
         ],
         stepByStepSolution: [
-          r`The density is $\frac{1}{${b - a}}$ on $[${a}, ${b}]$ and 0 outside.`,
-          r`$[${c}, ${d}] \cap [${a}, ${b}] = [${lo}, ${hi}]$, of length ${hi - lo}.`,
-          r`$P = \frac{${hi - lo}}{${b - a}} = ${frac(hi - lo, b - a)}$.`,
+          r`The count in ${t} minutes is Poisson with $\lambda = ${lam}\cdot${t} = ${mu}$: the average scales with the window.`,
+          r`$P(X = ${k}) = e^{-${mu}}\frac{${mu}^{${k}}}{${k}!} = ${term(mu)}$.`,
+          r`$${term(mu)} ${approx(P(mu))}$.`,
+        ],
+      };
+    },
+  },
+  {
+    id: 'pr-03-9',
+    difficulty: 3,
+    keyConceptTag: 'At least two: subtract zero and one',
+    correctOptionId: 'a',
+    generate: (g) => {
+      const n = g.int(4, 6);
+      const N = 2 ** n;
+      return {
+        params: { n },
+        promptText: r`A fair coin is tossed ${n} times. What is the probability of at least two heads?`,
+        options: [
+          { id: 'a', label: `$${frac(N - 1 - n, N)}$`, value: (N - 1 - n) / N },
+          { id: 'b', label: `$${frac(binomial(n, 2), N)}$`, value: binomial(n, 2) / N, trapExplanation: r`That is exactly two heads. "At least two" also includes 3, 4, … heads.` },
+          { id: 'c', label: `$${frac(N - 1, N)}$`, value: (N - 1) / N, trapExplanation: r`That is $1 - P(\text{0 heads})$, i.e. at least <i>one</i> head. For at least two, also subtract $P(\text{exactly 1}) = \frac{${n}}{${N}}$.` },
+          { id: 'd', label: `$${frac(1 + n, N)}$`, value: (1 + n) / N, trapExplanation: r`That is $P(X \le 1)$, the complement. Subtract it from 1.` },
+        ],
+        stepByStepSolution: [
+          r`The complement of "at least two heads" is "zero or one head".`,
+          r`$P(X = 0) = \frac{1}{${N}}$ and $P(X = 1) = \binom{${n}}{1}\frac{1}{${N}} = \frac{${n}}{${N}}$.`,
+          r`$P(X \ge 2) = 1 - \frac{${1 + n}}{${N}} = ${frac(N - 1 - n, N)}$.`,
         ],
       };
     },

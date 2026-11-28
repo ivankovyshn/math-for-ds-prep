@@ -127,59 +127,63 @@ export const practice: QuestionTemplate[] = [
     },
   },
   {
-    id: 'ca-04-5',
+    id: 'ca-04-7',
     difficulty: 3,
-    keyConceptTag: 'Integration by substitution',
+    keyConceptTag: 'Total area versus signed area',
     correctOptionId: 'a',
     generate: (g) => {
-      const { c, m, n } = g.until(
-        () => ({ c: g.int(1, 2), m: g.int(1, 3), n: g.int(1, 2) }),
-        ({ c, m, n }) => {
-          const top = (c * c + m) ** (n + 1);
-          const bot = m ** (n + 1);
-          return allDistinct([(top - bot) / (n + 1), top - bot, top / (n + 1), (top - bot) / (2 * (n + 1))]);
+      const { a, b } = g.until(
+        () => {
+          const a = g.int(1, 4);
+          return { a, b: a + g.int(1, 5) };
         },
+        ({ a, b }) => allDistinct([a * a + (b - a) ** 2, b * b - 2 * a * b, (b - a) ** 2, b * b]),
       );
-      const top = (c * c + m) ** (n + 1);
-      const bot = m ** (n + 1);
-      const inner = poly([m, 0, 1]);
+      const total = a * a + (b - a) ** 2;
       return {
-        params: { c, m, n },
-        promptText: r`Compute $\displaystyle\int_0^{${c}} 2x\,(${inner})^{${n}}\,dx$.`,
+        params: { a, b },
+        promptText: r`What is the total area between the graph of $f(x) = x - ${a}$ and the $x$-axis for $0 \le x \le ${b}$?`,
         options: [
-          { id: 'a', label: `$${frac(top - bot, n + 1)}$`, value: (top - bot) / (n + 1) },
-          { id: 'b', label: `$${top - bot}$`, value: top - bot, trapExplanation: r`$\int u^{${n}}\,du = \frac{u^{${n + 1}}}{${n + 1}}$: divide by ${n + 1}.` },
-          { id: 'c', label: `$${frac(top, n + 1)}$`, value: top / (n + 1), trapExplanation: r`The lower limit $x = 0$ gives $u = ${m}$, not $u = 0$: subtract $\frac{${m}^{${n + 1}}}{${n + 1}}$.` },
-          { id: 'd', label: `$${frac(top - bot, 2 * (n + 1))}$`, value: (top - bot) / (2 * (n + 1)), trapExplanation: r`With $u = ${inner}$, $du = 2x\,dx$ absorbs the whole factor $2x$: there is no extra $\frac12$.` },
+          { id: 'a', label: `$${frac(total, 2)}$`, value: total / 2 },
+          { id: 'b', label: `$${frac(b * b - 2 * a * b, 2)}$`, value: (b * b - 2 * a * b) / 2, trapExplanation: r`That is the signed integral $\int_0^{${b}} (x - ${a})\,dx$: the part below the axis was subtracted instead of added.` },
+          { id: 'c', label: `$${frac((b - a) ** 2, 2)}$`, value: (b - a) ** 2 / 2, trapExplanation: r`Only the part above the axis. The triangle below it, on $[0, ${a}]$, has area $${frac(a * a, 2)}$ as well.` },
+          { id: 'd', label: `$${frac(b * b, 2)}$`, value: (b * b) / 2, trapExplanation: r`That is the area under $y = x$: the shift by ${a} was dropped.` },
         ],
         stepByStepSolution: [
-          r`Substitute $u = ${inner}$, $du = 2x\,dx$. The limits $x = 0 \to u = ${m}$ and $x = ${c} \to u = ${c * c + m}$.`,
-          r`$\int_{${m}}^{${c * c + m}} u^{${n}}\,du = \Big[\frac{u^{${n + 1}}}{${n + 1}}\Big]_{${m}}^{${c * c + m}} = \frac{${top} - ${bot}}{${n + 1}}$.`,
-          r`$= ${frac(top - bot, n + 1)}$.`,
+          r`$f$ is negative on $[0, ${a}]$ and positive on $[${a}, ${b}]$: split the interval at $x = ${a}$.`,
+          r`$\int_0^{${a}} (x - ${a})\,dx = -${frac(a * a, 2)}$, so that piece has area $${frac(a * a, 2)}$; $\int_{${a}}^{${b}} (x - ${a})\,dx = ${frac((b - a) ** 2, 2)}$.`,
+          r`Total area: $${frac(a * a, 2)} + ${frac((b - a) ** 2, 2)} = ${frac(total, 2)}$.`,
         ],
       };
     },
   },
   {
-    id: 'ca-04-6',
+    id: 'ca-04-8',
     difficulty: 3,
-    keyConceptTag: 'Expectation as an integral',
+    keyConceptTag: 'The integral of a rate is the total change',
     correctOptionId: 'a',
     generate: (g) => {
-      const n = g.int(2, 7);
+      const { p, q, t1, t2 } = g.until(
+        () => {
+          const t1 = g.int(0, 3);
+          return { p: g.int(1, 4), q: g.int(1, 6), t1, t2: t1 + g.int(1, 3) };
+        },
+        ({ p, q, t1, t2 }) => allDistinct([p * (t2 * t2 - t1 * t1) + 2 * q * (t2 - t1), 2 * p * (t2 - t1), 2 * (p * t2 + q) * (t2 - t1), p * (t2 * t2 - t1 * t1)]),
+      );
+      const total2 = p * (t2 * t2 - t1 * t1) + 2 * q * (t2 - t1);
       return {
-        params: { n },
-        promptText: r`A random variable $X$ on $[0, 1]$ has density $p(x) = ${n + 1}x^{${n}}$. What is $E[X] = \int_0^1 x\,p(x)\,dx$?`,
+        params: { p, q, t1, t2 },
+        promptText: r`Water flows into a tank at the rate $r(t) = ${poly([q, p], 't')}$ litres per minute. How many litres flow in between $t = ${t1}$ and $t = ${t2}$ minutes?`,
         options: [
-          { id: 'a', label: `$${frac(n + 1, n + 2)}$`, value: (n + 1) / (n + 2) },
-          { id: 'b', label: r`$\tfrac12$`, value: 0.5, trapExplanation: r`$\frac12$ is the mean of the <i>uniform</i> density. This density puts more weight near 1.` },
-          { id: 'c', label: `$${frac(n, n + 1)}$`, value: n / (n + 1), trapExplanation: r`The integrand is $x\cdot${n + 1}x^{${n}} = ${n + 1}x^{${n + 1}}$, whose antiderivative has $x^{${n + 2}}$ and the denominator ${n + 2}.` },
-          { id: 'd', label: `$${frac(1, n + 2)}$`, value: 1 / (n + 2), trapExplanation: r`The constant ${n + 1} in the density stays in front of the integral.` },
+          { id: 'a', label: `$${frac(total2, 2)}$`, value: total2 / 2 },
+          { id: 'b', label: `$${p * (t2 - t1)}$`, value: p * (t2 - t1), trapExplanation: r`$r(${t2}) - r(${t1})$ is how much the <i>rate</i> changed. The amount of water is the area under the rate.` },
+          { id: 'c', label: `$${(p * t2 + q) * (t2 - t1)}$`, value: (p * t2 + q) * (t2 - t1), trapExplanation: r`That treats the rate as constant at its final value $r(${t2}) = ${p * t2 + q}$. It grew from $r(${t1}) = ${p * t1 + q}$, so integrate.` },
+          { id: 'd', label: `$${frac(p * (t2 * t2 - t1 * t1), 2)}$`, value: (p * (t2 * t2 - t1 * t1)) / 2, trapExplanation: r`The constant part of the rate also adds water: $${q}\cdot(${t2} - ${t1}) = ${q * (t2 - t1)}$ litres.` },
         ],
         stepByStepSolution: [
-          r`$E[X] = \int_0^1 x\cdot${n + 1}x^{${n}}\,dx = ${n + 1}\int_0^1 x^{${n + 1}}\,dx$.`,
-          r`$= ${n + 1}\cdot\Big[\frac{x^{${n + 2}}}{${n + 2}}\Big]_0^1 = \frac{${n + 1}}{${n + 2}}$.`,
-          r`Check: $\int_0^1 p = [x^{${n + 1}}]_0^1 = 1$, so $p$ is a density. ✓`,
+          r`The total change is the integral of the rate: $\int_{${t1}}^{${t2}} (${poly([q, p], 't')})\,dt$.`,
+          r`Antiderivative: $F(t) = ${p === 2 ? '' : frac(p, 2)}t^2 + ${q}t$.`,
+          r`$F(${t2}) - F(${t1}) = ${frac(p * t2 * t2 + 2 * q * t2, 2)} - ${frac(p * t1 * t1 + 2 * q * t1, 2)} = ${frac(total2, 2)}$ litres.`,
         ],
       };
     },
