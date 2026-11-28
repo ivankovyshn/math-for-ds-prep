@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Determinants',
   blurb: 'Area scaling, 3×3 expansion, properties',
   minutes: 8,
+  deeper: [
+    { title: 'The determinant', url: 'https://www.3blue1brown.com/lessons/determinant', source: '3Blue1Brown · animated video lesson' },
+  ],
   lecture: [
     {
       title: 'One number that measures stretching',

@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Momentum and stochastic gradients',
   blurb: 'Cheap noisy steps, a heavy ball and adaptive learning rates',
   minutes: 8,
+  deeper: [
+    { title: 'Why momentum really works', url: 'https://distill.pub/2017/momentum/', source: 'Distill · interactive article' },
+  ],
   lecture: [
     {
       title: 'Stochastic gradients',

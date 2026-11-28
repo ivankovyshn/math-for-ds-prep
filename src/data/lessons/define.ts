@@ -1,4 +1,4 @@
-import type { LectureSection, Lesson, ModuleId, Question, QuestionDraft, QuestionTemplate } from '../../types.ts';
+import type { DeeperLink, LectureSection, Lesson, ModuleId, Question, QuestionDraft, QuestionTemplate } from '../../types.ts';
 import { CANONICAL_SEED, makeRng } from '../../lib/variants.ts';
 
 /** `String.raw` as a tag: backslashes in LaTeX need no escaping. */
@@ -11,6 +11,7 @@ interface LessonInput {
   blurb: string;
   minutes: number;
   lecture: LectureSection[];
+  deeper?: DeeperLink[];
   questions: (QuestionDraft | QuestionTemplate)[];
   extra: (QuestionDraft | QuestionTemplate)[];
 }

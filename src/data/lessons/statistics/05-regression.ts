@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Linear regression',
   blurb: 'Fitting a line by least squares, and how much of the data it explains',
   minutes: 8,
+  deeper: [
+    { title: 'Regression analysis', url: 'https://seeing-theory.brown.edu/regression-analysis/index.html', source: 'Seeing Theory (Brown University) · interactive visualisation' },
+    { title: 'Linear regression model', url: 'https://www.statlect.com/fundamentals-of-statistics/linear-regression', source: 'StatLect · free textbook page with proofs and exercises' },
+  ],
   lecture: [
     {
       title: 'The model and least squares',

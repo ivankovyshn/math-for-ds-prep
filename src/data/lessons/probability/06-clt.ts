@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Law of large numbers and CLT',
   blurb: 'Why averages are reliable, and why the bell curve is everywhere',
   minutes: 8,
+  deeper: [
+    { title: 'But what is the Central Limit Theorem?', url: 'https://www.3blue1brown.com/lessons/clt', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Central Limit Theorem', url: 'https://www.statlect.com/asymptotic-theory/central-limit-theorem', source: 'StatLect · free textbook page with proofs and exercises' },
+  ],
   lecture: [
     {
       title: 'The sample mean',

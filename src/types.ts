@@ -32,6 +32,11 @@ export interface Question {
   /** First-principles breakdown, one step per entry. Supports $...$. */
   stepByStepSolution: string[];
   keyConceptTag: string;
+  /**
+   * What the Hint button shows. Defaults to the first solution step; set it when that step already gives the
+   * answer away (scripts/verify.mjs checks this).
+   */
+  hint?: string;
   /** Set on Extra practice (Practice 2) questions; they stay out of module tests. */
   extra?: boolean;
   /**
@@ -74,6 +79,8 @@ export interface QuestionTemplate {
   difficulty: Difficulty;
   keyConceptTag: string;
   correctOptionId: string;
+  /** See Question.hint; the same text for every variant. */
+  hint?: string;
   generate: (rng: Rng) => QuestionVariant;
 }
 
@@ -103,7 +110,21 @@ export type LectureBlock =
 
 export interface LectureSection {
   title: string;
+  /**
+   * The questions this section teaches, as id suffixes ('3' for la-04-3, 'x2' for la-04-x2). The section must
+   * hold a worked example, a quick check or a code block that shows the move; the Hint links to it.
+   * scripts/verify.mjs checks that every question of the lesson is covered exactly once.
+   */
+  covers?: string[];
   blocks: LectureBlock[];
+}
+
+/** A trusted outside resource for a hard topic, listed at the end of the lecture. */
+export interface DeeperLink {
+  title: string;
+  url: string;
+  /** Who publishes it and what form it takes, e.g. "3Blue1Brown · video, 17 min". */
+  source: string;
 }
 
 export interface Lesson {
@@ -114,6 +135,8 @@ export interface Lesson {
   /** Estimated reading time of the lecture, in minutes. */
   minutes: number;
   lecture: LectureSection[];
+  /** "Go deeper": outside resources for a topic the short lecture cannot fully carry. */
+  deeper?: DeeperLink[];
   /** Practice 1: passed with at most one mistake, it completes the lesson. */
   questions: Question[];
   /** Practice 2 (Extra practice): easier questions on the same ideas, opened by a rough Practice 1. */

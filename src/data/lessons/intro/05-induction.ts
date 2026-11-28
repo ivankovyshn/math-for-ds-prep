@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Mathematical induction',
   blurb: 'Base case, inductive step, sums',
   minutes: 7,
+  deeper: [
+    { title: 'Book of Proof, chapter 10: mathematical induction', url: 'https://richardhammack.github.io/BookOfProof/', source: 'Richard Hammack, Book of Proof · free textbook' },
+  ],
   lecture: [
     {
       title: 'The domino principle',

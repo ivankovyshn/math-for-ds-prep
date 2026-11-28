@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Spectral decomposition',
   blurb: 'Symmetric matrices: perpendicular axes and real stretches',
   minutes: 8,
+  deeper: [
+    { title: 'Symmetric matrices and positive definiteness', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/symmetric-matrices-and-positive-definiteness/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+  ],
   lecture: [
     {
       title: 'Symmetric matrices',

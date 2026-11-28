@@ -113,6 +113,7 @@ export const practice: QuestionTemplate[] = [
     difficulty: 2,
     keyConceptTag: 'Broadcasting rules',
     correctOptionId: 'a',
+    hint: r`Write the two shapes right-aligned (a missing leading dimension counts as 1) and compare them position by position: each pair of sizes must be equal or contain a 1.`,
     generate: (g) => {
       const { m, n } = g.until(() => ({ m: g.int(2, 5), n: g.int(2, 5) }), ({ m, n }) => m !== n);
       const cases: [number[], number[]][] = [[[m, 1], [1, n]], [[m, n], [n]], [[m, n], [m]], [[m, 1], [n]], [[m, n], [1, n]]];

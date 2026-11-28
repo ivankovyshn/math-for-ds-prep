@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Eigenvalues and eigenvectors',
   blurb: 'Directions a matrix only stretches',
   minutes: 8,
+  deeper: [
+    { title: 'Eigenvectors and eigenvalues', url: 'https://www.3blue1brown.com/lessons/eigenvalues', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Diagonalization and powers of A', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/diagonalization-and-powers-of-a/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+  ],
   lecture: [
     {
       title: 'Directions that survive',

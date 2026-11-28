@@ -22,6 +22,10 @@ Runs entirely in the browser. No account, no server, no API keys.
   passes the lesson.
 - **Extra practice (Practice 2)** — opens when Practice 1 ends with two or more mistakes (or out of hearts):
   6 new, gentler questions on the same ideas and traps. Passing it also passes the lesson.
+- **Hint** — before answering, `H` or the Hint button shows the first step of the solution for half the XP
+  of the question, with a link that opens the lecture section teaching it on top of the session.
+- **Go deeper** — lectures on the hardest topics end with one or two free outside resources (3Blue1Brown,
+  MIT OpenCourseWare, Paul's Online Math Notes, StatLect and others) for when one short lecture is not enough.
 - **Feedback drawer** — after every answer: the step-by-step first-principles breakdown and, if you were wrong,
   an explanation of why the option you picked is a trap.
 - **Module Test** — 8 mixed questions from the whole module, unlocked after every lesson is passed.
@@ -112,8 +116,9 @@ export default defineLesson({
     // 4 or 5 options in total
   ],
   correctOptionId: 'a',
-  stepByStepSolution: [r`Step 1…`, r`Step 2…`, r`Step 3…`],  // at least 3 steps
+  stepByStepSolution: [r`Step 1…`, r`Step 2…`, r`Step 3…`],  // at least 3 steps; the Hint shows the first
   keyConceptTag: 'Vector operations are componentwise',
+  // hint: r`…`,                       // only when the first step already gives the answer away
 }
 ```
 

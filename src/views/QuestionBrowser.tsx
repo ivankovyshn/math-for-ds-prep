@@ -4,7 +4,7 @@ import { variantOf } from '../lib/variants.ts';
 import { ALL_QUESTIONS, LESSONS, lessonsOf } from '../data/questions.ts';
 import { QuestionBody } from '../components/QuestionCard.tsx';
 import { Inline } from '../components/RichText.tsx';
-import { LectureBlockView } from './Lecture.tsx';
+import { DeeperLinks, LectureBlockView } from './Lecture.tsx';
 
 /**
  * Author's view: every lecture and question with its key, traps and solution on one page.
@@ -37,9 +37,11 @@ export function QuestionBrowser() {
                   {l.lecture.map((sec) => (
                     <div key={sec.title} className="space-y-4">
                       <h4 className="text-lg font-extrabold">{sec.title}</h4>
+                      {sec.covers && <div className="text-xs font-bold text-muted">Teaches: {sec.covers.map((c) => `${l.id}-${c}`).join(', ')}</div>}
                       {sec.blocks.map((b, i) => <LectureBlockView key={i} block={b} />)}
                     </div>
                   ))}
+                  {l.deeper && <DeeperLinks links={l.deeper} />}
                 </div>
               </details>
               {[...l.questions, ...l.extra].map((base, i) => round && base.generate ? variantOf(base, round * 1000 + i) : base).map((q) => (

@@ -2509,6 +2509,10 @@ for (const l of LESSONS) {
   for (const d of [1, 2, 3]) if (!l.questions.some((q) => q.difficulty === d)) fail(l.id, `has no level-${d} question`);
   if (l.extra.length < 5) fail(l.id, 'needs at least 5 Extra practice questions');
   if (l.extra.some((q) => q.difficulty > 2)) fail(l.id, 'Extra practice is gentler: difficulty 1–2 only');
+  for (const d of l.deeper ?? []) {
+    if (!/^https:\/\/[^\s]+$/.test(d.url)) fail(l.id, `"Go deeper" link is not an https URL: ${d.url}`);
+    if (!d.title.trim() || !d.source.trim()) fail(l.id, '"Go deeper" link needs a title and a source');
+  }
   const quizzes = l.lecture.flatMap((s) => s.blocks.filter((b) => b.kind === 'quiz'));
   if (quizzes.length < 2) fail(l.id, 'a lecture needs at least 2 quick checks');
   for (const s of l.lecture) {
@@ -2557,7 +2561,7 @@ function checkStructure(q, tag = q.id) {
     if (o.id === q.correctOptionId && o.trapExplanation) fail(tag, 'correct option must not have a trapExplanation');
   }
   if (q.stepByStepSolution.length < 3) fail(tag, 'needs at least 3 solution steps');
-  const texts = [q.promptText, q.mathFormula ?? '', ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution];
+  const texts = [q.promptText, q.mathFormula ?? '', ...q.options.flatMap((o) => [o.label, o.trapExplanation ?? '']), ...q.stepByStepSolution, q.hint ?? ''];
   for (const text of texts) {
     dollars(tag, text);
     if (BROKEN.test(text)) fail(tag, `broken text: ${text.match(BROKEN)[0]} in "${text.slice(0, 70)}…"`);
@@ -2574,14 +2578,27 @@ function checkStructure(q, tag = q.id) {
   return true;
 }
 
+// The Hint shows the first solution step unless the question has its own hint, so that step must not give the
+// answer away: it must not contain the key's label while naming no other option.
+const squash = (s) => s.replace(/\$/g, '').replace(/<\/?[ic]>/g, '').replace(/\\[,;! ]/g, '').replace(/\s+/g, '');
+function hintLeaks(q) {
+  if (q.hint) return false;
+  const key = squash(q.options.find((o) => o.id === q.correctOptionId)?.label ?? '');
+  const first = squash(q.stepByStepSolution[0] ?? '');
+  if (key.length < 2 || !first.includes(key)) return false;
+  return !q.options.some((o) => o.id !== q.correctOptionId && first.includes(squash(o.label)));
+}
+
 for (const q of QUESTIONS) {
   if (seen.has(q.id)) fail(q.id, 'duplicate id');
   seen.add(q.id);
   if (!q.id.startsWith(q.lessonId)) fail(q.id, `id should start with its lesson id ${q.lessonId}`);
   if (!q.generate) {
+    if (hintLeaks(q)) fail(q.id, 'the first solution step gives the answer away: add a `hint`');
     if (checkStructure(q)) verifyKey(q);
     continue;
   }
+  let leaks = 0;
   // Parametric: every variant must be well formed and have a correct key.
   const errorsBefore = errors.length;
   for (let seed = 1; seed <= SEEDS && errors.length === errorsBefore; seed++) {
@@ -2597,8 +2614,11 @@ for (const q of QUESTIONS) {
     const values = v.options.map((o) => JSON.stringify(o.value)).filter((x) => x !== undefined);
     if (new Set(values).size !== values.length) fail(`${q.id} (seed ${seed})`, 'two options have the same value');
     verifyKey(v, `${q.id} (seed ${seed})`);
+    if (hintLeaks(v)) leaks++;
     variantsChecked++;
   }
+  // A number can match by chance in a few variants; a step that names the answer does so in most of them.
+  if (leaks > SEEDS * 0.3) fail(q.id, `the first solution step gives the answer away in ${leaks} of ${SEEDS} variants: add a \`hint\``);
 }
 
 for (const b of quickChecks) {

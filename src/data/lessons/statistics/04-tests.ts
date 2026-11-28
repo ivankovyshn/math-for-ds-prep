@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Hypothesis tests',
   blurb: 'Is the effect real or just noise? p-values, errors and A/B tests',
   minutes: 8,
+  deeper: [
+    { title: 'Hypothesis testing (including power)', url: 'https://www.statlect.com/fundamentals-of-statistics/hypothesis-testing', source: 'StatLect · free textbook page with proofs and exercises' },
+    { title: 'Frequentist inference', url: 'https://seeing-theory.brown.edu/frequentist-inference/index.html', source: 'Seeing Theory (Brown University) · interactive visualisation' },
+  ],
   lecture: [
     {
       title: 'Null hypothesis and test statistic',

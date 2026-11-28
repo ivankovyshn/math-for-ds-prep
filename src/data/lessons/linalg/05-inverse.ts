@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'The inverse matrix',
   blurb: 'Undoing a map, 2×2 formula, Gauss–Jordan',
   minutes: 7,
+  deeper: [
+    { title: 'Inverse matrices, column space, and null space', url: 'https://www.3blue1brown.com/lessons/inverse-matrices', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Multiplication and inverse matrices (Gauss–Jordan)', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/multiplication-and-inverse-matrices/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+  ],
   lecture: [
     {
       title: 'Undoing a matrix',

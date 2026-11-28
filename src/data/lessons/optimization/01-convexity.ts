@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Convex sets and functions',
   blurb: 'The shape that makes every local minimum a global one',
   minutes: 7,
+  deeper: [
+    { title: 'Convex Optimization, chapter 3: convex functions', url: 'https://web.stanford.edu/~boyd/cvxbook/', source: 'Boyd & Vandenberghe, Convex Optimization · free textbook' },
+  ],
   lecture: [
     {
       title: 'Convex sets',

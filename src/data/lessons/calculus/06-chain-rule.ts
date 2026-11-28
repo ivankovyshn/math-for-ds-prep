@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'The multivariable chain rule',
   blurb: 'How changes flow through a composition — the idea behind backpropagation',
   minutes: 8,
+  deeper: [
+    { title: 'Backpropagation calculus', url: 'https://www.3blue1brown.com/lessons/backpropagation-calculus', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Chain rule in several variables', url: 'https://tutorial.math.lamar.edu/Classes/CalcIII/ChainRule.aspx', source: "Paul's Online Math Notes (Lamar University) · notes with many worked examples" },
+  ],
   lecture: [
     {
       title: 'One variable, revisited',

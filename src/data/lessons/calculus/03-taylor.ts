@@ -8,6 +8,10 @@ export default defineLesson({
   title: "Taylor's formula",
   blurb: 'Approximating a function by polynomials',
   minutes: 8,
+  deeper: [
+    { title: 'Taylor series', url: 'https://www.3blue1brown.com/lessons/taylor-series', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Taylor series', url: 'https://tutorial.math.lamar.edu/Classes/CalcII/TaylorSeries.aspx', source: "Paul's Online Math Notes (Lamar University) · notes with many worked examples" },
+  ],
   lecture: [
     {
       title: 'Linear approximation',

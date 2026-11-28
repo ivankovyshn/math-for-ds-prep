@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, HelpCircle, Lightbulb, PenLine, Sparkles, Target, X, XCircle } from 'lucide-react';
-import type { LectureBlock, Lesson } from '../types.ts';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, Compass, ExternalLink, HelpCircle, Lightbulb, PenLine, Sparkles, Target, X, XCircle } from 'lucide-react';
+import type { DeeperLink, LectureBlock, Lesson } from '../types.ts';
 import { MODULE_BY_ID } from '../data/modules.ts';
 import { PREREQS } from '../data/prereqs.ts';
 import { LESSON_BY_ID } from '../data/questions.ts';
@@ -113,6 +113,7 @@ export function Lecture({ lesson, number, onExit, onStartPractice, onOpenLecture
             {section.blocks.map((b, i) => (
               <LectureBlockView key={i} block={b} picked={b.kind === 'quiz' ? picks[b.id] : undefined} onPick={(id, option) => setPicks((p) => ({ ...p, [id]: option }))} />
             ))}
+            {last && lesson.deeper && <DeeperLinks links={lesson.deeper} />}
             {last && (
               <div className="rounded-2xl border-2 border-primary bg-primary-soft px-4 py-3 text-[15px]">
                 <div className="flex items-center gap-2 font-extrabold text-primary">
@@ -157,6 +158,33 @@ export function Lecture({ lesson, number, onExit, onStartPractice, onOpenLecture
 
       <ToolsPanel pageKey={`${lesson.id}-${idx}`} pageLabel={section.title} pin={section.title} />
     </div>
+  );
+}
+
+/** "Go deeper": free outside resources for a topic that one short lecture cannot fully carry. */
+export function DeeperLinks({ links }: { links: DeeperLink[] }) {
+  return (
+    <section className="rounded-2xl border-2 border-line px-4 py-3">
+      <h3 className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-accent">
+        <Compass size={15} className="shrink-0" /> Go deeper
+      </h3>
+      <p className="mb-2.5 text-[15px] leading-relaxed text-muted">
+        This topic usually takes a few weeks of a university course. If something did not click, these free resources explain it at length, with more pictures and examples.
+      </p>
+      <ul className="space-y-2">
+        {links.map((d) => (
+          <li key={d.url}>
+            <a href={d.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-2 rounded-xl px-1 py-0.5">
+              <ExternalLink size={16} className="mt-1 shrink-0 text-accent" />
+              <span>
+                <span className="font-bold text-accent group-hover:underline">{d.title}</span>
+                <span className="block text-sm text-muted">{d.source}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

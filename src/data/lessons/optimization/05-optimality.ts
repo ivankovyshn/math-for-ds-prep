@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Optimality conditions',
   blurb: 'How to recognise a minimum, with and without inequality constraints',
   minutes: 8,
+  deeper: [
+    { title: 'Convex Optimization, section 5.5: optimality conditions and KKT', url: 'https://web.stanford.edu/~boyd/cvxbook/', source: 'Boyd & Vandenberghe, Convex Optimization · free textbook' },
+  ],
   lecture: [
     {
       title: 'Without constraints',

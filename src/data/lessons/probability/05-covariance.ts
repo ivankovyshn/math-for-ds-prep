@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Joint distributions and covariance',
   blurb: 'How two random variables move together',
   minutes: 8,
+  deeper: [
+    { title: 'Covariance matrix', url: 'https://www.statlect.com/fundamentals-of-probability/covariance-matrix', source: 'StatLect · free textbook page with proofs and exercises' },
+  ],
   lecture: [
     {
       title: 'Joint and marginal distributions',

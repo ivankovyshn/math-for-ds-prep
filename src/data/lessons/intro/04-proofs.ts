@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Proof techniques',
   blurb: 'Direct proof, contrapositive, contradiction, counterexample',
   minutes: 8,
+  deeper: [
+    { title: 'Book of Proof, chapters 4–6: direct proof, contrapositive and contradiction', url: 'https://richardhammack.github.io/BookOfProof/', source: 'Richard Hammack, Book of Proof · free textbook' },
+  ],
   lecture: [
     {
       title: 'What counts as a proof',

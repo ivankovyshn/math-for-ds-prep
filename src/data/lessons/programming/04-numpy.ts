@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'NumPy and vectorisation',
   blurb: 'Arrays, shapes, axes and broadcasting instead of loops',
   minutes: 8,
+  deeper: [
+    { title: 'Broadcasting', url: 'https://numpy.org/doc/stable/user/basics.broadcasting.html', source: 'NumPy user guide · official documentation' },
+  ],
   lecture: [
     {
       title: 'Arrays',

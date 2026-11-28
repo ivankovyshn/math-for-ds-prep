@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, ChevronDown, Clock, Dumbbell, Flame, Heart, HeartCrack, Lightbulb, Target, Trophy, X, XCircle, Zap } from 'lucide-react';
-import type { Question } from '../types.ts';
+import { BookOpen, CheckCircle2, ChevronDown, Clock, Dumbbell, Flame, Heart, HeartCrack, Lightbulb, Target, Trophy, X, XCircle, Zap } from 'lucide-react';
+import type { LectureSection, Question } from '../types.ts';
+import { LESSON_BY_ID } from '../data/questions.ts';
 import { HEARTS_PER_SESSION } from '../data/modules.ts';
 import { formatClock, shuffle, xpForQuestion } from '../lib/session.ts';
 import { useProgress } from '../store/useProgress.ts';
@@ -9,6 +10,7 @@ import { OptionList, QuestionBody } from '../components/QuestionCard.tsx';
 import { Inline } from '../components/RichText.tsx';
 import { Button, IconButton, Kbd, ProgressBar } from '../components/ui.tsx';
 import { isToolsEvent, ToolButtons, ToolsPanel } from '../components/Tools.tsx';
+import { LectureBlockView } from './Lecture.tsx';
 
 export interface QuizProps {
   title: string;
@@ -55,12 +57,19 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
   const [wasCompleted] = useState(() => !!(nodeKey && useProgress.getState().completedNodes[nodeKey]));
   const [timeLeft, setTimeLeft] = useState(secondsPerQuestion ?? 0);
   const [showSteps, setShowSteps] = useState(false);
+  // Hint: the first step of the solution (or the question's own hint), for half the XP of the question.
+  const [hint, setHint] = useState(false);
+  const [lastHint, setLastHint] = useState(false);
+  // The lecture section that teaches this question, opened over the session so that nothing is lost.
+  const [sectionOpen, setSectionOpen] = useState(false);
 
   const q = questions[idx];
   // Options are shuffled once per question so that positions cannot be memorised.
   const options = useMemo(() => shuffle(q.options), [q]);
   const correctOption = q.options.find((o) => o.id === q.correctOptionId)!;
   const pickedOption = q.options.find((o) => o.id === selected);
+  const hintText = q.hint ?? q.stepByStepSolution[0];
+  const taught = teachingSection(q);
 
   const check = (timeout = false) => {
     if (phase !== 'answering' || outcome) return;
@@ -68,7 +77,8 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
     const correct = !timeout && selected === q.correctOptionId;
     recordAnswer(q.id, correct, mode === 'mistakes', q.seed);
     if (correct) {
-      const xp = mode === 'mistakes' ? 5 : xpForQuestion(q);
+      const full = mode === 'mistakes' ? 5 : xpForQuestion(q);
+      const xp = hint ? Math.ceil(full / 2) : full;
       addXp(xp);
       setLastXp(xp);
       setXpEarned((v) => v + xp);
@@ -80,6 +90,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
       if (mode === 'lesson') setHearts((h) => h - 1);
     }
     setLastCorrect(correct);
+    setLastHint(hint);
     setTimedOut(timeout);
     setShowSteps(!correct);
     setPhase('feedback');
@@ -105,6 +116,8 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
     if (idx + 1 >= questions.length) return finish('passed');
     setIdx(idx + 1);
     setSelected(null);
+    setHint(false);
+    setSectionOpen(false);
     setPhase('answering');
     setTimeLeft(secondsPerQuestion ?? 0);
   };
@@ -121,11 +134,13 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, phase, outcome, secondsPerQuestion]);
 
-  // Keyboard: 1–5 select an option, Enter checks / continues.
+  // Keyboard: 1–5 select an option, H shows the hint, Enter checks / continues.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (outcome || isToolsEvent(e)) return;
-      if (e.key === 'Enter') {
+      if (outcome || sectionOpen || isToolsEvent(e)) return;
+      if (phase === 'answering' && (e.key === 'h' || e.key === 'H') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        setHint(true);
+      } else if (e.key === 'Enter') {
         e.preventDefault();
         if (phase === 'answering') check();
         else next();
@@ -218,6 +233,23 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
               onSelect={setSelected}
               revealCorrectId={phase === 'feedback' ? q.correctOptionId : undefined}
             />
+            {hint && phase === 'answering' && (
+              <motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border-l-4 border-warn bg-surface px-4 py-3">
+                <h3 className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-warn">
+                  <Lightbulb size={15} className="shrink-0" /> Hint{q.hint ? '' : ' · the first step'}
+                </h3>
+                <p className="leading-relaxed"><Inline text={hintText} /></p>
+                {taught && (
+                  <button
+                    type="button"
+                    onClick={() => setSectionOpen(true)}
+                    className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-surface2 px-2.5 py-1.5 text-sm font-bold text-accent hover:brightness-110"
+                  >
+                    <BookOpen size={15} className="shrink-0" /> See it in the lecture: {taught.title}
+                  </button>
+                )}
+              </motion.section>
+            )}
           </motion.div>
         </>
       </main>
@@ -227,11 +259,23 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
         <div data-tools-bar className="tools-shift-fixed fixed inset-x-0 bottom-0 border-t-2 border-line bg-bg">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <span className="hidden items-center gap-1.5 text-xs text-muted sm:flex">
-              <Kbd>1</Kbd>–<Kbd>{options.length}</Kbd> select · <Kbd>Enter</Kbd> check
+              <Kbd>1</Kbd>–<Kbd>{options.length}</Kbd> select · <Kbd>H</Kbd> hint · <Kbd>Enter</Kbd> check
             </span>
-            <Button className="w-full sm:w-52" disabled={!selected} onClick={() => check()}>
-              Check
-            </Button>
+            <div className="flex w-full gap-3 sm:w-auto">
+              <Button
+                tone="neutral"
+                className="!px-4"
+                disabled={hint}
+                onClick={() => setHint(true)}
+                aria-label="Hint: show the first step of the solution, for half the XP"
+                title="Hint (H): the first step of the solution, for half the XP"
+              >
+                <Lightbulb size={19} /> <span className="hidden sm:inline">Hint</span>
+              </Button>
+              <Button className="flex-1 sm:w-52 sm:flex-none" disabled={!selected} onClick={() => check()}>
+                Check
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -254,7 +298,7 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
                 <span>{lastCorrect ? (combo >= 3 ? `Correct — ${combo} in a row!` : 'Correct!') : timedOut ? 'Time is up' : 'Not quite'}</span>
                 {lastCorrect && (
                   <span className="ml-auto flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-sm">
-                    <Zap size={15} fill="currentColor" /> +{lastXp} XP
+                    <Zap size={15} fill="currentColor" /> +{lastXp} XP{lastHint ? ' · hint' : ''}
                   </span>
                 )}
               </div>
@@ -309,8 +353,72 @@ export function Quiz({ title, questions, mode, nodeKey, bonusXp = 0, secondsPerQ
         )}
       </AnimatePresence>
 
-      <ToolsPanel pageKey={`${idx}-${q.id}`} pageLabel={`Question ${idx + 1}`} pin={q.promptText} suspended={phase === 'feedback'} />
+      <ToolsPanel pageKey={`${idx}-${q.id}`} pageLabel={`Question ${idx + 1}`} pin={q.promptText} suspended={phase === 'feedback' || sectionOpen} />
+
+      <AnimatePresence>
+        {sectionOpen && taught && <SectionSheet section={taught} lessonTitle={LESSON_BY_ID[q.lessonId].title} onClose={() => setSectionOpen(false)} />}
+      </AnimatePresence>
     </div>
+  );
+}
+
+/** The lecture section whose `covers` lists this question (by its id suffix). */
+function teachingSection(q: Question): LectureSection | undefined {
+  const lesson = LESSON_BY_ID[q.lessonId];
+  const suffix = q.id.slice(q.lessonId.length + 1);
+  return lesson?.lecture.find((s) => s.covers?.includes(suffix));
+}
+
+/** One lecture section over the running session: read the worked example, then return to the question. */
+function SectionSheet({ section, lessonTitle, onClose }: { section: LectureSection; lessonTitle: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={section.title}
+        initial={{ y: 40 }}
+        animate={{ y: 0 }}
+        exit={{ y: 40 }}
+        transition={{ duration: 0.18 }}
+        className="flex max-h-[88dvh] w-full max-w-2xl flex-col rounded-t-3xl border-2 border-line bg-bg shadow-2xl sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 border-b-2 border-line px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+              <BookOpen size={14} className="shrink-0" /> <span className="truncate">{lessonTitle} · lecture</span>
+            </div>
+            <h2 className="truncate text-lg font-extrabold text-accent">{section.title}</h2>
+          </div>
+          <IconButton label="Back to the question (Esc)" className="!h-10 !w-10 shrink-0" onClick={onClose}>
+            <X size={22} />
+          </IconButton>
+        </div>
+        <div className="space-y-5 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {section.blocks.map((b, i) => (
+            <LectureBlockView key={i} block={b} />
+          ))}
+          <Button full tone="neutral" onClick={onClose}>
+            Back to the question
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

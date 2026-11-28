@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Independence, basis and rank',
   blurb: 'How many directions a set of vectors really has',
   minutes: 8,
+  deeper: [
+    { title: 'Linear combinations, span, and basis vectors', url: 'https://www.3blue1brown.com/lessons/span', source: '3Blue1Brown · animated video lesson' },
+    { title: 'Independence, basis and dimension', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/independence-basis-and-dimension/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+  ],
   lecture: [
     {
       title: 'Linear independence',

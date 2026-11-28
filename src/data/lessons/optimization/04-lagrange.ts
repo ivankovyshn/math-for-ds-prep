@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Lagrange multipliers',
   blurb: 'Optimising under an equality constraint, and what the multiplier is worth',
   minutes: 8,
+  deeper: [
+    { title: 'Lagrange multipliers', url: 'https://tutorial.math.lamar.edu/Classes/CalcIII/LagrangeMultipliers.aspx', source: "Paul's Online Math Notes (Lamar University) · notes with many worked examples" },
+  ],
   lecture: [
     {
       title: 'Optimising on a constraint',

@@ -8,6 +8,10 @@ export default defineLesson({
   title: 'Maximum likelihood',
   blurb: 'Choose the parameter that makes the observed data most probable',
   minutes: 8,
+  deeper: [
+    { title: 'Maximum likelihood estimation', url: 'https://www.statlect.com/fundamentals-of-statistics/maximum-likelihood', source: 'StatLect · free textbook page with proofs and exercises' },
+    { title: 'Normal distribution: maximum likelihood estimation (the σ² derivation)', url: 'https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood', source: 'StatLect · free textbook page with proofs and exercises' },
+  ],
   lecture: [
     {
       title: 'The likelihood',

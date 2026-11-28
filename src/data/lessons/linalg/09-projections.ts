@@ -8,6 +8,9 @@ export default defineLesson({
   title: 'Projections and least squares',
   blurb: 'The closest point, and the best fit to data',
   minutes: 8,
+  deeper: [
+    { title: 'Projections onto subspaces', url: 'https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/projections-onto-subspaces/', source: 'MIT OpenCourseWare 18.06SC (Gilbert Strang) · lecture video, notes and problems' },
+  ],
   lecture: [
     {
       title: 'Projecting onto a line',

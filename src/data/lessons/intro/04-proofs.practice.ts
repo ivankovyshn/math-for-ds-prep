@@ -122,6 +122,7 @@ export const practice: QuestionTemplate[] = [
     difficulty: 2,
     keyConceptTag: 'Examples are not proofs',
     correctOptionId: 'a',
+    hint: r`Look for an $n$ that makes every term share a factor. Since $n^2 + n = n(n + 1)$, pick $n$ so that $n(n + 1)$ is a multiple of the constant term.`,
     generate: (g) => {
       const p = g.pick(LUCKY);
       const P = (n: number) => n * n + n + p;

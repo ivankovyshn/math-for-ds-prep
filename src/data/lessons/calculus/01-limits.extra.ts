@@ -114,6 +114,7 @@ export const extra: QuestionTemplate[] = [
     difficulty: 2,
     keyConceptTag: 'The limit sin x / x',
     correctOptionId: 'a',
+    hint: r`$\frac{\sin u}{u} \to 1$ only when the denominator is the same $u$ as inside the sine. Multiply and divide by the number in front of $x$ to make them match.`,
     generate: (g) => {
       const k = g.pick([-6, -5, -4, -3, -2, 2, 3, 4, 5, 6]);
       return {

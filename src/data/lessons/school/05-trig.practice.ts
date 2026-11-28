@@ -69,6 +69,7 @@ export const practice: QuestionTemplate[] = [
     difficulty: 1,
     keyConceptTag: 'The standard values',
     correctOptionId: 'a',
+    hint: r`Picture the point at this angle on the unit circle: $\cos$ is its horizontal coordinate, $\sin$ its vertical one. The three special values are $\frac12$, $\frac{\sqrt2}{2}$ and $\frac{\sqrt3}{2}$; a steeper angle has the larger height.`,
     generate: (g) => {
       const fnId = g.int(0, 1);
       const deg = g.pick([30, 45, 60]);
