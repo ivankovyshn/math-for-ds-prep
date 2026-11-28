@@ -1,9 +1,10 @@
-import { ChartSpline, CodeXml, Dices, Grid3x3, Infinity as InfinityIcon, Mountain, Sigma } from 'lucide-react';
+import { ChartSpline, CodeXml, Dices, Grid3x3, Infinity as InfinityIcon, Mountain, PencilRuler, Sigma } from 'lucide-react';
 import type { ModuleId } from '../types.ts';
 
-const icons = { intro: InfinityIcon, linalg: Grid3x3, calculus: Sigma, probability: Dices, statistics: ChartSpline, optimization: Mountain, programming: CodeXml };
+const icons = { school: PencilRuler, intro: InfinityIcon, linalg: Grid3x3, calculus: Sigma, probability: Dices, statistics: ChartSpline, optimization: Mountain, programming: CodeXml };
 
 const colors: Record<ModuleId, string> = {
+  school: '#d4925a',
   intro: '#ff9d2e',
   linalg: '#3fa9ff',
   calculus: '#b67cff',

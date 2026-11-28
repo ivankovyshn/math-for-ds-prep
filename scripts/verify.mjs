@@ -11,6 +11,7 @@ import { execFileSync } from 'node:child_process';
 import katex from 'katex';
 import { ALL_QUESTIONS as QUESTIONS, LESSONS } from '../src/data/questions.ts';
 import { variantOf } from '../src/lib/variants.ts';
+import { PREREQS } from '../src/data/prereqs.ts';
 
 // ---------- numeric helpers ----------
 const EPS = 1e-9;
@@ -2311,6 +2312,154 @@ Object.assign(checks, {
   'pg-06-x6': ({ k }) => E(arangeJs(1, k + 1).map((x) => [x, 1 / k])),
 });
 
+// ---------- School Maths Toolkit: plain arithmetic, evaluated numerically ----------
+/** Coefficients [c0, c1, …] of a polynomial of degree ≤ deg, recovered from its values at x0, x0 + 1, … (exact interpolation). */
+function coeffsFrom(f, deg, x0 = 0) {
+  const xs = Array.from({ length: deg + 1 }, (_, i) => x0 + i);
+  const V = xs.map((x) => xs.map((_, j) => x ** j));
+  return solve(V, xs.map(f)).map((c) => Math.round(c * 1e9) / 1e9);
+}
+Object.assign(checks, {
+  'sm-01-q1': () => 1 / 2 + 1 / 3,
+  'sm-01-q2': () => 2 ** 3 * 2 ** 4,
+  'sm-01-q3': () => 8 ** (2 / 3),
+  'sm-01-1': ({ a, b, c, d }) => a / b + c / d,
+  'sm-01-2': ({ m, n, k }) => Math.log2((2 ** m * 2 ** n) / 2 ** k),
+  'sm-01-3': ({ a, b, c, d }) => a / b / (c / d),
+  'sm-01-4': ({ b, p, q, s }) => b ** ((s * p) / q),
+  'sm-01-5': ({ m, n }) => Math.sqrt(m) + Math.sqrt(n),
+  // (kx² − ka²)/(x − a) is a polynomial of degree 1: sample it away from x = a.
+  'sm-01-6': ({ k, a }) => coeffsFrom((x) => (k * x * x - k * a * a) / (x - a), 1, a + 1),
+  'sm-01-x1': ({ a, b, c, d }) => (a / b) * (c / d),
+  'sm-01-x2': ({ a, n }) => a ** -n,
+  'sm-01-x3': ({ m, n }) => Math.log2((2 ** m) ** n),
+  'sm-01-x4': ({ a, k }) => Math.sqrt(a * a * k),
+  'sm-01-x5': ({ a }) => coeffsFrom((x) => (x + a) ** 2, 2),
+  'sm-01-x6': ({ m, n }) => m * m - n * n,
+});
+
+/** Roots of ax² + bx + c: real ones sorted, or the complex pair as { re, im } with im > 0. */
+function quadRoots(a, b, c) {
+  const D = b * b - 4 * a * c;
+  if (D < 0) return { re: -b / (2 * a), im: Math.sqrt(-D) / (2 * Math.abs(a)) };
+  const s = Math.sqrt(D);
+  return [(-b - s) / (2 * a), (-b + s) / (2 * a)].sort((p, q) => p - q);
+}
+/** Where a·f is smallest on a fine grid (step 1/840 hits every fraction with denominator ≤ 8). */
+function argBest(f, sign = 1, lo = -30, hi = 30) {
+  let best = lo;
+  for (let i = 0; i <= (hi - lo) * 840; i++) {
+    const x = lo + i / 840;
+    if (sign * f(x) < sign * f(best) - 1e-12) best = x;
+  }
+  return best;
+}
+const pickByValue = (q, v) => ({ id: q.options.find((o) => o.value !== undefined && same(o.value, v, 1e-9))?.id ?? 'none' });
+Object.assign(checks, {
+  'sm-02-q1': () => quadRoots(1, -7, 12),
+  'sm-02-q2': () => new Set(quadRoots(1, 4, 4)).size,
+  'sm-02-q3': () => { const f = (x) => x * x - 6 * x + 1; return f(argBest(f)); },
+  'sm-02-1': ({ b, c }) => quadRoots(1, b, c),
+  'sm-02-2': ({ a, b, c }) => b * b - 4 * a * c,
+  'sm-02-3': ({ a, b, c }) => quadRoots(a, b, c),
+  'sm-02-4': ({ b, c }) => { const f = (x) => x * x + b * x + c; return f(argBest(f)); },
+  'sm-02-5': ({ b, c }, q) => { const z = quadRoots(1, b, c); return Array.isArray(z) ? { id: 'none' } : pickByValue(q, [z.re, z.im]); },
+  'sm-02-6': ({ s, p }) => { const z = quadRoots(1, -s, p); return Array.isArray(z) ? z[0] ** 2 + z[1] ** 2 : 2 * (z.re ** 2 - z.im ** 2); },
+  'sm-02-x1': ({ a, b }) => quadRoots(1, a + b, a * b),
+  'sm-02-x2': ({ b, c }) => { const z = quadRoots(1, b, c); return Array.isArray(z) ? new Set(z).size : 0; },
+  'sm-02-x3': ({ k }) => quadRoots(1, 0, -k),
+  // The bracket numbers are the roots with the opposite sign.
+  'sm-02-x4': ({ p, q }) => quadRoots(1, p + q, p * q).map((x) => -x).sort((u, v) => u - v),
+  'sm-02-x5': ({ a, b, c }) => { const z = quadRoots(a, b, c); return Array.isArray(z) ? z[0] * z[1] : z.re ** 2 + z.im ** 2; },
+  'sm-02-x6': ({ a, b, c }) => argBest((x) => a * x * x + b * x + c, Math.sign(a)),
+});
+
+/** Solutions of ax + by = e, cx + dy = f: 1 (unique), 0 (none) or -1 (infinitely many), by elimination. */
+function systemCount(a, b, c, d, e, f) {
+  if (Math.abs(rank([[a, b], [c, d]])) === 2) return 1;
+  return rank([[a, b, e], [c, d, f]]) > rank([[a, b], [c, d]]) ? 0 : -1;
+}
+/** Solves kx + m > n by testing points: [direction, bound] with direction −1 for "x < bound". */
+function solveIneq(k, m, n) {
+  const t = (n - m) / k;
+  return [k * (t - 1) + m > n ? -1 : 1, t];
+}
+Object.assign(checks, {
+  'sm-03-q1': () => solve([[5]], [18 - 3])[0],
+  'sm-03-q2': () => (9 - 1) / (4 - 2),
+  'sm-03-q3': () => systemCount(1, 2, 2, 4, 3, 7),
+  'sm-03-1': ({ a, b, c, d }) => solve([[a - c]], [d - b])[0],
+  'sm-03-2': ({ x1, y1, x2, y2 }) => (y2 - y1) / (x2 - x1),
+  'sm-03-3': ({ x1, y1, x2, y2 }) => solve([[x1, 1], [x2, 1]], [y1, y2]),
+  'sm-03-4': ({ A, e, f }) => solve(A, [e, f]),
+  'sm-03-5': ({ k, m, n }) => solveIneq(k, m, n),
+  'sm-03-6': ({ A, C, n, T }) => solve([[1, 1], [A, C]], [n, T])[0],
+  'sm-03-x1': ({ a, b, c }) => solve([[a]], [c - b])[0],
+  'sm-03-x2': ({ m, c }) => solve([[m]], [-c])[0],
+  // Two points of ax + by = c, then the slope between them.
+  'sm-03-x3': ({ a, b, c }) => { const y = (x) => (c - a * x) / b; return (y(1) - y(0)) / 1; },
+  'sm-03-x4': ({ s, d }) => solve([[1, 1], [1, -1]], [s, d]),
+  'sm-03-x5': ({ p, q }) => -1 / (p / q),
+  'sm-03-x6': ({ k, m, n }) => solveIneq(k, m, n),
+});
+
+/** Solves g(x) = 0 for increasing g by bisection on [lo, hi]. */
+function bisect(fn, lo, hi) {
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    if (fn(mid) < 0) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+Object.assign(checks, {
+  'sm-04-q1': () => Math.exp(0),
+  'sm-04-q2': () => bisect((x) => 2 ** x - 32, 0, 20),
+  'sm-04-q3': () => bisect((x) => Math.exp(2 * x) - Math.exp(6), -10, 10),
+  'sm-04-1': ({ b, N }) => bisect((x) => b ** x - N, 0, 30),
+  'sm-04-2': ({ k }, q) => pickByValue(q, Math.round(bisect((x) => 10 ** x - 10 ** -k, -20, 20) * 1e9) / 1e9),
+  'sm-04-3': ({ b, x, y, z }) => bisect((t) => b ** t - (x * y) / z, -10, 20),
+  // ln(a^m · a^(±1/2)) / ln a for a concrete a: the coefficient of t = ln a.
+  'sm-04-4': ({ m, s }) => { const a = 3; return Math.log(a ** m * a ** (s / 2)) / Math.log(a); },
+  'sm-04-5': ({ b, c }) => ({ v: bisect((x) => b ** x - c, 0, 10), tol: 0.006 }),
+  'sm-04-6': ({ k, f }) => ({ v: bisect((t) => 1 / f - Math.exp(-k * t), 0, 200), tol: 0.006 }),
+  'sm-04-x1': ({ N }) => bisect((x) => 2 ** x - N, 0, 20),
+  'sm-04-x2': ({ a, k }) => Math.exp(Math.log(a)) + Math.log(Math.exp(k)),
+  'sm-04-x3': ({ a, b }) => bisect((x) => 10 ** x - a * b, -5, 10),
+  'sm-04-x4': ({ B, N }) => bisect((x) => B ** x - N, -10, 10),
+  'sm-04-x5': ({ a, b }) => bisect((x) => Math.exp(a * x) - Math.exp(b), -20, 20),
+  'sm-04-x6': ({ P, rate, n }) => { let v = P; for (let i = 0; i < n; i++) v += v * rate; return v; },
+});
+
+const DEG = Math.PI / 180;
+const trigOf = (fnId, deg) => (fnId === 0 ? Math.sin(deg * DEG) : Math.cos(deg * DEG));
+Object.assign(checks, {
+  'sm-05-q1': () => 90 * DEG,
+  'sm-05-q2': () => Math.sin(30 * DEG),
+  'sm-05-q3': () => Math.sign(Math.cos(120 * DEG)),
+  'sm-05-1': ({ deg }) => deg * DEG,
+  'sm-05-2': ({ fnId, deg }) => trigOf(fnId, deg),
+  'sm-05-3': ({ fnId, deg }) => trigOf(fnId, deg),
+  // Walk the circle in small steps and take the angle in the given quadrant whose sine matches.
+  'sm-05-4': ({ sn, c, Q }) => {
+    // Sine is monotone inside each quadrant: bisect for the angle there, then take its cosine.
+    const lo = (Q - 1) * 90;
+    const hi = Q * 90;
+    const up = Math.sin(hi * DEG) > Math.sin(lo * DEG) ? 1 : -1;
+    const t = bisect((d) => up * (Math.sin(d * DEG) - sn / c), lo, hi);
+    return Math.cos(t * DEG);
+  },
+  'sm-05-5': ({ x, y }) => Math.round(((Math.atan2(y, x) / DEG) + 360) % 360),
+  // v is stored to 6 decimals, so match with that precision.
+  'sm-05-6': ({ fnId, v }) => range(0, 359).filter((d) => Math.abs(trigOf(fnId, d) - v) < 2e-6).map((d) => d * DEG),
+  'sm-05-x1': ({ p, q }) => ((p / q) * Math.PI) / DEG,
+  'sm-05-x2': ({ fnId, deg }) => Math.round(trigOf(fnId, deg) * 1e9) / 1e9,
+  'sm-05-x3': ({ sn, cn, c }) => sn / c / (cn / c),
+  'sm-05-x4': ({ ss, cs }) => [1, 2, 3, 4].find((k) => Math.sign(Math.sin((45 + 90 * (k - 1)) * DEG)) === ss && Math.sign(Math.cos((45 + 90 * (k - 1)) * DEG)) === cs),
+  'sm-05-x5': ({ fnId, theta }) => trigOf(fnId, theta),
+  'sm-05-x6': ({ rad, deg }) => rad * deg * DEG,
+});
+
 // @@new-checks (quick checks <lesson>-q<n> and Extra practice <lesson>-x<n> are added above this line)
 
 /** Purely conceptual questions without a numeric answer (reviewed by hand). */
@@ -2379,6 +2528,11 @@ for (const l of LESSONS) {
       }
     }
   }
+}
+
+for (const [id, reqs] of Object.entries(PREREQS)) {
+  if (!lessonIds.has(id)) fail(`prereqs ${id}`, 'no such lesson');
+  for (const r of reqs) if (!lessonIds.has(r)) fail(`prereqs ${id}`, `unknown prerequisite ${r}`);
 }
 
 // Questions

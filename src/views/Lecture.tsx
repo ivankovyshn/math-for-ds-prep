@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, HelpCircle, Lightbulb, PenLine, Sparkles, Target, X, XCircle } from 'lucide-react';
 import type { LectureBlock, Lesson } from '../types.ts';
 import { MODULE_BY_ID } from '../data/modules.ts';
+import { PREREQS } from '../data/prereqs.ts';
+import { LESSON_BY_ID } from '../data/questions.ts';
 import { useProgress } from '../store/useProgress.ts';
 import { Diagram } from '../components/Diagram.tsx';
 import { CodeWithOutput } from '../components/Pseudocode.tsx';
@@ -18,13 +20,15 @@ interface Props {
   number: number;
   onExit: () => void;
   onStartPractice: () => void;
+  /** Opens another lesson's lecture (used for the Module 0 refresher links). */
+  onOpenLecture?: (lessonId: string) => void;
 }
 
 /**
  * The lecture of a lesson, shown one section at a time.
  * Reaching the last section marks the lecture as read, which unlocks the practice.
  */
-export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
+export function Lecture({ lesson, number, onExit, onStartPractice, onOpenLecture }: Props) {
   const [idx, setIdx] = useState(0);
   const markLectureRead = useProgress((s) => s.markLectureRead);
   const sections = lesson.lecture;
@@ -80,6 +84,22 @@ export function Lecture({ lesson, number, onExit, onStartPractice }: Props) {
           <BookOpen size={14} /> {MODULE_BY_ID[lesson.moduleId].title} · Lesson {number} · {idx + 1} / {sections.length}
         </div>
         {idx === 0 && <h1 className="mb-1 text-3xl font-extrabold leading-tight">{lesson.title}</h1>}
+        {idx === 0 && onOpenLecture && PREREQS[lesson.id] && (
+          <div className="mb-4 mt-2 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-line px-3 py-2.5 text-sm">
+            <span className="font-bold text-muted">Uses school maths:</span>
+            {PREREQS[lesson.id].map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onOpenLecture(id)}
+                className="flex items-center gap-1 rounded-lg bg-surface2 px-2 py-1 font-bold text-accent hover:brightness-110"
+                title="Open this Module 0 lecture"
+              >
+                <BookOpen size={14} /> {LESSON_BY_ID[id].title}
+              </button>
+            ))}
+          </div>
+        )}
         <AnimatePresence mode="wait">
           <motion.article
             key={idx}

@@ -6,9 +6,17 @@ export interface ModuleMeta {
   blurb: string;
   /** Lesson titles shown while a module has no content yet. */
   planned?: string[];
+  /** Every lesson is open from the start (a refresher you dip into), instead of unlocking one by one. */
+  freeOrder?: boolean;
 }
 
 export const MODULES: ModuleMeta[] = [
+  {
+    id: 'school',
+    title: 'School Maths Toolkit',
+    blurb: 'Fractions, powers, equations, logarithms and trigonometry: the basics every later module uses',
+    freeOrder: true,
+  },
   {
     id: 'intro',
     title: 'Mathematical Language',

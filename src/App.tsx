@@ -81,6 +81,7 @@ export default function App() {
           number={lessonNumber(view.lessonId)}
           onExit={home}
           onStartPractice={() => startPractice(view.lessonId)}
+          onOpenLecture={openLecture}
         />
       );
 

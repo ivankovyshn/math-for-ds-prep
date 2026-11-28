@@ -1,4 +1,4 @@
-export type ModuleId = 'intro' | 'linalg' | 'calculus' | 'probability' | 'statistics' | 'optimization' | 'programming';
+export type ModuleId = 'school' | 'intro' | 'linalg' | 'calculus' | 'probability' | 'statistics' | 'optimization' | 'programming';
 export type Difficulty = 1 | 2 | 3;
 
 export interface QuestionOption {

@@ -98,7 +98,7 @@ export function Dashboard({ onOpenLecture, onStartPractice, onStartExtra, onStar
           >
             <ModulePath
               module={m}
-              number={mi + 1}
+              number={mi}
               lessons={lessonsOf(m.id)}
               completed={completed}
               lecturesRead={lecturesRead}
@@ -184,7 +184,7 @@ function ModulePath({ module: m, number, lessons, completed, lecturesRead, extra
         <ol className="relative px-4 pb-4">
           {lessons.map((l, li) => {
             const passed = completed[lessonKey(l.id)];
-            const unlocked = li === 0 || !!completed[lessonKey(lessons[li - 1].id)];
+            const unlocked = li === 0 || !!m.freeOrder || !!completed[lessonKey(lessons[li - 1].id)];
             const read = !!lecturesRead[l.id];
             const extra = !!extraUnlocked[l.id] && l.extra.length > 0;
             const isNext = unlocked && !passed;

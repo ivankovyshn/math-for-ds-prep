@@ -1,4 +1,5 @@
 import type { Lesson, ModuleId } from '../types.ts';
+import { school } from './lessons/school/index.ts';
 import { intro } from './lessons/intro/index.ts';
 import { calculus } from './lessons/calculus/index.ts';
 import { linalg } from './lessons/linalg/index.ts';
@@ -11,7 +12,7 @@ import { programming } from './lessons/programming/index.ts';
  * Every lesson with content, in path order. A lesson file holds the lecture
  * and its practice questions together. See README.md for the format.
  */
-export const LESSONS: Lesson[] = [...intro, ...linalg, ...calculus, ...probability, ...statistics, ...optimization, ...programming];
+export const LESSONS: Lesson[] = [...school, ...intro, ...linalg, ...calculus, ...probability, ...statistics, ...optimization, ...programming];
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 

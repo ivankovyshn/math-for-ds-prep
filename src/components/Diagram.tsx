@@ -1157,6 +1157,114 @@ const figures: Record<string, { title: string; viewBox: string; body: () => Reac
       );
     },
   },
+
+  binomialSquare: {
+    title: 'A square with side a + b cut into four pieces: a square of area a², two rectangles of area ab and a square of area b², so (a + b)² = a² + 2ab + b²',
+    viewBox: '0 0 300 230',
+    body: () => {
+      const x0 = 70;
+      const y0 = 30;
+      const a = 110;
+      const b = 70;
+      const piece = (x: number, y: number, w: number, h: number, color: string, text: string) => (
+        <g>
+          <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.22} stroke={color} strokeWidth={2} />
+          <Text at={[x + w / 2, y + h / 2 + 6]} color={color}>{text}</Text>
+        </g>
+      );
+      return (
+        <>
+          {piece(x0, y0, a, a, BLUE, 'a²')}
+          {piece(x0 + a, y0, b, a, YELLOW, 'ab')}
+          {piece(x0, y0 + a, a, b, YELLOW, 'ab')}
+          {piece(x0 + a, y0 + a, b, b, GREEN, 'b²')}
+          <Text at={[x0 + a / 2, y0 - 10]}>a</Text>
+          <Text at={[x0 + a + b / 2, y0 - 10]}>b</Text>
+          <Text at={[x0 - 14, y0 + a / 2 + 5]}>a</Text>
+          <Text at={[x0 - 14, y0 + a + b / 2 + 5]}>b</Text>
+        </>
+      );
+    },
+  },
+
+  parabola: {
+    title: 'The parabola y = x² − 4x + 3: it crosses the x-axis at the roots 1 and 3, and its lowest point, the vertex (2, −1), lies on the dashed axis of symmetry halfway between them',
+    viewBox: '0 0 300 215',
+    body: () => {
+      const p = (x: number, y: number): Pt => [40 + 50 * x, 150 - 30 * y];
+      const f = (x: number) => x * x - 4 * x + 3;
+      const curve = Array.from({ length: 47 }, (_, i) => p(-0.3 + i * 0.1, f(-0.3 + i * 0.1)).join(',')).join(' ');
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={15} x1={290} y0={8} y1={205} />
+          <line x1={p(2, 4.4)[0]} y1={p(2, 4.4)[1]} x2={p(2, -1.6)[0]} y2={p(2, -1.6)[1]} {...dashed} />
+          <polyline points={curve} {...thin} stroke={BLUE} strokeWidth={2.6} />
+          <Dot at={p(1, 0)} color={GREEN} />
+          <Dot at={p(3, 0)} color={GREEN} />
+          <Dot at={p(2, -1)} color={YELLOW} />
+          <Text at={p(1, 0)} dx={-12} dy={20} color={GREEN}>1</Text>
+          <Text at={p(3, 0)} dx={12} dy={20} color={GREEN}>3</Text>
+          <Text at={p(2, -1)} dy={20} color={YELLOW} style={caption}>vertex (2, −1)</Text>
+          <Text at={p(4.3, -0.6)} color={BLUE} style={caption}>y = x² − 4x + 3</Text>
+        </>
+      );
+    },
+  },
+
+  expLog: {
+    title: 'The graphs of e^x and ln x are mirror images in the dashed line y = x: e^x passes through (0, 1) and is always positive, ln x passes through (1, 0) and exists only for x > 0',
+    viewBox: '0 0 300 235',
+    body: () => {
+      const p = (x: number, y: number): Pt => [130 + 30 * x, 125 - 30 * y];
+      const ex = Array.from({ length: 54 }, (_, i) => -3.9 + i * 0.1).map((x) => p(x, Math.exp(x)).join(',')).join(' ');
+      const ln = Array.from({ length: 80 }, (_, i) => 0.03 * Math.exp(i * 0.064)).map((x) => p(x, Math.log(x)).join(',')).join(' ');
+      return (
+        <>
+          <Axes o={p(0, 0)} x0={10} x1={290} y0={8} y1={228} />
+          <line x1={p(-3.6, -3.6)[0]} y1={p(-3.6, -3.6)[1]} x2={p(3.8, 3.8)[0]} y2={p(3.8, 3.8)[1]} {...dashed} />
+          <polyline points={ex} {...thin} stroke={BLUE} strokeWidth={2.6} />
+          <polyline points={ln} {...thin} stroke={GREEN} strokeWidth={2.6} />
+          <Dot at={p(0, 1)} color={BLUE} />
+          <Dot at={p(1, 0)} color={GREEN} />
+          <Text at={p(1.25, Math.exp(1.25))} dx={-26} dy={6} color={BLUE}>eˣ</Text>
+          <Text at={p(4.5, Math.log(4.5))} dx={-6} dy={-12} color={GREEN}>ln x</Text>
+          <Text at={p(3.3, 3.3)} dx={22} dy={4} style={caption}>y = x</Text>
+          <Text at={p(0, 1)} dx={-20} dy={2} color={BLUE} style={caption}>(0, 1)</Text>
+          <Text at={p(1, 0)} dx={6} dy={18} color={GREEN} style={caption}>(1, 0)</Text>
+        </>
+      );
+    },
+  },
+
+  unitCircle: {
+    title: 'The unit circle: the point at angle θ from the positive x-axis has coordinates (cos θ, sin θ). The signs of cos and sin in the four quadrants are (+, +), (−, +), (−, −) and (+, −)',
+    viewBox: '0 0 300 240',
+    body: () => {
+      const c: Pt = [150, 120];
+      const R = 88;
+      const th = Math.PI / 3;
+      const pt: Pt = [c[0] + R * Math.cos(th), c[1] - R * Math.sin(th)];
+      return (
+        <>
+          <Axes o={c} x0={30} x1={270} y0={12} y1={228} />
+          <circle cx={c[0]} cy={c[1]} r={R} {...thin} opacity={0.7} />
+          <line x1={pt[0]} y1={pt[1]} x2={pt[0]} y2={c[1]} stroke={GREEN} strokeWidth={2.4} />
+          <line x1={c[0]} y1={c[1]} x2={pt[0]} y2={c[1]} stroke={YELLOW} strokeWidth={3} />
+          <Arrow from={c} to={pt} color={BLUE} width={2.6} />
+          <path d={`M${c[0] + 24} ${c[1]} A24 24 0 0 0 ${c[0] + 24 * Math.cos(th)} ${c[1] - 24 * Math.sin(th)}`} {...thin} strokeWidth={1.8} />
+          <Text at={c} dx={34} dy={-10}>θ</Text>
+          <Text at={pt} dx={50} dy={8} color={BLUE} style={caption}>(cos θ, sin θ)</Text>
+          <Text at={[pt[0], (pt[1] + c[1]) / 2]} dx={30} color={GREEN} style={caption}>sin θ</Text>
+          <Text at={[(pt[0] + c[0]) / 2, c[1]]} dy={18} color={YELLOW} style={caption}>cos θ</Text>
+          <Text at={[c[0] + R, c[1]]} dx={14} dy={18} style={caption}>1</Text>
+          <Text at={[c[0] + 108, c[1] - 100]} style={caption}>I (+, +)</Text>
+          <Text at={[c[0] - 108, c[1] - 100]} style={caption}>II (−, +)</Text>
+          <Text at={[c[0] - 108, c[1] + 108]} style={caption}>III (−, −)</Text>
+          <Text at={[c[0] + 108, c[1] + 108]} style={caption}>IV (+, −)</Text>
+        </>
+      );
+    },
+  },
 };
 
 export const DIAGRAM_TYPES = Object.keys(figures);

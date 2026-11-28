@@ -8,9 +8,12 @@ Runs entirely in the browser. No account, no server, no API keys.
 
 ## What is inside
 
-- **Modules** — Mathematical Language, Linear Algebra, Calculus & Analysis, Probability, Statistics,
-  Optimization, Programming Foundations: 46 lessons in all (6, 11, 7, 6, 5, 5 and 6). A module without lessons
-  would show its `planned` titles as "coming soon".
+- **Modules** — School Maths Toolkit (Module 0), Mathematical Language, Linear Algebra, Calculus & Analysis,
+  Probability, Statistics, Optimization, Programming Foundations: 51 lessons in all (5, 6, 11, 7, 6, 5, 5 and 6).
+  A module without lessons would show its `planned` titles as "coming soon".
+- **Module 0, School Maths Toolkit** — fractions and powers, quadratic equations, lines and 2×2 systems,
+  exponentials and logarithms, trigonometry. Its lessons are all open from the start (`freeOrder`), and lectures
+  that rely on them show "Uses school maths" links at the top (`src/data/prereqs.ts`).
 - **Lessons** — lecture → Practice 1 → (Extra practice if needed) → next lesson. The lecture is shown one
   section at a time, with definition / key-fact / trap boxes, step-by-step worked examples and 2–3 quick checks:
   multiple-choice questions with an instant explanation and no hearts. Answering a section's quick checks
